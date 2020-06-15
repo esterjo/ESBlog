@@ -5,24 +5,25 @@ bio: My research interests include distributed robotics, mobile computing and pr
   matter.
 education:
   courses:
-  - course: PhD in Artificial Intelligence
-    institution: Stanford University
-    year: 2012
-  - course: MEng in Artificial Intelligence
-    institution: Massachusetts Institute of Technology
-    year: 2009
-  - course: BSc in Artificial Intelligence
-    institution: Massachusetts Institute of Technology
-    year: 2008
+  - course: PhD in Mathematics
+    institution: The Graduate Center, CUNY
+    year: 2018
+  - course: MPhil in Mathematics
+    institution: The Graduate Center, CUNY
+    year: 2015
+  - course: MA/BA in Mathematics
+    institution: The City College of New York, CUNY
+    year: 2011
 email: ""
 interests:
-- Artificial Intelligence
-- Computational Linguistics
-- Information Retrieval
+- Dynamic Programming and Reinforcement Learning
+- Statistical Modeling
+- Monte Carlo methods
+- Mathematical Physics
 organizations:
-- name: Stanford University
+- name: ""
   url: ""
-role: Professor of Artificial Intelligence
+role: ""
 social:
 - icon: envelope
   icon_pack: fas
@@ -37,12 +38,10 @@ social:
   icon_pack: fab
   link: https://github.com/gcushen
 superuser: true
-title: Nelson Bighetti
+title: Edger Sterjo
 user_groups:
 - Researchers
 - Visitors
 ---
 
-Nelson Bighetti is a professor of artificial intelligence at the Stanford AI Lab. His research interests include distributed robotics, mobile computing and programmable matter. He leads the Robotic Neurobiology group, which develops self-reconfiguring robots, systems of self-organizing robots, and mobile sensor networks.
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed neque elit, tristique placerat feugiat ac, facilisis vitae arcu. Proin eget egestas augue. Praesent ut sem nec arcu pellentesque aliquet. Duis dapibus diam vel metus tempus vulputate.
+Edger Sterjo is a mathematician working in the financial industry as a quantitative analyst and data scientist. He is a pure mathematician at heart with a deep appreciation of mathematics that is applicable to real world problems. His current interests include dynamic programming, non-parametric Bayesian models, and (on weekends) constructive quantum field theory.

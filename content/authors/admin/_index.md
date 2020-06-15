@@ -1,7 +1,7 @@
 ---
 authors:
 - admin
-bio: My research interests include dynamic programming, statistical modeling, and mathematical physics.
+bio: ""
 education:
   courses:
   - course: PhD in Mathematics
@@ -15,9 +15,9 @@ education:
     year: 2011
 email: ""
 interests:
+- Mathematical Physics
 - Dynamic Programming and Reinforcement Learning
 - Statistical Modeling
-- Mathematical Physics
 organizations:
 - name: ""
   url: ""
@@ -39,4 +39,4 @@ user_groups:
 - Visitors
 ---
 
-Edger Sterjo is a mathematician working in the financial industry as a quantitative analyst and data scientist. He is a pure mathematician at heart with a deep appreciation of mathematics that is applicable to real world problems. His current interests include dynamic programming, non-parametric Bayesian models, and (on weekends) constructive quantum field theory.
+Edger Sterjo is a mathematician working in the financial industry as a quant and data scientist. He is a pure mathematician at heart with a deep appreciation of mathematics that is applicable to real world problems. His current interests include dynamic programming, non-parametric Bayesian models, and (on weekends) constructive quantum field theory.

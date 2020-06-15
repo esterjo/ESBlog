@@ -26,11 +26,8 @@ social:
 - icon: linkedin
   icon_pack: fab
   link: https://www.linkedin.com/in/edger-sterjo-ph-d-453594125/
-- icon: google-scholar
+- icon: 
   icon_pack: ai
-  link: ""
-- icon: github
-  icon_pack: fab
   link: ""
 superuser: true
 title: Edger Sterjo

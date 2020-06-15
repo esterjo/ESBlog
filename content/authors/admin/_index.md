@@ -1,8 +1,7 @@
 ---
 authors:
 - admin
-bio: My research interests include distributed robotics, mobile computing and programmable
-  matter.
+bio: My research interests include dynamic programming, statistical modeling, and mathematical physics.
 education:
   courses:
   - course: PhD in Mathematics

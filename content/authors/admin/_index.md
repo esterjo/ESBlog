@@ -18,7 +18,6 @@ email: ""
 interests:
 - Dynamic Programming and Reinforcement Learning
 - Statistical Modeling
-- Monte Carlo methods
 - Mathematical Physics
 organizations:
 - name: ""

@@ -25,18 +25,15 @@ organizations:
   url: ""
 role: ""
 social:
-- icon: envelope
-  icon_pack: fas
-  link: '#contact'
-- icon: twitter
+- icon: linkedin
   icon_pack: fab
-  link: https://twitter.com/GeorgeCushen
+  link: https://www.linkedin.com/in/edger-sterjo-ph-d-453594125/
 - icon: google-scholar
   icon_pack: ai
-  link: https://scholar.google.co.uk/citations?user=sIwtMXoAAAAJ
+  link: ""
 - icon: github
   icon_pack: fab
-  link: https://github.com/gcushen
+  link: ""
 superuser: true
 title: Edger Sterjo
 user_groups:

@@ -434,35 +434,6 @@
         
 
         <li class="nav-item">
-          <a class="nav-link " href="/#featured"><span>Publications</span></a>
-        </li>
-
-        
-        
-
-        
-
-        
-        
-        
-          
-        
-
-        
-        
-        
-        
-        
-        
-          
-          
-          
-            
-          
-          
-        
-
-        <li class="nav-item">
           <a class="nav-link " href="/#contact"><span>Contact</span></a>
         </li>
 
@@ -613,15 +584,15 @@
 ##  Mean   :15.4   Mean   : 42.98  
 ##  3rd Qu.:19.0   3rd Qu.: 56.00  
 ##  Max.   :25.0   Max.   :120.00
-fit &lt;- lm(dist ~ speed, data = cars)
+fit &lt;- lm(log(dist) ~ log(speed), data = cars)
 fit
 ## 
 ## Call:
-## lm(formula = dist ~ speed, data = cars)
+## lm(formula = log(dist) ~ log(speed), data = cars)
 ## 
 ## Coefficients:
-## (Intercept)        speed  
-##     -17.579        3.932</code></pre>
+## (Intercept)   log(speed)  
+##     -0.7297       1.6024</code></pre>
 </div>
 <div id="including-plots" class="section level1">
 <h1>Including Plots</h1>
@@ -836,6 +807,15 @@ Figure 1: A fancy pie chart.
 
 
   
+  
+  <div class="article-widget content-widget-hr">
+    <h3>Related</h3>
+    <ul>
+      
+      <li><a href="/post/test/2015-07-23-r-rmarkdown/">Hello R Markdown</a></li>
+      
+    </ul>
+  </div>
   
 
 

@@ -36,4 +36,4 @@ user_groups:
 - Visitors
 ---
 
-Edger Sterjo is a mathematician working in the financial industry as a quant and data scientist. He is a pure mathematician at heart, with a deep appreciation of mathematics that is applicable to real world problems. His current research interests include dynamic programming, non-parametric Bayesian models, and (on weekends) constructive quantum field theory.
+Edger Sterjo is a mathematician working in the financial industry as a "quant" and data scientist. He is a pure mathematician at heart, but with a deep appreciation of mathematics that is applicable to real world problems. His current mathematical interests include dynamic programming, non-parametric Bayesian models, and (on weekends) constructive quantum field theory.

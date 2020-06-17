@@ -60,7 +60,7 @@ where the argmax is taken over all <span class="math inline">\(\vec{\omega}\)</s
 \vec{\omega}_1 := \text{argmax} \ \ \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle 
 \]</span>
 again the argmax is taken over all <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(||\vec{\omega}|| = 1\)</span>. This problem is called a “variational problem”, but why so is not important at the moment.</p>
-<p>This <span class="math inline">\(\vec{\omega}_1\)</span> must be the first eigenvector of the matrix <span class="math inline">\(\text{Cov}(\vec{X})\)</span>. Why? <strong>This is the hard part. If you can understand this part you’re golden</strong>. There are multiple ways to see why this must be the first eigenvector of the covariance matrix:</p>
+<p>This <span class="math inline">\(\vec{\omega}_1\)</span> must be the first eigenvector of the matrix <span class="math inline">\(\text{Cov}(\vec{X})\)</span>. Why? <strong>This is the hard part. If you can understand this part you’re golden</strong>. There are multiple ways to see why:</p>
 <p>One is by Lagrange multipliers. If we write <span class="math inline">\(f(\vec{\omega}) := \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle\)</span> then</p>
 <p><span class="math display">\[\begin{equation}
 \begin{aligned}

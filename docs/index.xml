@@ -136,7 +136,7 @@ where the argmax is taken over all &lt;span class=&#34;math inline&#34;&gt;\(\ve
 \vec{\omega}_1 := \text{argmax} \ \ \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle 
 \]&lt;/span&gt;
 again the argmax is taken over all &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}\)&lt;/span&gt; with &lt;span class=&#34;math inline&#34;&gt;\(||\vec{\omega}|| = 1\)&lt;/span&gt;. This problem is called a “variational problem”, but why so is not important at the moment.&lt;/p&gt;
-&lt;p&gt;This &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}_1\)&lt;/span&gt; must be the first eigenvector of the matrix &lt;span class=&#34;math inline&#34;&gt;\(\text{Cov}(\vec{X})\)&lt;/span&gt;. Why? &lt;strong&gt;This is the hard part. If you can understand this part you’re golden&lt;/strong&gt;. There are multiple ways to see why this must be the first eigenvector of the covariance matrix:&lt;/p&gt;
+&lt;p&gt;This &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}_1\)&lt;/span&gt; must be the first eigenvector of the matrix &lt;span class=&#34;math inline&#34;&gt;\(\text{Cov}(\vec{X})\)&lt;/span&gt;. Why? &lt;strong&gt;This is the hard part. If you can understand this part you’re golden&lt;/strong&gt;. There are multiple ways to see why:&lt;/p&gt;
 &lt;p&gt;One is by Lagrange multipliers. If we write &lt;span class=&#34;math inline&#34;&gt;\(f(\vec{\omega}) := \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle\)&lt;/span&gt; then&lt;/p&gt;
 &lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{equation}
 \begin{aligned}

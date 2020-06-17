@@ -72,7 +72,7 @@ $$
 $$
 again the argmax is taken over all $\vec{\omega}$ with $||\vec{\omega}|| = 1$. This problem is called a "variational problem", but why so is not important at the moment. 
 
-This $\vec{\omega}_1$ must be the first eigenvector of the matrix $\text{Cov}(\vec{X})$. Why? **This is the hard part. If you can understand this part you're golden**. There are multiple ways to see why this must be the first eigenvector of the covariance matrix:
+This $\vec{\omega}_1$ must be the first eigenvector of the matrix $\text{Cov}(\vec{X})$. Why? **This is the hard part. If you can understand this part you're golden**. There are multiple ways to see why:
 
 One is by Lagrange multipliers. If we write $f(\vec{\omega}) := \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle$ then 
 

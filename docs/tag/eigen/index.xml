@@ -25,7 +25,7 @@
 &lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Principal_component_analysis&#34;&gt;Principal component analysis&lt;/a&gt; is one of the most commonly used techniques in statistical modeling and machine learning. In typical applications it serves as a (linear) dimensionality reduction, allowing one to project high dimensional data onto a lower dimensional subspace. This can help make a problem that was previously computationally intractable easier, or can help transform feature variables into something more useful. However, most presentations fail to give a sense of “why” and students are left without an understanding of exactly what PCA is and what assumptions it makes. This can lead to model risk issues and prevent users from being able to modify the technique when different assumptions hold. The purpose of this post is to rectify this with a derivation for those that want to know why, which should be everyone. For fun we implement what we learn at the end in a few lines of C++.&lt;/p&gt;
 &lt;div id=&#34;a-note-on-difficulty&#34; class=&#34;section level3&#34;&gt;
 &lt;h3&gt;A note on difficulty&lt;/h3&gt;
-&lt;p&gt;To understand what follows you need to understand linear algebra and undergraduate probability. &lt;strong&gt;The proof that follows is as clear, honest, and self-contained as I think is possible, but most will not find it easy&lt;/strong&gt;. If a truly easy proof (by undergraduate standards) that was theoretically honest were possible you would have already seen it.&lt;/p&gt;
+&lt;p&gt;To understand what follows you need to understand linear algebra and undergraduate probability. &lt;strong&gt;The proof that follows is as clear, honest, and self-contained as I think is possible, but most will not find it easy&lt;/strong&gt;. In my opinion if a truly easy and theoretically honest proof were possible you would have already seen it.&lt;/p&gt;
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;div id=&#34;deriving-pca&#34; class=&#34;section level2&#34;&gt;
@@ -145,6 +145,47 @@ where &lt;span class=&#34;math inline&#34;&gt;\(\bar{X}^i\)&lt;/span&gt; is the 
 &lt;/div&gt;
 &lt;div id=&#34;implementing-in-eigen&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Implementing in Eigen&lt;/h2&gt;
+&lt;p&gt;The derivation above gives us one formula to carry out PCA. Simply compute the sample covariance matrix of the data and extract its eigenvectors and eigenvalues. This is easy enough to implement in most numerical computing languages. Here we implement it in &lt;code&gt;C++&lt;/code&gt; using the &lt;a href=&#34;http://eigen.tuxfamily.org/&#34;&gt;Eigen&lt;/a&gt; library. To make it more interactive we use the &lt;code&gt;RcppEigen&lt;/code&gt; package in &lt;code&gt;R&lt;/code&gt; to allow using the function in &lt;code&gt;R&lt;/code&gt; sessions:&lt;/p&gt;
+&lt;pre class=&#34;cpp&#34;&gt;&lt;code&gt;#include &amp;lt;RcppEigen.h&amp;gt;
+
+// [[Rcpp::depends(RcppEigen)]]
+
+using namespace Eigen;
+
+
+// [[Rcpp::export]]
+Rcpp::List EigenDecomp(const Map&amp;lt;MatrixXd&amp;gt; M) 
+{
+    //Constructing sample covariance matrix 
+    MatrixXd centered = M.rowwise() - M.colwise().mean();
+    MatrixXd cov = centered.adjoint() * centered/(M.rows()-1);
+    
+    //Using Eigen&amp;#39;s eigensolver (with default settings)
+    SelfAdjointEigenSolver&amp;lt;MatrixXd&amp;gt; eig(cov);
+    
+    VectorXd values = eig.eigenvalues();
+    MatrixXd vectors = eig.eigenvectors();
+    
+    //Returning results as a R-list
+    return Rcpp::List::create(Rcpp::Named(&amp;quot;Cov&amp;quot;) = cov,
+                           Rcpp::Named(&amp;quot;values&amp;quot;) = values,
+                           Rcpp::Named(&amp;quot;vectors&amp;quot;) = vectors);
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Note on compilation: I’m using a laptop with an i7-8750h CPU running Windows 10. By creating a Makevars.win file in an &lt;code&gt;./Documents/.R&lt;/code&gt; folder file I altered R’s default flags for g++ to use:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;CXXFLAGS = -march=native -O3 -Wno-ignored-attributes $(DEBUGFLAG)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Eigen is a template expression library that relies heavily on the compiler using the best options for the machine at hand. Here we’ve used &lt;code&gt;-march=native&lt;/code&gt; which enables all instruction subsets supported by our local machine (hence the result might not run on a different machine). For more info running &lt;code&gt;g++ -march=native -Q --help=target&lt;/code&gt; in the command line will show you what compiler flags this turns on. For example mine enables all AVX2 flags, as well as a variety of others. The &lt;code&gt;-Wno-ignored-attributes&lt;/code&gt; suppresses the huge number of ignored attributes warnings that an expression template library like Eigen can produce. Let’s compare with R’s built in PCA function &lt;code&gt;prcomp&lt;/code&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;set.seed(42)
+X = matrix(rnorm(10000*4), 10000, 4)
+
+R = prcomp(X)
+
+Cpp = EigenDecomp(X)
+
+print(R$sdev^2)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] 1.036884 1.021022 1.013685 1.001778&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;print(Cpp$values)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] 1.001778 1.013685 1.021022 1.036884&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The eigenvalues are exactly the same, just in opposite order. Next time we might link an optimized BLAS library such as Intel’s MKL, but I suspect the plain Eigen version is quite competitive.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div class=&#34;footnotes&#34;&gt;
 &lt;hr /&gt;

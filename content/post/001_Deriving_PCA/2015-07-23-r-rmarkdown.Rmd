@@ -13,7 +13,7 @@ tags: ["Dimensionality Reduction", "PCA", "eigen", "C++", "Derivation"]
 
 ### A note on difficulty
 
-To understand what follows you need to understand linear algebra and undergraduate probability. **The proof that follows is as clear, honest, and self-contained as I think is possible, but most will not find it easy**. If a truly easy proof (by undergraduate standards) that was theoretically honest were possible you would have already seen it.
+To understand what follows you need to understand linear algebra and undergraduate probability. **The proof that follows is as clear, honest, and self-contained as I think is possible, but most will not find it easy**. In my opinion if a truly easy and theoretically honest proof were possible you would have already seen it.
 
 
 
@@ -170,10 +170,56 @@ where $\bar{X}^i$ is the mean of the $i^{\text{th}}$ feature column. This estima
 
 ## Implementing in Eigen
 
+The derivation above gives us one formula to carry out PCA. Simply compute the sample covariance matrix of the data and extract its eigenvectors and eigenvalues. This is easy enough to implement in most numerical computing languages. Here we implement it in `C++` using the [Eigen](http://eigen.tuxfamily.org/) library. To make it more interactive we use the `RcppEigen` package in `R` to allow using the function in `R` sessions:
+
+```{Rcpp, cache=TRUE}
+#include <RcppEigen.h>
+
+// [[Rcpp::depends(RcppEigen)]]
+
+using namespace Eigen;
 
 
+// [[Rcpp::export]]
+Rcpp::List EigenDecomp(const Map<MatrixXd> M) 
+{
+	//Constructing sample covariance matrix 
+	MatrixXd centered = M.rowwise() - M.colwise().mean();
+	MatrixXd cov = centered.adjoint() * centered/(M.rows()-1);
+	
+	//Using Eigen's eigensolver (with default settings)
+	SelfAdjointEigenSolver<MatrixXd> eig(cov);
+	
+	VectorXd values = eig.eigenvalues();
+	MatrixXd vectors = eig.eigenvectors();
+	
+	//Returning results as a R-list
+	return Rcpp::List::create(Rcpp::Named("Cov") = cov,
+                           Rcpp::Named("values") = values,
+                           Rcpp::Named("vectors") = vectors);
+}
+```
+Note on compilation: I'm using a laptop with an i7-8750h CPU running Windows 10. By creating a Makevars.win file in an `./Documents/.R` folder file I altered R's default flags for g++ to use:
+
+```
+CXXFLAGS = -march=native -O3 -Wno-ignored-attributes $(DEBUGFLAG)
+```
+
+Eigen is a template expression library that relies heavily on the compiler using the best options for the machine at hand. Here we've used `-march=native` which enables all instruction subsets supported by our local machine (hence the result might not run on a different machine). For more info running `g++ -march=native -Q --help=target` in the command line will show you what compiler flags this turns on. For example mine enables all AVX2 flags, as well as a variety of others. The `-Wno-ignored-attributes` suppresses the huge number of ignored attributes warnings that an expression template library like Eigen can produce. Let's compare with R's built in PCA function `prcomp`
 
 
+```{r}
+set.seed(42)
+X = matrix(rnorm(10000*4), 10000, 4)
+
+R = prcomp(X)
+
+Cpp = EigenDecomp(X)
+
+print(R$sdev^2)
+print(Cpp$values)
+```
+The eigenvalues are exactly the same, just in opposite order. Next time we might link an optimized BLAS library such as Intel's MKL, but I suspect the plain Eigen version is quite competitive.
 
 
 

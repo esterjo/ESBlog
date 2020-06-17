@@ -1,37 +1,53 @@
 ---
-title: "Hello R Markdown"
-author: "Frida Gomam"
-date: 2015-07-23T21:13:14-05:00
-categories: ["R"]
-tags: ["R Markdown", "plot", "regression"]
+title: "Derving Principal Component Analysis and implementing in C++ using Eigen"
+author: "Edger Sterjo"
+date: 2020-06-16
+categories: ["C++"]
+tags: ["Dimensionality Reduction", "PCA", "eigen", "C++", "Derivation"]
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(collapse = TRUE)
-```
+## Introduction
 
-# R Markdown
+[Principal component analysis](https://en.wikipedia.org/wiki/Principal_component_analysis) is one of the most commonly used techniques in statistical modeling and machine learning. In typical applications it serves as a (linear) dimensionality reduction, allowing one to project high dimensional data onto a lower dimensional subspace. This can help make a problem that was previously computationally intractable easier, or can help transform feature variables into something more useful However, most presentations fail to give a sense of "why" and students are left without an understanding of exactly what PCA is and what assumptions it makes. This can lead to model risk issues and prevent users from being able to modify the technique when different assumptions hold. The purpose of this post is to rectify this with a short and motivating derivation. For fun we implement what we learn at the end in a few lines of C++.
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-You can embed an R code chunk like this:
+### Requirements
 
-```{r cars}
-summary(cars)
-fit <- lm(log(dist) ~ log(speed), data = cars)
-fit
-```
+You need to understand linear algebra and undergrad probability. Can't run before you walk.
 
-# Including Plots
 
-You can also embed plots. See Figure \@ref(fig:pie) for example:
 
-```{r pie, fig.cap='A fancy pie chart.', tidy=FALSE}
-par(mar = c(0, 1, 0, 1))
-pie(
-  c(280, 60, 20),
-  c('Sky', 'Sunny side of pyramid', 'Shady side of pyramid'),
-  col = c('#0292D8', '#F7EA39', '#C4B632'),
-  init.angle = -50, border = NA
-)
-```
+## Deriving PCA
+
+As scientists often times our data is multidimensional because it involves measurements of many features of the world. Equally often, our data may have some "randomness" in it that we can not capture (so that if the experiment that was run to obtain the data were rerun the results may not be exactly the same). 
+
+Let $\vec{X} = [X^1, X^2, ..., X^d]$ be a $d$-dimensional random vector [^1] that represents the measured values of $d$ feature variables.
+
+We want to capture the "shape" of the randomness of $\vec{X}$. For example, in what directions does $\vec{X}$ vary the most? In what directions does it vary the least? This is important because if, for example, $\vec{X}$ had a lot of randomness in its first coordinate $X^1$, but had very little randomness in the other coordinates, then independent measurements of $\vec{X}$ would differ a lot in the first coordinate, but not much in the others. The other coordinates would all give roughly the same values and hence roughly the same information. The other coordinates would be redundant. Replacing $\vec{X}$ by $X^1$ would not lose a lot of information but would have the benefit of having to deal with only 1 feature as opposed to $d$ features (i.e. a dimensionality reduction).
+
+To proceed we need to define some measure of variation or randomness. A good one is variance. Our goal is to decompose $\vec{X}$ into vectors along which $\vec{X}$ has the most variance. Directions are represented by unit vectors (i.e. vectors of length 1). If $\vec{\omega}$ is a non-random unit vector, then the component of $\vec{X}$ along $\vec{\omega}$ is given by
+
+$$
+\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\ \vec{\omega}
+$$
+where $\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle$ denotes the inner product in $\mathbb{R}^d$ (aka, dot product). Since $\vec{\omega}$ is not random, the randomness of $\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\ \vec{\omega}$ is controlled entirely by the coefficient $\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle$. To find the direction of maximal variance is to simply find $\vec{\omega}$ that maximizes this inner product. In other words we want
+
+$$
+\vec{\omega}_1 := \text{argmax} \{ \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle \} 
+$$
+where the argmax is taken over all $\vec{\omega}$ with $||\vec{\omega}|| = 1$.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[^1]: The exact definition of "random variable" or "random vector" is unimportant. For mathematicians this means that there is a probability space $(\Omega, \mathcal{M}, \mathbf{P})$ and that $\vec{X}:\Omega \mapsto \mathbb{R}^d$ is Borel-measurable.

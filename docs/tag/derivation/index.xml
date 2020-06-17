@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Derivation | Fundamenta Nova</title>
+    <link>/tag/derivation/</link>
+      <atom:link href="/tag/derivation/index.xml" rel="self" type="application/rss+xml" />
+    <description>Derivation</description>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Tue, 16 Jun 2020 00:00:00 +0000</lastBuildDate>
+    <image>
+      <url>/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png</url>
+      <title>Derivation</title>
+      <link>/tag/derivation/</link>
+    </image>
+    
+    <item>
+      <title>Derving Principal Component Analysis and implementing in C&#43;&#43; using Eigen</title>
+      <link>/post/001_deriving_pca/2015-07-23-r-rmarkdown/</link>
+      <pubDate>Tue, 16 Jun 2020 00:00:00 +0000</pubDate>
+      <guid>/post/001_deriving_pca/2015-07-23-r-rmarkdown/</guid>
+      <description>
+
+
+&lt;div id=&#34;introduction&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://en.wikipedia.org/wiki/Principal_component_analysis&#34;&gt;Principal component analysis&lt;/a&gt; is one of the most commonly used techniques in statistical modeling and machine learning. In typical applications it serves as a (linear) dimensionality reduction, allowing one to project high dimensional data onto a lower dimensional subspace. This can help make a problem that was previously computationally intractable easier, or can help transform feature variables into something more useful However, most presentations fail to give a sense of “why” and students are left without an understanding of exactly what PCA is and what assumptions it makes. This can lead to model risk issues and prevent users from being able to modify the technique when different assumptions hold. The purpose of this post is to rectify this with a short and motivating derivation. For fun we implement what we learn at the end in a few lines of C++.&lt;/p&gt;
+&lt;div id=&#34;requirements&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Requirements&lt;/h3&gt;
+&lt;p&gt;You need to understand linear algebra and undergrad probability. Can’t run before you walk.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&#34;deriving-pca&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Deriving PCA&lt;/h2&gt;
+&lt;p&gt;As scientists often times our data is multidimensional because it involves measurements of many features of the world. Equally often, our data may have some “randomness” in it that we can not capture (so that if the experiment that was run to obtain the data were rerun the results may not be exactly the same).&lt;/p&gt;
+&lt;p&gt;Let &lt;span class=&#34;math inline&#34;&gt;\(\vec{X} = [X^1, X^2, ..., X^d]\)&lt;/span&gt; be a &lt;span class=&#34;math inline&#34;&gt;\(d\)&lt;/span&gt;-dimensional random vector &lt;a href=&#34;#fn1&#34; class=&#34;footnote-ref&#34; id=&#34;fnref1&#34;&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/a&gt; that represents the measured values of &lt;span class=&#34;math inline&#34;&gt;\(d\)&lt;/span&gt; feature variables.&lt;/p&gt;
+&lt;p&gt;We want to capture the “shape” of the randomness of &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt;. For example, in what directions does &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt; vary the most? In what directions does it vary the least? This is important because if, for example, &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt; had a lot of randomness in its first coordinate &lt;span class=&#34;math inline&#34;&gt;\(X^1\)&lt;/span&gt;, but had very little randomness in the other coordinates, then independent measurements of &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt; would differ a lot in the first coordinate, but not much in the others. The other coordinates would all give roughly the same values and hence roughly the same information. The other coordinates would be redundant. Replacing &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt; by &lt;span class=&#34;math inline&#34;&gt;\(X^1\)&lt;/span&gt; would not lose a lot of information but would have the benefit of having to deal with only 1 feature as opposed to &lt;span class=&#34;math inline&#34;&gt;\(d\)&lt;/span&gt; features (i.e. a dimensionality reduction).&lt;/p&gt;
+&lt;p&gt;To proceed we need to define some measure of variation or randomness. A good one is variance. Our goal is to decompose &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt; into vectors along which &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt; has the most variance. Directions are represented by unit vectors (i.e. vectors of length 1). If &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}\)&lt;/span&gt; is a non-random unit vector, then the component of &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt; along &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}\)&lt;/span&gt; is given by&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\ \vec{\omega}
+\]&lt;/span&gt;
+where &lt;span class=&#34;math inline&#34;&gt;\(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\)&lt;/span&gt; denotes the inner product in &lt;span class=&#34;math inline&#34;&gt;\(\mathbb{R}^d\)&lt;/span&gt; (aka, dot product). Since &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}\)&lt;/span&gt; is not random, the randomness of &lt;span class=&#34;math inline&#34;&gt;\(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\ \vec{\omega}\)&lt;/span&gt; is controlled entirely by the coefficient &lt;span class=&#34;math inline&#34;&gt;\(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\)&lt;/span&gt;. To find the direction of maximal variance is to simply find &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}\)&lt;/span&gt; that maximizes this inner product. In other words we want&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\vec{\omega}_1 := \text{argmax} \{ \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle \} 
+\]&lt;/span&gt;
+where the argmax is taken over all &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}\)&lt;/span&gt; with &lt;span class=&#34;math inline&#34;&gt;\(||\vec{\omega}|| = 1\)&lt;/span&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&#34;footnotes&#34;&gt;
+&lt;hr /&gt;
+&lt;ol&gt;
+&lt;li id=&#34;fn1&#34;&gt;&lt;p&gt;The exact definition of “random variable” or “random vector” is unimportant. For mathematicians this means that there is a probability space &lt;span class=&#34;math inline&#34;&gt;\((\Omega, \mathcal{M}, \mathbf{P})\)&lt;/span&gt; and that &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}:\Omega \mapsto \mathbb{R}^d\)&lt;/span&gt; is Borel-measurable.&lt;a href=&#34;#fnref1&#34; class=&#34;footnote-back&#34;&gt;↩︎&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

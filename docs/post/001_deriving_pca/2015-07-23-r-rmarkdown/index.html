@@ -27,7 +27,7 @@
   
     
   
-  <meta name="description" content="R MarkdownThis is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see http://rmarkdown.">
+  <meta name="description" content="IntroductionPrincipal component analysis is one of the most commonly used techniques in statistical modeling and machine learning. In typical applications it serves as a (linear) dimensionality reduction, allowing one to project high dimensional data onto a lower dimensional subspace.">
 
   
   <link rel="alternate" hreflang="en-us" href="/post/001_deriving_pca/2015-07-23-r-rmarkdown/">
@@ -237,14 +237,14 @@
   
   <meta property="og:site_name" content="Fundamenta Nova">
   <meta property="og:url" content="/post/001_deriving_pca/2015-07-23-r-rmarkdown/">
-  <meta property="og:title" content="Hello R Markdown | Fundamenta Nova">
-  <meta property="og:description" content="R MarkdownThis is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see http://rmarkdown."><meta property="og:image" content="/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png">
+  <meta property="og:title" content="Derving Principal Component Analysis and implementing in C&#43;&#43; using Eigen | Fundamenta Nova">
+  <meta property="og:description" content="IntroductionPrincipal component analysis is one of the most commonly used techniques in statistical modeling and machine learning. In typical applications it serves as a (linear) dimensionality reduction, allowing one to project high dimensional data onto a lower dimensional subspace."><meta property="og:image" content="/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png">
   <meta property="twitter:image" content="/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png"><meta property="og:locale" content="en-us">
   
     
-      <meta property="article:published_time" content="2015-07-23T21:13:14-05:00">
+      <meta property="article:published_time" content="2020-06-16T00:00:00&#43;00:00">
     
-    <meta property="article:modified_time" content="2015-07-23T21:13:14-05:00">
+    <meta property="article:modified_time" content="2020-06-16T00:00:00&#43;00:00">
   
 
   
@@ -270,10 +270,10 @@
     "@type": "WebPage",
     "@id": "/post/001_deriving_pca/2015-07-23-r-rmarkdown/"
   },
-  "headline": "Hello R Markdown",
+  "headline": "Derving Principal Component Analysis and implementing in C++ using Eigen",
   
-  "datePublished": "2015-07-23T21:13:14-05:00",
-  "dateModified": "2015-07-23T21:13:14-05:00",
+  "datePublished": "2020-06-16T00:00:00Z",
+  "dateModified": "2020-06-16T00:00:00Z",
   
   "author": {
     "@type": "Person",
@@ -288,7 +288,7 @@
       "url": "/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_192x192_fill_lanczos_center_2.png"
     }
   },
-  "description": "R Markdown\rThis is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see http://rmarkdown."
+  "description": "Introduction\rPrincipal component analysis is one of the most commonly used techniques in statistical modeling and machine learning. In typical applications it serves as a (linear) dimensionality reduction, allowing one to project high dimensional data onto a lower dimensional subspace."
 }
 </script>
 
@@ -306,7 +306,7 @@
 
 
 
-  <title>Hello R Markdown | Fundamenta Nova</title>
+  <title>Derving Principal Component Analysis and implementing in C&#43;&#43; using Eigen | Fundamenta Nova</title>
 
 </head>
 
@@ -501,7 +501,7 @@
   
   
 <div class="article-container pt-3">
-  <h1>Hello R Markdown</h1>
+  <h1>Derving Principal Component Analysis and implementing in C&#43;&#43; using Eigen</h1>
 
   
 
@@ -520,7 +520,7 @@
     
       
     
-    Jul 23, 2015
+    Jun 16, 2020
   </span>
   
 
@@ -529,7 +529,7 @@
   
   <span class="middot-divider"></span>
   <span class="article-reading-time">
-    1 min read
+    3 min read
   </span>
   
 
@@ -541,7 +541,7 @@
   
   <span class="middot-divider"></span>
   <span class="article-categories">
-    <i class="fas fa-folder mr-1"></i><a href="/category/r/">R</a></span>
+    <i class="fas fa-folder mr-1"></i><a href="/category/c-/">C&#43;&#43;</a></span>
   
 
 </div>
@@ -572,44 +572,34 @@
       
 
 
-<div id="r-markdown" class="section level1">
-<h1>R Markdown</h1>
-<p>This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <a href="http://rmarkdown.rstudio.com" class="uri">http://rmarkdown.rstudio.com</a>.</p>
-<p>You can embed an R code chunk like this:</p>
-<pre class="r"><code>summary(cars)
-##      speed           dist       
-##  Min.   : 4.0   Min.   :  2.00  
-##  1st Qu.:12.0   1st Qu.: 26.00  
-##  Median :15.0   Median : 36.00  
-##  Mean   :15.4   Mean   : 42.98  
-##  3rd Qu.:19.0   3rd Qu.: 56.00  
-##  Max.   :25.0   Max.   :120.00
-fit &lt;- lm(log(dist) ~ log(speed), data = cars)
-fit
-## 
-## Call:
-## lm(formula = log(dist) ~ log(speed), data = cars)
-## 
-## Coefficients:
-## (Intercept)   log(speed)  
-##     -0.7297       1.6024</code></pre>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p><a href="https://en.wikipedia.org/wiki/Principal_component_analysis">Principal component analysis</a> is one of the most commonly used techniques in statistical modeling and machine learning. In typical applications it serves as a (linear) dimensionality reduction, allowing one to project high dimensional data onto a lower dimensional subspace. This can help make a problem that was previously computationally intractable easier, or can help transform feature variables into something more useful However, most presentations fail to give a sense of “why” and students are left without an understanding of exactly what PCA is and what assumptions it makes. This can lead to model risk issues and prevent users from being able to modify the technique when different assumptions hold. The purpose of this post is to rectify this with a short and motivating derivation. For fun we implement what we learn at the end in a few lines of C++.</p>
+<div id="requirements" class="section level3">
+<h3>Requirements</h3>
+<p>You need to understand linear algebra and undergrad probability. Can’t run before you walk.</p>
 </div>
-<div id="including-plots" class="section level1">
-<h1>Including Plots</h1>
-<p>You can also embed plots. See Figure <a href="#fig:pie">1</a> for example:</p>
-<pre class="r"><code>par(mar = c(0, 1, 0, 1))
-pie(
-  c(280, 60, 20),
-  c(&#39;Sky&#39;, &#39;Sunny side of pyramid&#39;, &#39;Shady side of pyramid&#39;),
-  col = c(&#39;#0292D8&#39;, &#39;#F7EA39&#39;, &#39;#C4B632&#39;),
-  init.angle = -50, border = NA
-)</code></pre>
-<div class="figure"><span id="fig:pie"></span>
-<img src="/post/test/2015-07-23-r-rmarkdown_files/figure-html/pie-1.png" alt="A fancy pie chart." width="672" />
-<p class="caption">
-Figure 1: A fancy pie chart.
-</p>
 </div>
+<div id="deriving-pca" class="section level2">
+<h2>Deriving PCA</h2>
+<p>As scientists often times our data is multidimensional because it involves measurements of many features of the world. Equally often, our data may have some “randomness” in it that we can not capture (so that if the experiment that was run to obtain the data were rerun the results may not be exactly the same).</p>
+<p>Let <span class="math inline">\(\vec{X} = [X^1, X^2, ..., X^d]\)</span> be a <span class="math inline">\(d\)</span>-dimensional random vector <a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> that represents the measured values of <span class="math inline">\(d\)</span> feature variables.</p>
+<p>We want to capture the “shape” of the randomness of <span class="math inline">\(\vec{X}\)</span>. For example, in what directions does <span class="math inline">\(\vec{X}\)</span> vary the most? In what directions does it vary the least? This is important because if, for example, <span class="math inline">\(\vec{X}\)</span> had a lot of randomness in its first coordinate <span class="math inline">\(X^1\)</span>, but had very little randomness in the other coordinates, then independent measurements of <span class="math inline">\(\vec{X}\)</span> would differ a lot in the first coordinate, but not much in the others. The other coordinates would all give roughly the same values and hence roughly the same information. The other coordinates would be redundant. Replacing <span class="math inline">\(\vec{X}\)</span> by <span class="math inline">\(X^1\)</span> would not lose a lot of information but would have the benefit of having to deal with only 1 feature as opposed to <span class="math inline">\(d\)</span> features (i.e. a dimensionality reduction).</p>
+<p>To proceed we need to define some measure of variation or randomness. A good one is variance. Our goal is to decompose <span class="math inline">\(\vec{X}\)</span> into vectors along which <span class="math inline">\(\vec{X}\)</span> has the most variance. Directions are represented by unit vectors (i.e. vectors of length 1). If <span class="math inline">\(\vec{\omega}\)</span> is a non-random unit vector, then the component of <span class="math inline">\(\vec{X}\)</span> along <span class="math inline">\(\vec{\omega}\)</span> is given by</p>
+<p><span class="math display">\[
+\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\ \vec{\omega}
+\]</span>
+where <span class="math inline">\(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\)</span> denotes the inner product in <span class="math inline">\(\mathbb{R}^d\)</span> (aka, dot product). Since <span class="math inline">\(\vec{\omega}\)</span> is not random, the randomness of <span class="math inline">\(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\ \vec{\omega}\)</span> is controlled entirely by the coefficient <span class="math inline">\(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\)</span>. To find the direction of maximal variance is to simply find <span class="math inline">\(\vec{\omega}\)</span> that maximizes this inner product. In other words we want</p>
+<p><span class="math display">\[
+\vec{\omega}_1 := \text{argmax} \{ \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle \} 
+\]</span>
+where the argmax is taken over all <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(||\vec{\omega}|| = 1\)</span>.</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>The exact definition of “random variable” or “random vector” is unimportant. For mathematicians this means that there is a probability space <span class="math inline">\((\Omega, \mathcal{M}, \mathbf{P})\)</span> and that <span class="math inline">\(\vec{X}:\Omega \mapsto \mathbb{R}^d\)</span> is Borel-measurable.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
 </div>
 
     </div>
@@ -623,11 +613,15 @@ Figure 1: A fancy pie chart.
 
 <div class="article-tags">
   
-  <a class="badge badge-light" href="/tag/plot/">plot</a>
+  <a class="badge badge-light" href="/tag/c-/">C&#43;&#43;</a>
   
-  <a class="badge badge-light" href="/tag/r-markdown/">R Markdown</a>
+  <a class="badge badge-light" href="/tag/derivation/">Derivation</a>
   
-  <a class="badge badge-light" href="/tag/regression/">regression</a>
+  <a class="badge badge-light" href="/tag/dimensionality-reduction/">Dimensionality Reduction</a>
+  
+  <a class="badge badge-light" href="/tag/eigen/">eigen</a>
+  
+  <a class="badge badge-light" href="/tag/pca/">PCA</a>
   
 </div>
 
@@ -644,7 +638,7 @@ Figure 1: A fancy pie chart.
       
       
       <li>
-        <a href="https://twitter.com/intent/tweet?url=/post/001_deriving_pca/2015-07-23-r-rmarkdown/&amp;text=Hello%20R%20Markdown" target="_blank" rel="noopener" class="share-btn-twitter">
+        <a href="https://twitter.com/intent/tweet?url=/post/001_deriving_pca/2015-07-23-r-rmarkdown/&amp;text=Derving%20Principal%20Component%20Analysis%20and%20implementing%20in%20C&#43;&#43;%20using%20Eigen" target="_blank" rel="noopener" class="share-btn-twitter">
           <i class="fab fa-twitter"></i>
         </a>
       </li>
@@ -657,7 +651,7 @@ Figure 1: A fancy pie chart.
       
       
       <li>
-        <a href="https://www.facebook.com/sharer.php?u=/post/001_deriving_pca/2015-07-23-r-rmarkdown/&amp;t=Hello%20R%20Markdown" target="_blank" rel="noopener" class="share-btn-facebook">
+        <a href="https://www.facebook.com/sharer.php?u=/post/001_deriving_pca/2015-07-23-r-rmarkdown/&amp;t=Derving%20Principal%20Component%20Analysis%20and%20implementing%20in%20C&#43;&#43;%20using%20Eigen" target="_blank" rel="noopener" class="share-btn-facebook">
           <i class="fab fa-facebook"></i>
         </a>
       </li>
@@ -670,7 +664,7 @@ Figure 1: A fancy pie chart.
       
       
       <li>
-        <a href="mailto:?subject=Hello%20R%20Markdown&amp;body=/post/001_deriving_pca/2015-07-23-r-rmarkdown/" target="_blank" rel="noopener" class="share-btn-email">
+        <a href="mailto:?subject=Derving%20Principal%20Component%20Analysis%20and%20implementing%20in%20C&#43;&#43;%20using%20Eigen&amp;body=/post/001_deriving_pca/2015-07-23-r-rmarkdown/" target="_blank" rel="noopener" class="share-btn-email">
           <i class="fas fa-envelope"></i>
         </a>
       </li>
@@ -683,7 +677,7 @@ Figure 1: A fancy pie chart.
       
       
       <li>
-        <a href="https://www.linkedin.com/shareArticle?url=/post/001_deriving_pca/2015-07-23-r-rmarkdown/&amp;title=Hello%20R%20Markdown" target="_blank" rel="noopener" class="share-btn-linkedin">
+        <a href="https://www.linkedin.com/shareArticle?url=/post/001_deriving_pca/2015-07-23-r-rmarkdown/&amp;title=Derving%20Principal%20Component%20Analysis%20and%20implementing%20in%20C&#43;&#43;%20using%20Eigen" target="_blank" rel="noopener" class="share-btn-linkedin">
           <i class="fab fa-linkedin-in"></i>
         </a>
       </li>
@@ -696,7 +690,7 @@ Figure 1: A fancy pie chart.
       
       
       <li>
-        <a href="whatsapp://send?text=Hello%20R%20Markdown%20/post/001_deriving_pca/2015-07-23-r-rmarkdown/" target="_blank" rel="noopener" class="share-btn-whatsapp">
+        <a href="whatsapp://send?text=Derving%20Principal%20Component%20Analysis%20and%20implementing%20in%20C&#43;&#43;%20using%20Eigen%20/post/001_deriving_pca/2015-07-23-r-rmarkdown/" target="_blank" rel="noopener" class="share-btn-whatsapp">
           <i class="fab fa-whatsapp"></i>
         </a>
       </li>
@@ -709,7 +703,7 @@ Figure 1: A fancy pie chart.
       
       
       <li>
-        <a href="https://service.weibo.com/share/share.php?url=/post/001_deriving_pca/2015-07-23-r-rmarkdown/&amp;title=Hello%20R%20Markdown" target="_blank" rel="noopener" class="share-btn-weibo">
+        <a href="https://service.weibo.com/share/share.php?url=/post/001_deriving_pca/2015-07-23-r-rmarkdown/&amp;title=Derving%20Principal%20Component%20Analysis%20and%20implementing%20in%20C&#43;&#43;%20using%20Eigen" target="_blank" rel="noopener" class="share-btn-weibo">
           <i class="fab fa-weibo"></i>
         </a>
       </li>
@@ -807,15 +801,6 @@ Figure 1: A fancy pie chart.
 
 
   
-  
-  <div class="article-widget content-widget-hr">
-    <h3>Related</h3>
-    <ul>
-      
-      <li><a href="/post/test/2015-07-23-r-rmarkdown/">Hello R Markdown</a></li>
-      
-    </ul>
-  </div>
   
 
 

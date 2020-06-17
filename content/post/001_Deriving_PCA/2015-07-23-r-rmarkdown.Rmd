@@ -205,7 +205,7 @@ Note on compilation: I'm using a laptop with an i7-8750h CPU running Windows 10.
 CXXFLAGS = -march=native -O3 -Wno-ignored-attributes $(DEBUGFLAG)
 ```
 
-Eigen is a template expression library that relies heavily on the compiler using the best options for the machine at hand. Here we've used `-march=native` which enables all instruction subsets supported by our local machine (hence the result might not run on a different machine). For more info running `g++ -march=native -Q --help=target` in the command line will show you what compiler flags this turns on. For example mine enables all AVX2 flags, as well as a variety of others. The `-Wno-ignored-attributes` suppresses the huge number of ignored attributes warnings that an expression template library like Eigen can produce. Let's compare with R's built in PCA function `prcomp`
+Eigen is a template expression library that relies heavily on the compiler using the best options for the machine at hand. Here we've used `-march=native` which enables all instruction subsets supported by our local machine. For more info running `g++ -march=native -Q --help=target` in the command line will show you what compiler flags this turns on. For example mine enables all AVX2 flags, as well as a variety of others. The `-Wno-ignored-attributes` suppresses the huge number of ignored attributes warnings that an expression template library like Eigen can produce. Let's compare with R's built in PCA function `prcomp`
 
 
 ```{r}

@@ -72,7 +72,7 @@ where the argmax is taken over all &lt;span class=&#34;math inline&#34;&gt;\(\ve
 \vec{\omega}_1 := \text{argmax} \ \ \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle 
 \]&lt;/span&gt;
 again the argmax is taken over all &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}\)&lt;/span&gt; with &lt;span class=&#34;math inline&#34;&gt;\(||\vec{\omega}|| = 1\)&lt;/span&gt;. This problem is called a “variational problem”, but why so is not important at the moment.&lt;/p&gt;
-&lt;p&gt;This &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}_1\)&lt;/span&gt; must be the first eigenvector of the matrix &lt;span class=&#34;math inline&#34;&gt;\(\text{Cov}(\vec{X})\)&lt;/span&gt;. Why? &lt;strong&gt;This is the hard part. If you can understand this part you’re golden&lt;/strong&gt;. There are multiple ways to see why:&lt;/p&gt;
+&lt;p&gt;This &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}_1\)&lt;/span&gt; must be the first eigenvector of the matrix &lt;span class=&#34;math inline&#34;&gt;\(\text{Cov}(\vec{X})\)&lt;/span&gt;. Why? &lt;strong&gt;This is the hard part. If you can understand what follows you’re golden&lt;/strong&gt;. There are multiple ways to see why this is the case:&lt;/p&gt;
 &lt;p&gt;One is by Lagrange multipliers. If we write &lt;span class=&#34;math inline&#34;&gt;\(f(\vec{\omega}) := \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle\)&lt;/span&gt; then&lt;/p&gt;
 &lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{equation}
 \begin{aligned}
@@ -85,11 +85,11 @@ f(\vec{\omega} + \vec{h}) - f(\vec{\omega}) &amp;amp;=  \langle \ \vec{\omega} +
 
 \end{aligned}
 \end{equation}\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;where we first expanded the first term using the bilinearity of the inner product, canceled like terms, and lastly used the symmetry of the covariance matrix to combine two terms. In the above expression the first order (in &lt;span class=&#34;math inline&#34;&gt;\(\vec{h}\)&lt;/span&gt;) term is given by &lt;span class=&#34;math inline&#34;&gt;\(\langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle\)&lt;/span&gt;. The other term is quadratic in &lt;span class=&#34;math inline&#34;&gt;\(\vec{h}\)&lt;/span&gt;. By definition the differential of &lt;span class=&#34;math inline&#34;&gt;\(f\)&lt;/span&gt; at &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}\)&lt;/span&gt; is this linear term:&lt;/p&gt;
+&lt;p&gt;where we first expanded the first term using the bilinearity of the inner product, canceled like terms, and lastly used the symmetry of the covariance matrix to combine two terms. In the above expression the first order term in &lt;span class=&#34;math inline&#34;&gt;\(\vec{h}\)&lt;/span&gt; is given by &lt;span class=&#34;math inline&#34;&gt;\(\langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle\)&lt;/span&gt;. The other term is quadratic in &lt;span class=&#34;math inline&#34;&gt;\(\vec{h}\)&lt;/span&gt;. By definition the differential of &lt;span class=&#34;math inline&#34;&gt;\(f\)&lt;/span&gt; at &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}\)&lt;/span&gt; is this linear term:&lt;/p&gt;
 &lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
 df_{\vec{\omega}} \ (\vec{h}) = \langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle
 \]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;By definition&lt;a href=&#34;#fn3&#34; class=&#34;footnote-ref&#34; id=&#34;fnref3&#34;&gt;&lt;sup&gt;3&lt;/sup&gt;&lt;/a&gt; the gradient of &lt;span class=&#34;math inline&#34;&gt;\(f\)&lt;/span&gt; at &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}\)&lt;/span&gt; is just the vector in the above expression for which the inner product with &lt;span class=&#34;math inline&#34;&gt;\(\vec{h}\)&lt;/span&gt; is being taken:&lt;/p&gt;
+&lt;p&gt;By definition&lt;a href=&#34;#fn3&#34; class=&#34;footnote-ref&#34; id=&#34;fnref3&#34;&gt;&lt;sup&gt;3&lt;/sup&gt;&lt;/a&gt; the gradient of &lt;span class=&#34;math inline&#34;&gt;\(f\)&lt;/span&gt; at &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}\)&lt;/span&gt; is just the vector in the above expression which the inner product with &lt;span class=&#34;math inline&#34;&gt;\(\vec{h}\)&lt;/span&gt; is being taken:&lt;/p&gt;
 &lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
 \nabla_{\vec{\omega}} f = 2 \ \text{Cov}(\vec{X}) \ \vec{\omega}
 \]&lt;/span&gt;
@@ -107,7 +107,7 @@ Hence &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}_1\)&lt;/span&gt; is
 &lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
 \langle \ \vec{\omega}_1 \ , \ \text{Cov}(\vec{X}) \ \vec{\omega}_1 \ \rangle = \langle \ \vec{\omega}_1 \ , \lambda \vec{\omega}_1 \ \rangle = \lambda\langle \ \vec{\omega}_1 \ , \vec{\omega}_1 \ \rangle = \lambda ||\vec{\omega}||^2 = \lambda
 \]&lt;/span&gt;
-Thus we see that eigenvectors capture directions of maximal variation and eigenvalues capture the value of the variation in that maximal direction!&lt;/p&gt;
+Thus we see that eigenvectors capture directions of maximal variance and eigenvalues capture the value of the variance in that maximal direction! We can also see why the variance is a nice measure of variation/randomness. Because it’s &lt;strong&gt;quadratic&lt;/strong&gt; in its arguments, derivatives of it become &lt;strong&gt;linear&lt;/strong&gt;, leading to &lt;strong&gt;linear&lt;/strong&gt; eigenvalue problems, which are very well understood by mathematicians.&lt;/p&gt;
 &lt;p&gt;We proceed as follows. Let &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}_{new} = \vec{X} - \langle\vec{\omega}_1,\vec{X}\rangle\vec{\omega}_1\)&lt;/span&gt;. This &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}_{new}\)&lt;/span&gt; is just the component of &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt; orthogonal to &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}_1\)&lt;/span&gt;. Intuitively it’s the part of &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt; that &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}_1\)&lt;/span&gt; can not explain.&lt;/p&gt;
 &lt;p&gt;Just as before we want to capture the direction of maximal variance of &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}_{new}\)&lt;/span&gt;. I.e. we want a vector &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}_2\)&lt;/span&gt; with &lt;span class=&#34;math inline&#34;&gt;\(||\vec{\omega}_2||=1\)&lt;/span&gt; such that &lt;span class=&#34;math inline&#34;&gt;\(\text{Var}(\langle \vec{\omega}_2, \vec{X}_{new}\rangle)\)&lt;/span&gt; is maximal.&lt;/p&gt;
 &lt;p&gt;Since &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}_{new} \perp \vec{\omega}_1\)&lt;/span&gt;&lt;a href=&#34;#fn4&#34; class=&#34;footnote-ref&#34; id=&#34;fnref4&#34;&gt;&lt;sup&gt;4&lt;/sup&gt;&lt;/a&gt; then &lt;span class=&#34;math inline&#34;&gt;\(\langle \vec{\omega}, \vec{X}_{new}\rangle = \langle \vec{\omega} - \alpha\vec{\omega}_1, \vec{X}_{new}\rangle\)&lt;/span&gt; for any &lt;span class=&#34;math inline&#34;&gt;\(\alpha \in \mathbb{R}\)&lt;/span&gt;. Therefore by replacing &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}\)&lt;/span&gt; with &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega} - \langle\vec{\omega}_1,\vec{\omega}\rangle\vec{\omega}_1\)&lt;/span&gt; we may restrict our maximization problem to maximizing &lt;span class=&#34;math inline&#34;&gt;\(\text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle)\)&lt;/span&gt; over all &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}\)&lt;/span&gt; with &lt;span class=&#34;math inline&#34;&gt;\(||\vec{\omega}|| = 1\)&lt;/span&gt; and &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega} \perp \vec{\omega}_1\)&lt;/span&gt;.&lt;/p&gt;
@@ -117,7 +117,7 @@ Thus we see that eigenvectors capture directions of maximal variation and eigenv
 
 \text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle) &amp;amp;= \text{Var}(\langle \vec{\omega}, \vec{X} - \langle\vec{\omega}_1,\vec{X}\rangle\vec{\omega}_1\rangle) \\
 
-    &amp;amp;= \text{Var}(\langle \vec{\omega}, \vec{X}\rangle) \\
+    &amp;amp;= \text{Var}(\langle \vec{\omega}, \vec{X}\rangle) \qquad \text{Since }\vec{\omega}\perp\vec{\omega}_1 \\
     
     &amp;amp;= \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle \qquad \text{By the earlier computation}
 
@@ -145,7 +145,7 @@ where &lt;span class=&#34;math inline&#34;&gt;\(\bar{X}^i\)&lt;/span&gt; is the 
 &lt;/div&gt;
 &lt;div id=&#34;implementing-in-eigen&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Implementing in Eigen&lt;/h2&gt;
-&lt;p&gt;The derivation above gives us one formula to carry out PCA. Simply compute the sample covariance matrix of the data and extract its eigenvectors and eigenvalues. This is easy enough to implement in most numerical computing languages. Here we implement it in &lt;code&gt;C++&lt;/code&gt; using the &lt;a href=&#34;http://eigen.tuxfamily.org/&#34;&gt;Eigen&lt;/a&gt; library. To make it more interactive we use the &lt;code&gt;RcppEigen&lt;/code&gt; package in &lt;code&gt;R&lt;/code&gt; to allow using the function in &lt;code&gt;R&lt;/code&gt; sessions:&lt;/p&gt;
+&lt;p&gt;The derivation above gives us one formula to carry out PCA: simply compute the sample covariance matrix of the data and extract its eigenvectors and eigenvalues. This is easy enough to implement in most numerical computing languages. Here we implement it in &lt;code&gt;C++&lt;/code&gt; using the &lt;a href=&#34;http://eigen.tuxfamily.org/&#34;&gt;Eigen&lt;/a&gt; library. To make it more interactive we use the &lt;code&gt;RcppEigen&lt;/code&gt; package in &lt;code&gt;R&lt;/code&gt; to allow using the function in &lt;code&gt;R&lt;/code&gt; sessions:&lt;/p&gt;
 &lt;pre class=&#34;cpp&#34;&gt;&lt;code&gt;#include &amp;lt;RcppEigen.h&amp;gt;
 
 // [[Rcpp::depends(RcppEigen)]]

@@ -72,7 +72,7 @@ $$
 $$
 again the argmax is taken over all $\vec{\omega}$ with $||\vec{\omega}|| = 1$. This problem is called a "variational problem", but why so is not important at the moment. 
 
-This $\vec{\omega}_1$ must be the first eigenvector of the matrix $\text{Cov}(\vec{X})$. Why? **This is the hard part. If you can understand this part you're golden**. There are multiple ways to see why:
+This $\vec{\omega}_1$ must be the first eigenvector of the matrix $\text{Cov}(\vec{X})$. Why? **This is the hard part. If you can understand what follows you're golden**. There are multiple ways to see why this is the case:
 
 One is by Lagrange multipliers. If we write $f(\vec{\omega}) := \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle$ then 
 
@@ -89,13 +89,13 @@ f(\vec{\omega} + \vec{h}) - f(\vec{\omega}) &=  \langle \ \vec{\omega} + \vec{h}
 \end{aligned}
 \end{equation}
 
-where we first expanded the first term using the bilinearity of the inner product, canceled like terms, and lastly used the symmetry of the covariance matrix to combine two terms. In the above expression the first order (in $\vec{h}$) term is given by $\langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle$. The other term is quadratic in $\vec{h}$. By definition the differential of $f$ at $\vec{\omega}$ is this linear term:
+where we first expanded the first term using the bilinearity of the inner product, canceled like terms, and lastly used the symmetry of the covariance matrix to combine two terms. In the above expression the first order term in $\vec{h}$ is given by $\langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle$. The other term is quadratic in $\vec{h}$. By definition the differential of $f$ at $\vec{\omega}$ is this linear term:
 
 $$
 df_{\vec{\omega}} \ (\vec{h}) = \langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle
 $$
 
-By definition[^3] the gradient of $f$ at $\vec{\omega}$ is just the vector in the above expression for which the inner product with $\vec{h}$ is being taken:
+By definition[^3] the gradient of $f$ at $\vec{\omega}$ is just the vector in the above expression which the inner product with $\vec{h}$ is being taken:
 
 $$
 \nabla_{\vec{\omega}} f = 2 \ \text{Cov}(\vec{X}) \ \vec{\omega}
@@ -118,7 +118,7 @@ Hence $\vec{\omega}_1$ is an eigenvector of $\text{Cov}(\vec{X})$. We note that 
 $$
 \langle \ \vec{\omega}_1 \ , \ \text{Cov}(\vec{X}) \ \vec{\omega}_1 \ \rangle = \langle \ \vec{\omega}_1 \ , \lambda \vec{\omega}_1 \ \rangle = \lambda\langle \ \vec{\omega}_1 \ , \vec{\omega}_1 \ \rangle = \lambda ||\vec{\omega}||^2 = \lambda
 $$
-Thus we see that eigenvectors capture directions of maximal variation and eigenvalues capture the value of the variation in that maximal direction!
+Thus we see that eigenvectors capture directions of maximal variance and eigenvalues capture the value of the variance in that maximal direction! We can also see why the variance is a nice measure of variation/randomness. Because it's **quadratic** in its arguments, derivatives of it become **linear**, leading to **linear** eigenvalue problems, which are very well understood by mathematicians.
 
 We proceed as follows. Let $\vec{X}_{new} = \vec{X} - \langle\vec{\omega}_1,\vec{X}\rangle\vec{\omega}_1$. This $\vec{X}_{new}$ is just the component of $\vec{X}$ orthogonal to $\vec{\omega}_1$. Intuitively it's the part of $\vec{X}$ that $\vec{\omega}_1$ can not explain.
 
@@ -133,7 +133,7 @@ We transform this expression as follows:
 
 \text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle) &= \text{Var}(\langle \vec{\omega}, \vec{X} - \langle\vec{\omega}_1,\vec{X}\rangle\vec{\omega}_1\rangle) \\
 
-	&= \text{Var}(\langle \vec{\omega}, \vec{X}\rangle) \\
+	&= \text{Var}(\langle \vec{\omega}, \vec{X}\rangle) \qquad \text{Since }\vec{\omega}\perp\vec{\omega}_1 \\
 	
 	&= \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle \qquad \text{By the earlier computation}
 
@@ -170,7 +170,7 @@ where $\bar{X}^i$ is the mean of the $i^{\text{th}}$ feature column. This estima
 
 ## Implementing in Eigen
 
-The derivation above gives us one formula to carry out PCA. Simply compute the sample covariance matrix of the data and extract its eigenvectors and eigenvalues. This is easy enough to implement in most numerical computing languages. Here we implement it in `C++` using the [Eigen](http://eigen.tuxfamily.org/) library. To make it more interactive we use the `RcppEigen` package in `R` to allow using the function in `R` sessions:
+The derivation above gives us one formula to carry out PCA: simply compute the sample covariance matrix of the data and extract its eigenvectors and eigenvalues. This is easy enough to implement in most numerical computing languages. Here we implement it in `C++` using the [Eigen](http://eigen.tuxfamily.org/) library. To make it more interactive we use the `RcppEigen` package in `R` to allow using the function in `R` sessions:
 
 ```{Rcpp, cache=TRUE}
 #include <RcppEigen.h>

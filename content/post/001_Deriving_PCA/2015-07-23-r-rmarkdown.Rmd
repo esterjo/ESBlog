@@ -8,34 +8,167 @@ tags: ["Dimensionality Reduction", "PCA", "eigen", "C++", "Derivation"]
 
 ## Introduction
 
-[Principal component analysis](https://en.wikipedia.org/wiki/Principal_component_analysis) is one of the most commonly used techniques in statistical modeling and machine learning. In typical applications it serves as a (linear) dimensionality reduction, allowing one to project high dimensional data onto a lower dimensional subspace. This can help make a problem that was previously computationally intractable easier, or can help transform feature variables into something more useful However, most presentations fail to give a sense of "why" and students are left without an understanding of exactly what PCA is and what assumptions it makes. This can lead to model risk issues and prevent users from being able to modify the technique when different assumptions hold. The purpose of this post is to rectify this with a short and motivating derivation. For fun we implement what we learn at the end in a few lines of C++.
+[Principal component analysis](https://en.wikipedia.org/wiki/Principal_component_analysis) is one of the most commonly used techniques in statistical modeling and machine learning. In typical applications it serves as a (linear) dimensionality reduction, allowing one to project high dimensional data onto a lower dimensional subspace. This can help make a problem that was previously computationally intractable easier, or can help transform feature variables into something more useful. However, most presentations fail to give a sense of "why" and students are left without an understanding of exactly what PCA is and what assumptions it makes. This can lead to model risk issues and prevent users from being able to modify the technique when different assumptions hold. The purpose of this post is to rectify this with a derivation for those that want to know why, which should be everyone. For fun we implement what we learn at the end in a few lines of C++.
 
 
-### Requirements
+### A note on difficulty
 
-You need to understand linear algebra and undergrad probability. Can't run before you walk.
+To understand what follows you need to understand linear algebra and undergraduate probability. **The proof that follows is as clear, honest, and self-contained as I think is possible, but most will not find it easy**. If a truly easy proof (by undergraduate standards) that was theoretically honest were possible you would have already seen it.
 
 
 
 ## Deriving PCA
 
-As scientists often times our data is multidimensional because it involves measurements of many features of the world. Equally often, our data may have some "randomness" in it that we can not capture (so that if the experiment that was run to obtain the data were rerun the results may not be exactly the same). 
+As scientists our data is often times multidimensional because it involves measurements of many features of the world. Equally often, our data may have some "randomness" in it that we can not capture (so that if the experiment that was run to obtain the data were rerun the results may not be exactly the same). 
 
 Let $\vec{X} = [X^1, X^2, ..., X^d]$ be a $d$-dimensional random vector [^1] that represents the measured values of $d$ feature variables.
 
-We want to capture the "shape" of the randomness of $\vec{X}$. For example, in what directions does $\vec{X}$ vary the most? In what directions does it vary the least? This is important because if, for example, $\vec{X}$ had a lot of randomness in its first coordinate $X^1$, but had very little randomness in the other coordinates, then independent measurements of $\vec{X}$ would differ a lot in the first coordinate, but not much in the others. The other coordinates would all give roughly the same values and hence roughly the same information. The other coordinates would be redundant. Replacing $\vec{X}$ by $X^1$ would not lose a lot of information but would have the benefit of having to deal with only 1 feature as opposed to $d$ features (i.e. a dimensionality reduction).
+We want to capture the "shape" of the randomness of $\vec{X}$. For example, in what directions does $\vec{X}$ vary the most? In what directions does it vary the least? This is important because if, for example, $\vec{X}$ had a lot of randomness in its first coordinate $X^1$, but had very little randomness in the other coordinates, then independent measurements of $\vec{X}$ would differ a lot in the first coordinate, but not much in the others. The other coordinates would all give roughly the same values and hence roughly the same information. The other coordinates would in a sense be redundant: replacing $\vec{X}$ by $X^1$ would not lose a lot of information but would have the benefit of having to deal with only 1 feature as opposed to $d$ features (i.e. a dimensionality reduction).
 
 To proceed we need to define some measure of variation or randomness. A good one is variance. Our goal is to decompose $\vec{X}$ into vectors along which $\vec{X}$ has the most variance. Directions are represented by unit vectors (i.e. vectors of length 1). If $\vec{\omega}$ is a non-random unit vector, then the component of $\vec{X}$ along $\vec{\omega}$ is given by
 
 $$
 \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\ \vec{\omega}
 $$
-where $\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle$ denotes the inner product in $\mathbb{R}^d$ (aka, dot product). Since $\vec{\omega}$ is not random, the randomness of $\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\ \vec{\omega}$ is controlled entirely by the coefficient $\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle$. To find the direction of maximal variance is to simply find $\vec{\omega}$ that maximizes this inner product. In other words we want
+where $\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle$ denotes the inner product in $\mathbb{R}^d$ (aka, dot product). Since $\vec{\omega}$ is not random, the randomness of $\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\ \vec{\omega}$ is controlled entirely by the coefficient $\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle$. To find the direction of maximal variance is to simply find $\vec{\omega}$ that maximizes the variance of this inner product. In other words we want
 
 $$
-\vec{\omega}_1 := \text{argmax} \{ \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle \} 
+\vec{\omega}_1 := \text{argmax} \ \ \text{Var}( \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle ) 
 $$
-where the argmax is taken over all $\vec{\omega}$ with $||\vec{\omega}|| = 1$.
+where the argmax is taken over all $\vec{\omega}$ with $||\vec{\omega}|| = 1$[^2]. We begin:
+
+
+
+\begin{equation}
+  \begin{aligned}
+
+\text{Var}( \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle )  &= 
+\text{E}\bigg[\bigg(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle - \text{E}[\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle]\bigg)^2\bigg] \\
+
+
+    &= \text{E}[\langle\ \vec{\omega}\ , \ \vec{X} - \text{E}[\vec{X}] \ \rangle^2] \\
+    
+    
+    &= \text{E}\bigg[\ \bigg(\sum_i\omega_i(X^i - \text{E}[X^i])\bigg)^2\bigg] \\
+    
+    
+    &= \text{E}\bigg[ \sum_{i,j}\omega_i\omega_j(X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \bigg] \\
+    
+    
+    &= \sum_{i,j}\omega_i\omega_j \ \text{E}\bigg[ \ (X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \ \bigg] \\
+    
+    
+    &= \sum_{i,j}\omega_i\omega_j \ \text{Cov}(X^i, X^j) \\
+    
+    
+    &= \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle
+  \end{aligned}
+\end{equation}
+
+where $\text{Cov}(\vec{X})$ is the covariance matrix of $\vec{X}$. So
+
+$$
+\vec{\omega}_1 := \text{argmax} \ \ \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle 
+$$
+again the argmax is taken over all $\vec{\omega}$ with $||\vec{\omega}|| = 1$. This problem is called a "variational problem", but why so is not important at the moment. 
+
+This $\vec{\omega}_1$ must be the first eigenvector of the matrix $\text{Cov}(\vec{X})$. Why? **This is the hard part. If you can understand this part you're golden**. There are multiple ways to see why this must be the first eigenvector of the covariance matrix:
+
+One is by Lagrange multipliers. If we write $f(\vec{\omega}) := \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle$ then 
+
+
+\begin{equation}
+\begin{aligned}
+
+f(\vec{\omega} + \vec{h}) - f(\vec{\omega}) &=  \langle \ \vec{\omega} + \vec{h} \ , \ \text{Cov}(\vec{X})(\vec{\omega}+\vec{h}) \ \rangle - \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle \\
+
+	&= \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{h}\rangle \ + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle \\
+	
+	&= 2\langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle
+
+\end{aligned}
+\end{equation}
+
+where we first expanded the first term using the bilinearity of the inner product, canceled like terms, and lastly used the symmetry of the covariance matrix to combine two terms. In the above expression the first order (in $\vec{h}$) term is given by $\langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle$. The other term is quadratic in $\vec{h}$. By definition the differential of $f$ at $\vec{\omega}$ is this linear term:
+
+$$
+df_{\vec{\omega}} \ (\vec{h}) = \langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle
+$$
+
+By definition[^3] the gradient of $f$ at $\vec{\omega}$ is just the vector in the above expression for which the inner product with $\vec{h}$ is being taken:
+
+$$
+\nabla_{\vec{\omega}} f = 2 \ \text{Cov}(\vec{X}) \ \vec{\omega}
+$$
+Because our variational problem is to maximize $f(\vec{\omega})$ on the unit sphere where $||\vec{\omega}|| = 1$, then the gradient of $f$ at the maximizing point $\vec{\omega}_1$ must be orthogonal (i.e. perpendicular, i.e. normal) to the surface of the unit sphere at that point (this is the method of [Lagrange multipliers](https://en.wikipedia.org/wiki/Lagrange_multiplier#Modern_formulation_via_differentiable_manifolds)). The direction (i.e. unit vector) perpendicular to the unit sphere at $\vec{\omega}_1$ is $\vec{\omega}_1$ itself with its starting point translated to the surface!
+
+![](/img/Spherical_unit_vectors.png)
+Thus the gradient of $f$ at $\vec{\omega}_1$ must be collinear with (and hence a multiple of) $\vec{\omega}_1$:
+
+$$
+\nabla_{\vec{\omega}_1}f  = \lambda' \ \vec{\omega}_1
+$$
+for some number $\lambda'$. Thus
+
+$$
+\text{Cov}(\vec{X}) \ \vec{\omega}_1 = \frac{\lambda'}{2} \ \vec{\omega}_1 =: \lambda \ \vec{\omega}_1
+$$
+Hence $\vec{\omega}_1$ is an eigenvector of $\text{Cov}(\vec{X})$. We note that the eigenvalue $\lambda$ is just the variance we wanted to maximize:
+
+$$
+\langle \ \vec{\omega}_1 \ , \ \text{Cov}(\vec{X}) \ \vec{\omega}_1 \ \rangle = \langle \ \vec{\omega}_1 \ , \lambda \vec{\omega}_1 \ \rangle = \lambda\langle \ \vec{\omega}_1 \ , \vec{\omega}_1 \ \rangle = \lambda ||\vec{\omega}||^2 = \lambda
+$$
+Thus we see that eigenvectors capture directions of maximal variation and eigenvalues capture the value of the variation in that maximal direction!
+
+We proceed as follows. Let $\vec{X}_{new} = \vec{X} - \langle\vec{\omega}_1,\vec{X}\rangle\vec{\omega}_1$. This $\vec{X}_{new}$ is just the component of $\vec{X}$ orthogonal to $\vec{\omega}_1$. Intuitively it's the part of $\vec{X}$ that $\vec{\omega}_1$ can not explain.
+
+Just as before we want to capture the direction of maximal variance of $\vec{X}_{new}$. I.e. we want a vector $\vec{\omega}_2$ with $||\vec{\omega}_2||=1$ such that $\text{Var}(\langle \vec{\omega}_2, \vec{X}_{new}\rangle)$ is maximal.
+
+Since $\vec{X}_{new} \perp \vec{\omega}_1$[^4] then $\langle \vec{\omega}, \vec{X}_{new}\rangle = \langle \vec{\omega} - \alpha\vec{\omega}_1, \vec{X}_{new}\rangle$ for any $\alpha \in \mathbb{R}$. Therefore by replacing $\vec{\omega}$ with $\vec{\omega} - \langle\vec{\omega}_1,\vec{\omega}\rangle\vec{\omega}_1$ we may restrict our maximization problem to maximizing $\text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle)$ over all $\vec{\omega}$ with $||\vec{\omega}|| = 1$ and $\vec{\omega} \perp \vec{\omega}_1$. 
+
+We transform this expression as follows:
+
+\begin{equation}
+\begin{aligned}
+
+\text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle) &= \text{Var}(\langle \vec{\omega}, \vec{X} - \langle\vec{\omega}_1,\vec{X}\rangle\vec{\omega}_1\rangle) \\
+
+	&= \text{Var}(\langle \vec{\omega}, \vec{X}\rangle) \\
+	
+	&= \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle \qquad \text{By the earlier computation}
+
+\end{aligned}
+\end{equation}
+
+So the vector $\vec{\omega}_2$ is given by the new variational problem
+
+$$
+\vec{\omega}_2 = \text{argmax} \ \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle
+$$
+where the argmax is taken over all $\vec{\omega}$ with $||\vec{\omega}|| = 1$ and $\vec{\omega} \perp \vec{\omega}_1$. Now $\langle \vec{\omega}_2, \vec{X}_{new}\rangle = \langle \vec{\omega}_2, \vec{X}\rangle$ is of maximal variance in a direction perpendicular to $\vec{\omega}_1$. 
+
+Notice that this is the same maximization problem as before, but now restricted to a lower dimensional subspace (the subspace that is prependicular to $\vec{\omega}_1$). The same Lagrange multiplier calculation as before can be applied again in this subspace. This shows that $\vec{\omega}_2$ is an eigenvector of $\text{Cov}(\vec{X})$ with eigenvalue $\langle \vec{\omega}_2, \text{Cov}(\vec{X})\vec{\omega}_2\rangle$. This eigenvalue must be less than or equal to the eigenvalue of $\vec{\omega}_1$ because the maximum of the same expression is being taken over a smaller set for $\vec{\omega}_2$.
+
+We can continue this process until all eigenvectors are exhausted. By decomposing $\vec{X}$ into linear combinations of the eigenvectors $\vec{\omega}_i$ we may choose to capture as much or as little of the variance of $\vec{X}$ as we please. For example, by projecting onto the first k eigenvectors we may capture the k-dimensional variance of $\vec{X}$:
+
+$$
+\vec{X}_k := \sum_{i = 1}^k\langle\vec{\omega}_i,\vec{X}\rangle\vec{\omega}_i
+$$
+
+
+## Sample estimators
+
+In practice we do not know the matrix $\text{Cov}(\vec{X})$, but instead have a data matrix $\{ \vec{X}_j \}_{j=1}^N$ of row vectors representing realizations of the random vector $\vec{X}$. 
+
+Statistics is often concerned with constructing sample estimators of quantities. If our data rows are sampled IID from the distribution of $\vec{X}$ then in lieu of $\text{Cov}(X^i,X^j)$ we construct the sample covariances:
+
+$$
+S^2_{i,j} := \frac{1}{N-1}\sum_{n=1}^N\bigg(X^i_n - \bar{X}^i\bigg)\bigg(X^j_n - \bar{X}^j\bigg)
+$$
+where $\bar{X}^i$ is the mean of the $i^{\text{th}}$ feature column. This estimator is a statistic constructed for its favorable distributional properties under IID assumptions as $N$ becomes large. In particular, it converges to $\text{Cov}(X^i,X^j)$ in some sense.
+
+
+## Implementing in Eigen
 
 
 
@@ -49,5 +182,7 @@ where the argmax is taken over all $\vec{\omega}$ with $||\vec{\omega}|| = 1$.
 
 
 
-
-[^1]: The exact definition of "random variable" or "random vector" is unimportant. For mathematicians this means that there is a probability space $(\Omega, \mathcal{M}, \mathbf{P})$ and that $\vec{X}:\Omega \mapsto \mathbb{R}^d$ is Borel-measurable.
+[^1]: The exact definition of "random variable" or "random vector" is unimportant. For mathematicians this means that there is a probability space $(\Omega, \mathcal{M}, \mathbf{P})$ and that $\vec{X}:\Omega \mapsto \mathbb{R}^d$ is a Borel-measurable map.
+[^2]: Note on existence. A vector that attains the maximum must exist because the expression being maximized is continuous (in fact quadratic) in $\vec{\omega}$ and the unit sphere in $\mathbb{R}^d$ is compact.
+[^3]: And this is indeed the true definition of the [gradient of a function](https://en.wikipedia.org/wiki/Gradient#Differential_or_(exterior)_derivative).
+[^4]: The symbol $\perp$ means "prependicular to".

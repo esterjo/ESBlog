@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Dimensionality Reduction | Fundamenta Nova</title>
+    <title>dimensionality reduction | Fundamenta Nova</title>
     <link>/tag/dimensionality-reduction/</link>
       <atom:link href="/tag/dimensionality-reduction/index.xml" rel="self" type="application/rss+xml" />
-    <description>Dimensionality Reduction</description>
+    <description>dimensionality reduction</description>
     <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Tue, 16 Jun 2020 00:00:00 +0000</lastBuildDate>
     <image>
       <url>/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png</url>
-      <title>Dimensionality Reduction</title>
+      <title>dimensionality reduction</title>
       <link>/tag/dimensionality-reduction/</link>
     </image>
     
     <item>
       <title>Deriving Principal Component Analysis and implementing in C&#43;&#43; using Eigen</title>
-      <link>/post/001_deriving_pca/2015-07-23-r-rmarkdown/</link>
+      <link>/post/001_deriving_pca/main/</link>
       <pubDate>Tue, 16 Jun 2020 00:00:00 +0000</pubDate>
-      <guid>/post/001_deriving_pca/2015-07-23-r-rmarkdown/</guid>
+      <guid>/post/001_deriving_pca/main/</guid>
       <description>
 
 
@@ -94,8 +94,8 @@ df_{\vec{\omega}} \ (\vec{h}) = \langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec
 \nabla_{\vec{\omega}} f = 2 \ \text{Cov}(\vec{X}) \ \vec{\omega}
 \]&lt;/span&gt;
 Because our variational problem is to maximize &lt;span class=&#34;math inline&#34;&gt;\(f(\vec{\omega})\)&lt;/span&gt; on the unit sphere where &lt;span class=&#34;math inline&#34;&gt;\(||\vec{\omega}|| = 1\)&lt;/span&gt;, then the gradient of &lt;span class=&#34;math inline&#34;&gt;\(f\)&lt;/span&gt; at the maximizing point &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}_1\)&lt;/span&gt; must be orthogonal (i.e. perpendicular, i.e. normal) to the surface of the unit sphere at that point&lt;a href=&#34;#fn4&#34; class=&#34;footnote-ref&#34; id=&#34;fnref4&#34;&gt;&lt;sup&gt;4&lt;/sup&gt;&lt;/a&gt;. The direction (i.e. unit vector) perpendicular to the unit sphere at &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}_1\)&lt;/span&gt; is &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}_1\)&lt;/span&gt; itself with its starting point translated to the surface!&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;/img/Spherical_unit_vectors.png&#34; /&gt;
-Thus the gradient of &lt;span class=&#34;math inline&#34;&gt;\(f\)&lt;/span&gt; at &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}_1\)&lt;/span&gt; must be collinear with (and hence a multiple of) &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}_1\)&lt;/span&gt;:&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/img/Spherical_unit_vectors.png&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Thus the gradient of &lt;span class=&#34;math inline&#34;&gt;\(f\)&lt;/span&gt; at &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}_1\)&lt;/span&gt; must be collinear with (and hence a multiple of) &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}_1\)&lt;/span&gt;:&lt;/p&gt;
 &lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
 \nabla_{\vec{\omega}_1}f  = \lambda&amp;#39; \ \vec{\omega}_1
 \]&lt;/span&gt;

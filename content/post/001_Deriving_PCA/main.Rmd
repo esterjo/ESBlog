@@ -3,7 +3,7 @@ title: "Deriving Principal Component Analysis and implementing in C++ using Eige
 author: "Edger Sterjo"
 date: 2020-06-16
 categories: ["C++"]
-tags: ["Dimensionality Reduction", "PCA", "eigen", "C++", "Derivation"]
+tags: ["dimensionality reduction", "pca", "eigen", "c++", "derivation", "rcpp"]
 ---
 
 ## Introduction
@@ -102,7 +102,9 @@ $$
 $$
 Because our variational problem is to maximize $f(\vec{\omega})$ on the unit sphere where $||\vec{\omega}|| = 1$, then the gradient of $f$ at the maximizing point $\vec{\omega}_1$ must be orthogonal (i.e. perpendicular, i.e. normal) to the surface of the unit sphere at that point[^4]. The direction (i.e. unit vector) perpendicular to the unit sphere at $\vec{\omega}_1$ is $\vec{\omega}_1$ itself with its starting point translated to the surface!
 
+
 ![](/img/Spherical_unit_vectors.png)
+
 Thus the gradient of $f$ at $\vec{\omega}_1$ must be collinear with (and hence a multiple of) $\vec{\omega}_1$:
 
 $$

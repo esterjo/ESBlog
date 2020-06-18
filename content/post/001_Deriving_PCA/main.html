@@ -3,7 +3,7 @@ title: "Deriving Principal Component Analysis and implementing in C++ using Eige
 author: "Edger Sterjo"
 date: 2020-06-16
 categories: ["C++"]
-tags: ["Dimensionality Reduction", "PCA", "eigen", "C++", "Derivation"]
+tags: ["dimensionality reduction", "pca", "eigen", "c++", "derivation", "rcpp"]
 ---
 
 
@@ -82,8 +82,8 @@ df_{\vec{\omega}} \ (\vec{h}) = \langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec
 \nabla_{\vec{\omega}} f = 2 \ \text{Cov}(\vec{X}) \ \vec{\omega}
 \]</span>
 Because our variational problem is to maximize <span class="math inline">\(f(\vec{\omega})\)</span> on the unit sphere where <span class="math inline">\(||\vec{\omega}|| = 1\)</span>, then the gradient of <span class="math inline">\(f\)</span> at the maximizing point <span class="math inline">\(\vec{\omega}_1\)</span> must be orthogonal (i.e. perpendicular, i.e. normal) to the surface of the unit sphere at that point<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>. The direction (i.e. unit vector) perpendicular to the unit sphere at <span class="math inline">\(\vec{\omega}_1\)</span> is <span class="math inline">\(\vec{\omega}_1\)</span> itself with its starting point translated to the surface!</p>
-<p><img src="/img/Spherical_unit_vectors.png" />
-Thus the gradient of <span class="math inline">\(f\)</span> at <span class="math inline">\(\vec{\omega}_1\)</span> must be collinear with (and hence a multiple of) <span class="math inline">\(\vec{\omega}_1\)</span>:</p>
+<p><img src="/img/Spherical_unit_vectors.png" /></p>
+<p>Thus the gradient of <span class="math inline">\(f\)</span> at <span class="math inline">\(\vec{\omega}_1\)</span> must be collinear with (and hence a multiple of) <span class="math inline">\(\vec{\omega}_1\)</span>:</p>
 <p><span class="math display">\[
 \nabla_{\vec{\omega}_1}f  = \lambda&#39; \ \vec{\omega}_1
 \]</span>

@@ -33,12 +33,12 @@
   </url>
   
   <url>
-    <loc>/tag/c-/</loc>
+    <loc>/category/c-/</loc>
     <lastmod>2020-06-16T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>/category/c-/</loc>
+    <loc>/tag/c-/</loc>
     <lastmod>2020-06-16T00:00:00+00:00</lastmod>
   </url>
   
@@ -53,7 +53,7 @@
   </url>
   
   <url>
-    <loc>/post/001_deriving_pca/2015-07-23-r-rmarkdown/</loc>
+    <loc>/post/001_deriving_pca/main/</loc>
     <lastmod>2020-06-16T00:00:00+00:00</lastmod>
   </url>
   
@@ -74,6 +74,11 @@
   
   <url>
     <loc>/post/</loc>
+    <lastmod>2020-06-16T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tag/rcpp/</loc>
     <lastmod>2020-06-16T00:00:00+00:00</lastmod>
   </url>
   

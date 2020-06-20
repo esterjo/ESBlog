@@ -697,7 +697,7 @@ where <span class="math inline">\(\bar{X}^i\)</span> is the mean of the <span cl
 </div>
 <div id="implementing-in-eigen" class="section level2">
 <h2>Implementing in Eigen</h2>
-<p>The derivation above gives us one formula to carry out PCA: simply compute the sample covariance matrix of the data and extract its eigenvectors and eigenvalues. This is easy enough to implement in most numerical computing languages. Here we implement it in C++ using the <a href="http://eigen.tuxfamily.org/">Eigen</a> library. To make it more interactive we use the <a href="https://cran.r-project.org/web/packages/RcppEigen/index.html">RcppEigen</a> package in R to allow using the function in R sessions:</p>
+<p>The derivation above gives us one formula to carry out PCA: simply compute the sample covariance matrix of the data and extract its eigenvectors and eigenvalues. This may or may not be the most numerically efficient/stable algorithm to use (I haven’t checked), but this is easy enough to implement in most numerical computing languages. Here we implement it in C++ using the <a href="http://eigen.tuxfamily.org/">Eigen</a> library. To make it more interactive we use the <a href="https://cran.r-project.org/web/packages/RcppEigen/index.html">RcppEigen</a> package in R to allow using the function in R sessions:</p>
 <pre class="cpp"><code>#include &lt;RcppEigen.h&gt;
 
 // [[Rcpp::depends(RcppEigen)]]
@@ -770,6 +770,8 @@ print(R$sdev^2)</code></pre>
   <a class="badge badge-light" href="/tag/eigen/">eigen</a>
   
   <a class="badge badge-light" href="/tag/pca/">pca</a>
+  
+  <a class="badge badge-light" href="/tag/r/">r</a>
   
   <a class="badge badge-light" href="/tag/rcpp/">rcpp</a>
   

@@ -3,7 +3,7 @@ title: "Deriving Principal Component Analysis and implementing in C++ using Eige
 author: "Edger Sterjo"
 date: 2020-06-20
 categories: ["C++"]
-tags: ["dimensionality reduction", "pca", "eigen", "c++", "derivation", "rcpp"]
+tags: ["dimensionality reduction", "pca", "eigen", "c++", "derivation", "rcpp", "r"]
 ---
 
 ## Introduction
@@ -172,7 +172,7 @@ where $\bar{X}^i$ is the mean of the $i^{\text{th}}$ feature column. This estima
 
 ## Implementing in Eigen
 
-The derivation above gives us one formula to carry out PCA: simply compute the sample covariance matrix of the data and extract its eigenvectors and eigenvalues. This is easy enough to implement in most numerical computing languages. Here we implement it in C++ using the [Eigen](http://eigen.tuxfamily.org/) library. To make it more interactive we use the [RcppEigen](https://cran.r-project.org/web/packages/RcppEigen/index.html) package in R to allow using the function in R sessions:
+The derivation above gives us one formula to carry out PCA: simply compute the sample covariance matrix of the data and extract its eigenvectors and eigenvalues. This may or may not be the most numerically efficient/stable algorithm to use (I haven't checked), but this is easy enough to implement in most numerical computing languages. Here we implement it in C++ using the [Eigen](http://eigen.tuxfamily.org/) library. To make it more interactive we use the [RcppEigen](https://cran.r-project.org/web/packages/RcppEigen/index.html) package in R to allow using the function in R sessions:
 
 ```{Rcpp, cache=TRUE}
 #include <RcppEigen.h>

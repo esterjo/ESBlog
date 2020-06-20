@@ -145,7 +145,7 @@ where &lt;span class=&#34;math inline&#34;&gt;\(\bar{X}^i\)&lt;/span&gt; is the 
 &lt;/div&gt;
 &lt;div id=&#34;implementing-in-eigen&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Implementing in Eigen&lt;/h2&gt;
-&lt;p&gt;The derivation above gives us one formula to carry out PCA: simply compute the sample covariance matrix of the data and extract its eigenvectors and eigenvalues. This is easy enough to implement in most numerical computing languages. Here we implement it in C++ using the &lt;a href=&#34;http://eigen.tuxfamily.org/&#34;&gt;Eigen&lt;/a&gt; library. To make it more interactive we use the &lt;a href=&#34;https://cran.r-project.org/web/packages/RcppEigen/index.html&#34;&gt;RcppEigen&lt;/a&gt; package in R to allow using the function in R sessions:&lt;/p&gt;
+&lt;p&gt;The derivation above gives us one formula to carry out PCA: simply compute the sample covariance matrix of the data and extract its eigenvectors and eigenvalues. This may or may not be the most numerically efficient/stable algorithm to use (I haven’t checked), but this is easy enough to implement in most numerical computing languages. Here we implement it in C++ using the &lt;a href=&#34;http://eigen.tuxfamily.org/&#34;&gt;Eigen&lt;/a&gt; library. To make it more interactive we use the &lt;a href=&#34;https://cran.r-project.org/web/packages/RcppEigen/index.html&#34;&gt;RcppEigen&lt;/a&gt; package in R to allow using the function in R sessions:&lt;/p&gt;
 &lt;pre class=&#34;cpp&#34;&gt;&lt;code&gt;#include &amp;lt;RcppEigen.h&amp;gt;
 
 // [[Rcpp::depends(RcppEigen)]]

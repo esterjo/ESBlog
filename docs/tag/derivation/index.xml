@@ -5,7 +5,7 @@
     <link>/tag/derivation/</link>
       <atom:link href="/tag/derivation/index.xml" rel="self" type="application/rss+xml" />
     <description>derivation</description>
-    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Tue, 16 Jun 2020 00:00:00 +0000</lastBuildDate>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Sat, 20 Jun 2020 00:00:00 +0000</lastBuildDate>
     <image>
       <url>/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png</url>
       <title>derivation</title>
@@ -15,7 +15,7 @@
     <item>
       <title>Deriving Principal Component Analysis and implementing in C&#43;&#43; using Eigen</title>
       <link>/post/001_deriving_pca/main/</link>
-      <pubDate>Tue, 16 Jun 2020 00:00:00 +0000</pubDate>
+      <pubDate>Sat, 20 Jun 2020 00:00:00 +0000</pubDate>
       <guid>/post/001_deriving_pca/main/</guid>
       <description>
 

@@ -48,6 +48,11 @@
   </url>
   
   <url>
+    <loc>/post/002_hmc_rcppeigen/main/</loc>
+    <lastmod>2020-06-20T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/tag/derivation/</loc>
     <lastmod>2020-06-20T00:00:00+00:00</lastmod>
   </url>
@@ -68,6 +73,16 @@
   </url>
   
   <url>
+    <loc>/tag/mcmc/</loc>
+    <lastmod>2020-06-20T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tag/metaprogramming/</loc>
+    <lastmod>2020-06-20T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/tag/pca/</loc>
     <lastmod>2020-06-20T00:00:00+00:00</lastmod>
   </url>
@@ -78,12 +93,22 @@
   </url>
   
   <url>
+    <loc>/category/r/</loc>
+    <lastmod>2020-06-20T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>/tag/r/</loc>
     <lastmod>2020-06-20T00:00:00+00:00</lastmod>
   </url>
   
   <url>
     <loc>/tag/rcpp/</loc>
+    <lastmod>2020-06-20T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/tag/rmarkdown/</loc>
     <lastmod>2020-06-20T00:00:00+00:00</lastmod>
   </url>
   

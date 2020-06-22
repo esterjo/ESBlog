@@ -94,7 +94,7 @@ constants = list(
 	paste('static const double Euler =', exp(1),';')
 )
 ```
-This already highlights a danger as we have not considered exactly how R might convert these double precision floating point numbers to strings. Regardless, we proceed. To use the new engine we run the engine as `{Rcpp test_chunk, extra = constants}`
+This already highlights a danger as we have not considered exactly how R might convert these double precision floating point numbers to strings. Regardless, we proceed. To use the new engine we run the engine as `{RcppFoo test_chunk, extra = constants}`
 
 ```{RcppFoo test_chunk, extra=constants}
 #include <Rcpp.h>

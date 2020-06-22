@@ -666,7 +666,7 @@ NumericVector timesTwo(NumericVector x)
     paste(&#39;static const double Pi =&#39;, pi, &#39;;&#39;),
     paste(&#39;static const double Euler =&#39;, exp(1),&#39;;&#39;)
 )</code></pre>
-<p>This already highlights a danger as we have not considered exactly how R might convert these double precision floating point numbers to strings. Regardless, we proceed. To use the new engine we run the engine as <code>{Rcpp test_chunk, extra = constants}</code></p>
+<p>This already highlights a danger as we have not considered exactly how R might convert these double precision floating point numbers to strings. Regardless, we proceed. To use the new engine we run the engine as <code>{RcppFoo test_chunk, extra = constants}</code></p>
 <pre class="cpp"><code>#include &lt;Rcpp.h&gt;
 using namespace Rcpp;
 

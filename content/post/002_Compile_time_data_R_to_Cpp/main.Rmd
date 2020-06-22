@@ -81,8 +81,8 @@ knit_engines$set(RcppFoo = function(options) {
     engine_output(options, 
     			  options$code, 
     			  paste("Added the lines:\n", 
-    			  	  paste(extra, sep = '\n'), 
-    			  	  collapse = '\n'))
+    			  	  paste(extra, collapse = '\n'), 
+    			  	  sep = '\n'))
 })
 ```
 

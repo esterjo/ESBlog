@@ -94,8 +94,8 @@ NumericVector timesTwo(NumericVector x)
     engine_output(options, 
                   options$code, 
                   paste(&quot;Added the lines:\n&quot;, 
-                      paste(extra, sep = &#39;\n&#39;), 
-                      collapse = &#39;\n&#39;))
+                      paste(extra, collapse = &#39;\n&#39;), 
+                      sep = &#39;\n&#39;))
 })</code></pre>
 <p>Next we test by creating some data in R and using that as a compile time constant in C++. Here we pass values of pi and e as static consts to C++.</p>
 <pre class="r"><code>constants = list(
@@ -112,9 +112,9 @@ NumericVector timesFoo(NumericVector x)
     return x * Pi + Euler;
 }</code></pre>
 <pre><code>## Added the lines:
-##  static const double Pi = 3.14159265358979 ;
-## Added the lines:
-##  static const double Euler = 2.71828182845905 ;</code></pre>
+## 
+## static const double Pi = 3.14159265358979 ;
+## static const double Euler = 2.71828182845905 ;</code></pre>
 <pre class="r"><code>x = timesFoo(1:10)
 print(x)</code></pre>
 <pre><code>##  [1]  5.859874  9.001467 12.143060 15.284652 18.426245 21.567838 24.709430

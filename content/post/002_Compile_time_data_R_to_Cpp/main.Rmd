@@ -120,3 +120,4 @@ But metaprogramming can be dangerous. In this case some loss of precision occurr
 ```{r}
 print(x - y)
 ```
+Anyway this was just a small example. There are many many directions one can choose to take with metaprogramming. Even creating new preprocessing directives such as unrolling loops, defining constexprs, etc.

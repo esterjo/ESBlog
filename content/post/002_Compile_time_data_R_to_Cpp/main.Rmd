@@ -86,7 +86,7 @@ knit_engines$set(RcppFoo = function(options) {
 })
 ```
 
-Next we test by creating some data in R and using that as a compile time constant in C++. Here we pass values of pi and e as static consts to C++.
+Next we test by creating some data in R and using that as a compile time constant in C++. Here we pass values of pi and e as static const doubles to C++ (a much cleaner API is possible of course).
 
 ```{r}
 constants = list(
@@ -116,8 +116,10 @@ We get **almost** the same result as in R
 y = pi*(1:10)+exp(1)
 print(y)
 ```
-But metaprogramming can be dangerous. In this case some loss of precision occurred with the doubles when converting to strings:
+But metaprogramming can be dangerous when mixed with floating point arithmetic. In this case some loss of precision occurred with the doubles when converting to strings:
 ```{r}
-print(x - y)
+x - y
+
+as.double(as.character(pi))*(1:10) + as.double(as.character(exp(1))) - x
 ```
 Anyway this was just a small example. There are many many directions one can choose to take with metaprogramming. Even creating new preprocessing directives such as unrolling loops, defining constexprs, etc.

@@ -661,7 +661,7 @@ NumericVector timesTwo(NumericVector x)
                       paste(extra, collapse = &#39;\n&#39;), 
                       sep = &#39;\n&#39;))
 })</code></pre>
-<p>Next we test by creating some data in R and using that as a compile time constant in C++. Here we pass values of pi and e as static consts to C++.</p>
+<p>Next we test by creating some data in R and using that as a compile time constant in C++. Here we pass values of pi and e as static const doubles to C++ (a much cleaner API is possible of course).</p>
 <pre class="r"><code>constants = list(
     paste(&#39;static const double Pi =&#39;, pi, &#39;;&#39;),
     paste(&#39;static const double Euler =&#39;, exp(1),&#39;;&#39;)
@@ -688,10 +688,13 @@ print(x)</code></pre>
 print(y)</code></pre>
 <pre><code>##  [1]  5.859874  9.001467 12.143060 15.284652 18.426245 21.567838 24.709430
 ##  [8] 27.851023 30.992616 34.134208</code></pre>
-<p>But metaprogramming can be dangerous. In this case some loss of precision occurred with the doubles when converting to strings:</p>
-<pre class="r"><code>print(x - y)</code></pre>
+<p>But metaprogramming can be dangerous when mixed with floating point arithmetic. In this case some loss of precision occurred with the doubles when converting to strings:</p>
+<pre class="r"><code>x - y</code></pre>
 <pre><code>##  [1]  1.776357e-15  0.000000e+00 -3.552714e-15 -7.105427e-15 -1.065814e-14
 ##  [6] -1.421085e-14 -1.776357e-14 -1.776357e-14 -2.131628e-14 -2.842171e-14</code></pre>
+<pre class="r"><code>as.double(as.character(pi))*(1:10) + as.double(as.character(exp(1))) - x</code></pre>
+<pre><code>##  [1] 0.000000e+00 0.000000e+00 0.000000e+00 0.000000e+00 0.000000e+00
+##  [6] 3.552714e-15 3.552714e-15 0.000000e+00 0.000000e+00 0.000000e+00</code></pre>
 <p>Anyway this was just a small example. There are many many directions one can choose to take with metaprogramming. Even creating new preprocessing directives such as unrolling loops, defining constexprs, etc.</p>
 </div>
 

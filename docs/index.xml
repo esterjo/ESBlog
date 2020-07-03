@@ -188,7 +188,7 @@ To prove this we start by applying the multiplication theorem for probability de
 
 p(\vec{x},\vec{y}|\theta) &amp;amp;= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_N|\vec{x},\theta)p(\vec{x}|\theta) \qquad \text{by the multiplication theorem}\\
 
-    &amp;amp;= p(y_1|\vec{x},\theta)...p(y_N|\vec{x},\theta)p(\vec{x}|\theta) \qquad \text{by conditional independence but keeping theta} \\
+    &amp;amp;= p(y_1|x_1,\theta)...p(y_N|x_N,\theta)p(\vec{x}|\theta) \qquad \text{by conditional independence but keeping theta} \\
     &amp;amp;= p(\vec{x}|\theta)\prod_{i=1}^Np(y_i|x_i,\theta) \\
     &amp;amp;=\prod_{i=1}^Np(y_i|x_i,\theta)p(x_i|\theta) \qquad \text{by independence of the x&amp;#39;s} \\
     &amp;amp;= \prod_{i=1}^Np(y_i,x_i|\theta).

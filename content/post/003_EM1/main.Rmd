@@ -45,7 +45,7 @@ In general, we have a dependence structure given by $\theta \to \vec{X} \to \vec
 $$
 \hat{\theta} := \text{argmax}_{\theta} \ \ \log(p(\vec{y} \ | \ \theta))
 $$
-All of the theory of MLE applies in this case. However, in practice this maximization problem might be very difficult. Often, the density $p(\vec{y} \ | \ \theta)$ may be much more complicated than the density $p(\vec{x} \ | \ \theta)$ of the hidden data that we wish we had.
+All of the theory of MLE applies in this case. In the example above this would be relatively easy. However, there are times this maximization problem is very difficult. Often the density $p(\vec{y} \ | \ \theta)$ may be much more complicated than the density $p(\vec{x} \ | \ \theta)$ of the hidden data that we wish we had.
 
 If we knew $\vec{x}$ then we can replace the above problem with $\hat{\theta} := \text{argmax}_{\theta} \ \ \log(p(\vec{x} \ | \ \theta))$. In fact, we wouldn't even need to know exactly what the value of $\vec{x}$ is but only what the value of $\log(p(\vec{x} \ | \ \theta))$ is for a given $\theta$. 
 
@@ -61,7 +61,7 @@ The idea of EM is indeed to try and maximize $\log(p(\vec{x} \ | \ \theta))$ ins
 * **Step 4:** Set $\theta_{m+1}$ equal to a value of $\theta$ that maximizes the current approximation $Q(\theta|\theta_m)$ of $\log(p(\vec{x} \ | \ \theta))$.
 * **Step 5:** Return to step 2 and repeat until some stopping criteria is met.[^1]  
 
-Practically speaking, this algorithm would be applied when each of these steps is significantly easier than the original MLE problem of $\hat{\theta} := \text{argmax}_{\theta} \ \ \log(p(\vec{y} \ | \ \theta))$. As a general example, this is often the case when the model is linear with respect to $\vec{X}$, but the information loss of going from $\vec{X}$ to $\vec{Y}$ is nonlinear (we'll give examples below).
+Practically speaking, this algorithm would be applied when each of these steps is significantly easier than the original MLE problem of $\hat{\theta} := \text{argmax}_{\theta} \ \ \log(p(\vec{y} \ | \ \theta))$. As a general example, this is often the case when the model is linear with respect to $\vec{X}$, but the information loss of going from $\vec{X}$ to $\vec{Y}$ is nonlinear and non-invertible (we'll give examples in later posts).
 
 ## Constructing an estimator for $\log(p(\vec{X} \ | \ \theta))$
 

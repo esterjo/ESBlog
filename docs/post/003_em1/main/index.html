@@ -603,7 +603,7 @@ p(\vec{y} \ | \ \vec{x}, \theta) = p(\vec{y} \ | \ \vec{x})
 <span class="math display">\[
 \hat{\theta} := \text{argmax}_{\theta} \ \ \log(p(\vec{y} \ | \ \theta))
 \]</span>
-All of the theory of MLE applies in this case. However, in practice this maximization problem might be very difficult. Often, the density <span class="math inline">\(p(\vec{y} \ | \ \theta)\)</span> may be much more complicated than the density <span class="math inline">\(p(\vec{x} \ | \ \theta)\)</span> of the hidden data that we wish we had.</p>
+All of the theory of MLE applies in this case. In the example above this would be relatively easy. However, there are times this maximization problem is very difficult. Often the density <span class="math inline">\(p(\vec{y} \ | \ \theta)\)</span> may be much more complicated than the density <span class="math inline">\(p(\vec{x} \ | \ \theta)\)</span> of the hidden data that we wish we had.</p>
 <p>If we knew <span class="math inline">\(\vec{x}\)</span> then we can replace the above problem with <span class="math inline">\(\hat{\theta} := \text{argmax}_{\theta} \ \ \log(p(\vec{x} \ | \ \theta))\)</span>. In fact, we wouldn’t even need to know exactly what the value of <span class="math inline">\(\vec{x}\)</span> is but only what the value of <span class="math inline">\(\log(p(\vec{x} \ | \ \theta))\)</span> is for a given <span class="math inline">\(\theta\)</span>.</p>
 </div>
 <div id="a-general-recipe-for-em-algorithms" class="section level2">
@@ -616,7 +616,7 @@ All of the theory of MLE applies in this case. However, in practice this maximiz
 <li><p><strong>Step 4:</strong> Set <span class="math inline">\(\theta_{m+1}\)</span> equal to a value of <span class="math inline">\(\theta\)</span> that maximizes the current approximation <span class="math inline">\(Q(\theta|\theta_m)\)</span> of <span class="math inline">\(\log(p(\vec{x} \ | \ \theta))\)</span>.</p></li>
 <li><p><strong>Step 5:</strong> Return to step 2 and repeat until some stopping criteria is met.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p></li>
 </ul>
-<p>Practically speaking, this algorithm would be applied when each of these steps is significantly easier than the original MLE problem of <span class="math inline">\(\hat{\theta} := \text{argmax}_{\theta} \ \ \log(p(\vec{y} \ | \ \theta))\)</span>. As a general example, this is often the case when the model is linear with respect to <span class="math inline">\(\vec{X}\)</span>, but the information loss of going from <span class="math inline">\(\vec{X}\)</span> to <span class="math inline">\(\vec{Y}\)</span> is nonlinear (we’ll give examples below).</p>
+<p>Practically speaking, this algorithm would be applied when each of these steps is significantly easier than the original MLE problem of <span class="math inline">\(\hat{\theta} := \text{argmax}_{\theta} \ \ \log(p(\vec{y} \ | \ \theta))\)</span>. As a general example, this is often the case when the model is linear with respect to <span class="math inline">\(\vec{X}\)</span>, but the information loss of going from <span class="math inline">\(\vec{X}\)</span> to <span class="math inline">\(\vec{Y}\)</span> is nonlinear and non-invertible (we’ll give examples in later posts).</p>
 </div>
 <div id="constructing-an-estimator-for-logpvecx-theta" class="section level2">
 <h2>Constructing an estimator for <span class="math inline">\(\log(p(\vec{X} \ | \ \theta))\)</span></h2>

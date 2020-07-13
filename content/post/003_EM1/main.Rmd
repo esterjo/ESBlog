@@ -47,12 +47,16 @@ $$
 $$
 All of the theory of MLE applies in this case. In the example above this would be relatively easy. However, there are times this maximization problem is very difficult. Often the density $p(\vec{y} \ | \ \theta)$ may be much more complicated than the density $p(\vec{x} \ | \ \theta)$ of the hidden data that we wish we had.
 
-If we knew $\vec{x}$ then we can replace the above problem with $\hat{\theta} := \text{argmax}_{\theta} \ \ \log(p(\vec{x} \ | \ \theta))$. In fact, we wouldn't even need to know exactly what the value of $\vec{x}$ is but only what the value of $\log(p(\vec{x} \ | \ \theta))$ is for a given $\theta$. 
+In such as situation, if we knew $\vec{x}$ then we can replace the above problem with $\hat{\theta} := \text{argmax}_{\theta} \ \ \log(p(\vec{x} \ | \ \theta))$. In fact, we wouldn't even need to know exactly what the value of $\vec{x}$ is but only what the value of $\log(p(\vec{x} \ | \ \theta))$ is for a given $\theta$. 
 
 
 ## A general recipe for EM algorithms
 
-The idea of EM is indeed to try and maximize $\log(p(\vec{x} \ | \ \theta))$ instead of $\log(p(\vec{y} \ | \ \theta))$, but because we do not know $\log(p(\vec{x} \ | \ \theta))$ to instead use an approximation/estimate of it. The quantity $\log(p(\vec{x} \ | \ \theta))$ is a random variable (depending on the unknown value $\vec{x}$ of $\vec{X}$). To estimate it in a meaningful way we need to use the most informative distribution related to $\vec{x}$. The problem is this distribution will necessarily depend $\theta$, which we do not know! At first this seems like a circular trap, but it hints at a solution: simply alternate between estimating the random variable $\log(p(\vec{x} \ | \ \theta))$ using a current guess of $\theta$ and then use this updated estimate of $\log(p(\vec{x} \ | \ \theta))$ to update our guess of $\theta$. More formally we can summarize EM in 5 steps:
+The idea of EM is indeed to try and maximize $\log(p(\vec{x} \ | \ \theta))$ instead of $\log(p(\vec{y} \ | \ \theta))$, but because we do not know $\log(p(\vec{x} \ | \ \theta))$ to instead use an approximation/estimate of it. 
+
+How to approximate such an expression? The quantity $\log(p(\vec{x} \ | \ \theta))$ is a random variable (depending on the unknown value $\vec{x}$ of $\vec{X}$). To estimate it in a meaningful way we need to use the most informative distribution related to $\vec{x}$. Because we know $\vec{y}$ the best such distribution is  $p(\vec{x}|\vec{y},\theta_m)$. 
+
+The problem is this distribution (or any other) will necessarily depend $\theta$, which we do not know! At first this seems like a circular trap, because to estimate $\log(p(\vec{x} \ | \ \theta))$ using $p(\vec{x}|\vec{y},\theta_m)$ we need to know $\theta$, but to estimate $\theta$ we need to know $\log(p(\vec{x} \ | \ \theta))$. However the trap hints at a solution: simply alternate between estimating the random variable $\log(p(\vec{x} \ | \ \theta))$ using a current guess of $\theta$ and then use this updated estimate of $\log(p(\vec{x} \ | \ \theta))$ to update our guess of $\theta$. More formally we can summarize EM in 5 steps:
 
 * **Step 1:** Let $m = 0$. Make an initial estimate $\theta_m$ for $\theta$.
 

@@ -198,7 +198,7 @@ p(\vec{x},\vec{y}|\theta) &amp;amp;= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...
 &lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{equation}
   \begin{aligned}
   
-  p(x_i|\vec{y},\theta) &amp;amp;= \frac{p(x_i,y_i|\theta)}{p(y_i|\theta)} \qquad \text{by Bayes} \\
+  p(x_i|\vec{y},\theta) &amp;amp;= \frac{p(x_i,\vec{y}|\theta)}{p(\vec{y}|\theta)} \qquad \text{by Bayes} \\
   
   &amp;amp;= \frac{\int p(\vec{x},\vec{y}|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int p(\vec{x},\vec{y}|\theta)d\vec{x}} \\
   

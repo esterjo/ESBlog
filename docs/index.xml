@@ -77,6 +77,312 @@
     </item>
     
     <item>
+      <title>In Machine Learning, why is Regularization called Regularization?</title>
+      <link>/post/004_regularization/main/</link>
+      <pubDate>Thu, 02 Jul 2020 00:00:00 +0000</pubDate>
+      <guid>/post/004_regularization/main/</guid>
+      <description>
+
+
+&lt;div id=&#34;introduction&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;Many newcomers to machine learning know about regularization, but they may not understand it yet. In particular, they may not know why regularization has that name. In this post we discuss the numerical and statistical significance of regularization methods in machine learning and more general statistical models. We’ll try to introduce why one may want to use regularization methods in the first place and how to interpret the fitted model from a statistical point of view.&lt;/p&gt;
+&lt;p&gt;The post will be long because there are a lot of cute nooks and crannies, and I’m going to assume you know your linear algebra. However, if you already know what an inner product is then I think this post will be worth your time. We will start with a bit of linear algebra, but rest assured that most of the post is on machine learning.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;matrices-and-linear-ill-posed-problems&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Matrices and Linear Ill-Posed Problems&lt;/h2&gt;
+&lt;p&gt;Suppose that we have a matrix &lt;span class=&#34;math inline&#34;&gt;\(A\in \mathbb{R}^{N \times p}\)&lt;/span&gt;, a vector &lt;span class=&#34;math inline&#34;&gt;\(y\in \mathbb{R}^N\)&lt;/span&gt;, and that we seek a vector &lt;span class=&#34;math inline&#34;&gt;\(\beta\in\mathbb{R}^p\)&lt;/span&gt; such that &lt;span class=&#34;math inline&#34;&gt;\(A\beta = y\)&lt;/span&gt;. How would one solve this problem? One answer might be to simply apply the inverse matrix to both sides of the equation: &lt;span class=&#34;math inline&#34;&gt;\(\beta = A^{-1}y\)&lt;/span&gt;. However, there are three problems with this:&lt;/p&gt;
+&lt;ol style=&#34;list-style-type: decimal&#34;&gt;
+&lt;li&gt;A matrix inverse &lt;span class=&#34;math inline&#34;&gt;\(A^{-1}\)&lt;/span&gt; may not exist.&lt;/li&gt;
+&lt;li&gt;Even if the matrix inverse exists it can be extremely expensive to calculate this inverse and apply the result to &lt;span class=&#34;math inline&#34;&gt;\(y\)&lt;/span&gt;.&lt;/li&gt;
+&lt;li&gt;Even if we are somehow able to calculate &lt;span class=&#34;math inline&#34;&gt;\(A^{-1}y\)&lt;/span&gt; the solution may not be very stable. Small numerical changes in either &lt;span class=&#34;math inline&#34;&gt;\(A\)&lt;/span&gt; or &lt;span class=&#34;math inline&#34;&gt;\(y\)&lt;/span&gt; may lead to large changes in the solution &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt;.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Issue 2 above is not really a problem in the sense that &lt;a href=&#34;https://www.johndcook.com/blog/2010/01/19/dont-invert-that-matrix/&#34;&gt;one should never really need to find &lt;span class=&#34;math inline&#34;&gt;\(A^{-1}\)&lt;/span&gt; to compute &lt;span class=&#34;math inline&#34;&gt;\(A^{-1}y\)&lt;/span&gt;&lt;/a&gt;. Instead the most efficient numerical algorithms typically compute &lt;span class=&#34;math inline&#34;&gt;\(A^{-1}y\)&lt;/span&gt; by using special factorizations of &lt;span class=&#34;math inline&#34;&gt;\(A\)&lt;/span&gt;, such as &lt;a href=&#34;https://en.wikipedia.org/wiki/QR_decomposition&#34;&gt;QR decomposition&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The other two issues are very important and are inextricably linked to each other and to regularization in machine learning.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Issue 3 means just what is says: that the solution &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt; may change a lot if the known data &lt;span class=&#34;math inline&#34;&gt;\(A\)&lt;/span&gt; and/or &lt;span class=&#34;math inline&#34;&gt;\(y\)&lt;/span&gt; only change a little.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Issue 1 means that the matrix is not invertible. A matrix that is not invertible is called &lt;strong&gt;&lt;em&gt;singular&lt;/em&gt;&lt;/strong&gt;. A matrix that is invertible is usually called &lt;strong&gt;&lt;em&gt;nonsingular&lt;/em&gt;&lt;/strong&gt;, but a less common synonym is &lt;a href=&#34;https://mathworld.wolfram.com/RegularMatrix.html&#34;&gt;&lt;strong&gt;&lt;em&gt;regular&lt;/em&gt;&lt;/strong&gt;&lt;/a&gt; and this is where the name &lt;em&gt;regularization&lt;/em&gt; comes from. When a matrix is singular it means that the problem &lt;span class=&#34;math inline&#34;&gt;\(A\beta = y\)&lt;/span&gt; may have either no solution at all or have at least 2 distinct solutions.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Any one of these issues being true means that the linear problem &lt;span class=&#34;math inline&#34;&gt;\(A\beta = y\)&lt;/span&gt; is ill-posed in the sense that it violates Hadamard’s conditions for a &lt;a href=&#34;https://en.wikipedia.org/wiki/Well-posed_problem&#34;&gt;well-posed problem&lt;/a&gt;. To be well-posed:&lt;/p&gt;
+&lt;ol style=&#34;list-style-type: decimal&#34;&gt;
+&lt;li&gt;A problem must have a solution&lt;/li&gt;
+&lt;li&gt;The solution must be unique&lt;/li&gt;
+&lt;li&gt;The solution’s behavior must be stable/continuous with respect to the data&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;These conditions are of extreme practical importance. They basically define what it means for a problem to be solvable &lt;strong&gt;&lt;em&gt;in practice&lt;/em&gt;&lt;/strong&gt;. In the case of the linear algebra problem above regularization means “&lt;em&gt;making the matrix regular&lt;/em&gt;” so that these conditions will hold true on the regularized problem. That’s where the name comes from.&lt;/p&gt;
+&lt;p&gt;Ok, cool but why are these conditions important to ML or statistics? Consider the case of Maximum Likelihood Estimation (MLE) of a parametric model (although the lesson applies more generally):&lt;/p&gt;
+&lt;ol style=&#34;list-style-type: decimal&#34;&gt;
+&lt;li&gt;In MLE we estimate a model’s unknown parameters by maximizing the log-likelihood. If no such maximizing values of the parameters can be found then the optimization problem does not have a solution and we can not obtain estimates for the unknown parameters to begin with! So, mirroring the first Hadamard condition, we require a maximizer to exist.&lt;/li&gt;
+&lt;li&gt;Non-Bayesian statistical models naturally assume that a single fixed set of parameters exists that specifies the relevant distributions. If MLE gives multiple sets of parameters that maximize the likelihood (as happens in the presence of multiple local maxima) we may have no way to tell which maximizer is the one that estimates the actual parameters the best! So, mirroring the second Hadamard condition, we require the maximizer to be unique.&lt;/li&gt;
+&lt;li&gt;Statistical models assume that data is in part random and so is subject to changes. If the estimated values of the parameters change a lot when the data changes a little then it’s impossible to tell when the MLE estimated parameters are in fact good estimates of the true parameters and when they are not! So, mirroring the third Hadamard condition, we require the maximizer to be stable with respect to changes in the data used for the fit.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Regularization is one way to change the problem so that these conditions are met.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;some-examples&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Some examples&lt;/h2&gt;
+&lt;p&gt;Ok, let’s look at some examples!&lt;/p&gt;
+&lt;div id=&#34;shifting-the-eigenvalues-of-a-symmetric-matrix&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Shifting the eigenvalues of a Symmetric Matrix&lt;/h3&gt;
+&lt;p&gt;Suppose we are asked to solve the linear inverse problem from above &lt;span class=&#34;math inline&#34;&gt;\(A\beta = y\)&lt;/span&gt;, but that this time &lt;span class=&#34;math inline&#34;&gt;\(A\in \mathbb{R}^{N\times N}\)&lt;/span&gt; is a symmetric matrix. The &lt;a href=&#34;https://pages.mtu.edu/~msgocken/ma5630spring2003/lectures/spectral/spectral/node2.html&#34;&gt;spectral theorem for symmetric matrices&lt;/a&gt; tells us that &lt;span class=&#34;math inline&#34;&gt;\(A\)&lt;/span&gt; can be represented as&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+A = QDQ^T
+\]&lt;/span&gt;
+where &lt;span class=&#34;math inline&#34;&gt;\(Q\)&lt;/span&gt; is an &lt;a href=&#34;https://en.wikipedia.org/wiki/Orthogonal_matrix&#34;&gt;orthogonal matrix&lt;/a&gt; and &lt;span class=&#34;math inline&#34;&gt;\(D\)&lt;/span&gt; is a diagonal matrix. Moreover, the columns of &lt;span class=&#34;math inline&#34;&gt;\(Q\)&lt;/span&gt; are the eigenvectors of &lt;span class=&#34;math inline&#34;&gt;\(A\)&lt;/span&gt;, and the diagonal elements of &lt;span class=&#34;math inline&#34;&gt;\(D\)&lt;/span&gt; are the corresponding (real) eigenvalues. &lt;a href=&#34;https://mast.queensu.ca/~br66/419/spectraltheoremproof.pdf&#34;&gt;Here’s&lt;/a&gt; a proof if you care for it.&lt;/p&gt;
+&lt;p&gt;This representation shows us exactly what the theoretical difficulty is in the inverse problem. Inverting &lt;span class=&#34;math inline&#34;&gt;\(Q\)&lt;/span&gt; is easy. Indeed orthogonal matrices are always invertible, with the inverse given by the transpose: &lt;span class=&#34;math inline&#34;&gt;\(Q^{-1} = Q^T\)&lt;/span&gt;. The geometric significance of orthogonal matrices comes from the fact (basically their definition) that they preserve the inner product of vectors: If we denote the inner product by &lt;span class=&#34;math inline&#34;&gt;\(\langle \cdot,\cdot\rangle\)&lt;/span&gt; then for any &lt;span class=&#34;math inline&#34;&gt;\(x,y \in R^N\)&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\langle x, y \rangle = \langle Qx, Qy \rangle
+\]&lt;/span&gt;
+Thus (using the definition of the transpose) &lt;span class=&#34;math inline&#34;&gt;\(\langle x, y \rangle = \langle Q^TQx, y \rangle\)&lt;/span&gt;. Since this holds for any &lt;span class=&#34;math inline&#34;&gt;\(y\)&lt;/span&gt;, then &lt;span class=&#34;math inline&#34;&gt;\(x = Q^TQx\)&lt;/span&gt; for all &lt;span class=&#34;math inline&#34;&gt;\(x\)&lt;/span&gt;. Since this holds for all &lt;span class=&#34;math inline&#34;&gt;\(x\)&lt;/span&gt; then &lt;span class=&#34;math inline&#34;&gt;\(Q^TQ = I\)&lt;/span&gt; and so &lt;span class=&#34;math inline&#34;&gt;\(Q^T\)&lt;/span&gt; is the inverse of &lt;span class=&#34;math inline&#34;&gt;\(Q\)&lt;/span&gt;.&lt;/p&gt;
+&lt;p&gt;No, the difficulty is simply in inverting the diagonal matrix &lt;span class=&#34;math inline&#34;&gt;\(D = \text{diag}(\sigma_1, \sigma_2, ..., \sigma_N)\)&lt;/span&gt;. If none of the eigenvalues &lt;span class=&#34;math inline&#34;&gt;\(\sigma_i\)&lt;/span&gt; are &lt;span class=&#34;math inline&#34;&gt;\(0\)&lt;/span&gt; then &lt;span class=&#34;math inline&#34;&gt;\(D^{-1} = \text{diag}(\sigma_1^{-1}, \sigma_2^{-1}, ..., \sigma_N^{-1})\)&lt;/span&gt;. In this case there isn’t any direction that &lt;span class=&#34;math inline&#34;&gt;\(D\)&lt;/span&gt; (and hence &lt;span class=&#34;math inline&#34;&gt;\(A\)&lt;/span&gt;) squashes into &lt;span class=&#34;math inline&#34;&gt;\(0\)&lt;/span&gt;. However, if some of the &lt;span class=&#34;math inline&#34;&gt;\(\sigma_i\)&lt;/span&gt;’s are &lt;span class=&#34;math inline&#34;&gt;\(0\)&lt;/span&gt; then we can not invert &lt;span class=&#34;math inline&#34;&gt;\(D\)&lt;/span&gt; and the problem will fail to satisfy at least one of the first 2 Hadamard conditions. Even if none of the &lt;span class=&#34;math inline&#34;&gt;\(\sigma_i\)&lt;/span&gt;’s are exactly &lt;span class=&#34;math inline&#34;&gt;\(0\)&lt;/span&gt;, some may be numerically very close to &lt;span class=&#34;math inline&#34;&gt;\(0\)&lt;/span&gt; in comparison to the others. In that case the value of their reciprocals may be enormously large and may lead to numerical instability in the problem, violating the 3rd Hadamard condition. This would be a big problem in practice because computers &lt;a href=&#34;https://floating-point-gui.de/errors/propagation/&#34;&gt;hate mixing floating point numbers that are drastically different in size&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;To address this issue we note that we can shift the eigenvalues of &lt;span class=&#34;math inline&#34;&gt;\(A\)&lt;/span&gt; by adding a multiple of an identity matrix:&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+A \to  A + \lambda I
+\]&lt;/span&gt;
+If &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt; is an eigenvalue of &lt;span class=&#34;math inline&#34;&gt;\(A\)&lt;/span&gt; then &lt;span class=&#34;math inline&#34;&gt;\(\sigma+\lambda\)&lt;/span&gt; is an eigenvalue of &lt;span class=&#34;math inline&#34;&gt;\(A+\lambda I\)&lt;/span&gt;. This is because every vector is an eigenvector of &lt;span class=&#34;math inline&#34;&gt;\(I\)&lt;/span&gt;: If &lt;span class=&#34;math inline&#34;&gt;\(Av = \sigma v\)&lt;/span&gt; then trivially &lt;span class=&#34;math inline&#34;&gt;\(\lambda Iv = \lambda v\)&lt;/span&gt;, so adding gives &lt;span class=&#34;math inline&#34;&gt;\((A+\lambda I)v = (\sigma + \lambda)v\)&lt;/span&gt;. This can also be seen form the representation above:
+&lt;span class=&#34;math display&#34;&gt;\[
+A + \lambda I = QDQ^T + \lambda QQ^T = Q(D + \lambda I)Q^T = Q\tilde{D}Q^T
+\]&lt;/span&gt;
+where &lt;span class=&#34;math inline&#34;&gt;\(\tilde{D}= \text{diag}(\sigma_1 + \lambda, \sigma_2 + \lambda, ..., \sigma_N + \lambda)\)&lt;/span&gt;. Therefore, if we choose &lt;span class=&#34;math inline&#34;&gt;\(\lambda &amp;gt; \min\{\sigma_1, \sigma_2, ..., \sigma_N\}+ \delta\)&lt;/span&gt; for some &lt;span class=&#34;math inline&#34;&gt;\(\delta &amp;gt; 0\)&lt;/span&gt;, then all the shifted eigenvalues satisfy &lt;span class=&#34;math inline&#34;&gt;\(\sigma_i + \lambda &amp;gt; \delta &amp;gt; 0\)&lt;/span&gt; and the new shifted problem&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+(A+\lambda I)x = y
+\]&lt;/span&gt;
+will be solvable with solution given by
+&lt;span class=&#34;math display&#34;&gt;\[
+x = Q(D + \lambda I)^{-1}Q^Ty
+\]&lt;/span&gt;
+If &lt;span class=&#34;math inline&#34;&gt;\(\lambda\)&lt;/span&gt; is sufficiently large this inverse will exist and will be numerically stable (all of the eigenvalues will have been shifted away from 0).&lt;/p&gt;
+&lt;p&gt;Making the change &lt;span class=&#34;math inline&#34;&gt;\(A \to A + \lambda I\)&lt;/span&gt; regularized the problem into one that satisfied Hadamard’s conditions, which is fundamentally the point of regularization. The change we made was essentially to replace the &lt;span class=&#34;math inline&#34;&gt;\(A^{-1}\)&lt;/span&gt; with the approximation &lt;span class=&#34;math inline&#34;&gt;\((A+\lambda I)^{-1}\)&lt;/span&gt;, but we could have used other approximations as well, for example partial sums of the &lt;a href=&#34;https://en.wikipedia.org/wiki/Invertible_matrix#By_Neumann_series&#34;&gt;Neumann Series Expansion of the &lt;span class=&#34;math inline&#34;&gt;\(A^{-1}\)&lt;/span&gt;&lt;/a&gt;. Regardless, the general principle illustrated above is basically to replace one problem by an approximate problem that does not suffer the same existence/stability issues.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;regularization-as-a-perturbation-of-an-invertible-matrix&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Regularization as a perturbation of an invertible matrix&lt;/h3&gt;
+&lt;p&gt;Above we regularized the ill-posed problem &lt;span class=&#34;math inline&#34;&gt;\(A\beta = y\)&lt;/span&gt; by replacing it with the problem &lt;span class=&#34;math inline&#34;&gt;\((A+\lambda I)x = y\)&lt;/span&gt;. Let’s go a bit deeper with this process.&lt;strong&gt;You may skip this section on your first read.&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Dividing by &lt;span class=&#34;math inline&#34;&gt;\(\lambda\)&lt;/span&gt;, the problem &lt;span class=&#34;math inline&#34;&gt;\((A+\lambda I)x = y\)&lt;/span&gt; is equivalent to the problem&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+(\epsilon A+I)x = \epsilon y
+\]&lt;/span&gt;
+where &lt;span class=&#34;math inline&#34;&gt;\(\epsilon := \frac{1}{\lambda}\)&lt;/span&gt;. When &lt;span class=&#34;math inline&#34;&gt;\(\lambda\)&lt;/span&gt; is large &lt;span class=&#34;math inline&#34;&gt;\(\epsilon\)&lt;/span&gt; is small, and vice versa. Hence for large &lt;span class=&#34;math inline&#34;&gt;\(\lambda\)&lt;/span&gt; the matrix &lt;span class=&#34;math inline&#34;&gt;\(\epsilon A+I\)&lt;/span&gt; can be seen as a small perturbation from the identity matrix &lt;span class=&#34;math inline&#34;&gt;\(I\)&lt;/span&gt;.&lt;/p&gt;
+&lt;p&gt;Now because &lt;span class=&#34;math inline&#34;&gt;\(I\)&lt;/span&gt; is invertible then for a small enough &lt;span class=&#34;math inline&#34;&gt;\(\epsilon\)&lt;/span&gt; (and hence for a large enough &lt;span class=&#34;math inline&#34;&gt;\(\lambda\)&lt;/span&gt;) the preturbed matrix &lt;span class=&#34;math inline&#34;&gt;\(\epsilon A+I\)&lt;/span&gt; is also invertible! Why? That’s a great question! The previous section gave one proof, but there are some much nicer ways to see why:&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Proof:&lt;/strong&gt; Consider the function
+&lt;span class=&#34;math display&#34;&gt;\[
+\det:\mathbb{R}^{N\times N} \to \mathbb{R}
+\]&lt;/span&gt;
+that maps a matrix to it’s &lt;a href=&#34;https://en.wikipedia.org/wiki/Determinant&#34;&gt;determinant&lt;/a&gt;. Because the space &lt;span class=&#34;math inline&#34;&gt;\(\mathbb{R}^{N\times N}\)&lt;/span&gt; of &lt;span class=&#34;math inline&#34;&gt;\(N\times N\)&lt;/span&gt; matrices is just the Euclidean inner product space &lt;span class=&#34;math inline&#34;&gt;\(\mathbb{R}^{N^2}\)&lt;/span&gt; with some extra algebraic structure, and because &lt;span class=&#34;math inline&#34;&gt;\(\det(A)\)&lt;/span&gt; is a polynomial function of the elements of a matrix &lt;span class=&#34;math inline&#34;&gt;\(A\)&lt;/span&gt;, &lt;span class=&#34;math inline&#34;&gt;\(\det\)&lt;/span&gt; is a continuous function on &lt;span class=&#34;math inline&#34;&gt;\(\mathbb{R}^{N\times N}\)&lt;/span&gt;.&lt;/p&gt;
+&lt;p&gt;By &lt;a href=&#34;https://en.wikipedia.org/wiki/Cramer%27s_rule&#34;&gt;Cramer’s Rule&lt;/a&gt;, a matrix &lt;span class=&#34;math inline&#34;&gt;\(A\)&lt;/span&gt; is invertible if and only if &lt;span class=&#34;math inline&#34;&gt;\(\det(A) \ne 0\)&lt;/span&gt;. Because &lt;span class=&#34;math inline&#34;&gt;\(\det\)&lt;/span&gt; is a continuous function on &lt;span class=&#34;math inline&#34;&gt;\(\mathbb{R}^{N\times N}\)&lt;/span&gt; then the set of invertible matrices is an open subset of &lt;span class=&#34;math inline&#34;&gt;\(\mathbb{R}^{N\times N}\)&lt;/span&gt;! Hence for every invertible matrix &lt;span class=&#34;math inline&#34;&gt;\(L\in\mathbb{R}^{N\times N}\)&lt;/span&gt; and every arbitrary matrix &lt;span class=&#34;math inline&#34;&gt;\(A\in\mathbb{R}^{N\times N}\)&lt;/span&gt; there exists an &lt;span class=&#34;math inline&#34;&gt;\(\epsilon_0 &amp;gt; 0\)&lt;/span&gt; such that for all &lt;span class=&#34;math inline&#34;&gt;\(\epsilon &amp;lt; \epsilon_0\)&lt;/span&gt; the matrix &lt;span class=&#34;math inline&#34;&gt;\(\epsilon A+L\)&lt;/span&gt; is invertible. &lt;strong&gt;QED&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;There’s a version of the theorem in Banach spaces, but we don’t need it.&lt;/p&gt;
+&lt;p&gt;Noticed that the only thing we needed about the matrix &lt;span class=&#34;math inline&#34;&gt;\(I\)&lt;/span&gt; in the above proof was that it was invertible. Therefore, we never needed to restrict attention to just the identity matrix &lt;span class=&#34;math inline&#34;&gt;\(I\)&lt;/span&gt;, but could have used any invertible matrix to regularize the problem:&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+(A+\lambda L)x = y
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;where &lt;span class=&#34;math inline&#34;&gt;\(L\)&lt;/span&gt; is any convenient invertible matrix.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;l2-regularization-of-ols&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;&lt;span class=&#34;math inline&#34;&gt;\(L^2\)&lt;/span&gt;-regularization of OLS&lt;/h3&gt;
+&lt;p&gt;With this example we begin moving towards the statistical part of the post. One of the most widely known examples of regularization is what is often called &lt;span class=&#34;math inline&#34;&gt;\(L^2\)&lt;/span&gt;-regularization, or &lt;a href=&#34;https://en.wikipedia.org/wiki/Tikhonov_regularization&#34;&gt;Tikhonov&lt;/a&gt; regularization of Ordinary Least Squares.&lt;/p&gt;
+&lt;p&gt;Suppose &lt;span class=&#34;math inline&#34;&gt;\(Y\)&lt;/span&gt; is a real valued random variable and &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt; is a random vector with values in &lt;span class=&#34;math inline&#34;&gt;\(\mathbb{R}^p\)&lt;/span&gt;. Suppose that we have the conditional relationship&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+Y \ \ | \ \ \vec{X} \sim \mathcal{N}(\ \langle \vec{X}  , \beta\rangle \ ,\ \sigma^2)
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;where &lt;span class=&#34;math inline&#34;&gt;\(\mathcal{N}(\mu, \sigma^2)\)&lt;/span&gt; denotes the univariate normal distribution with mean &lt;span class=&#34;math inline&#34;&gt;\(\mu\)&lt;/span&gt; and variance &lt;span class=&#34;math inline&#34;&gt;\(\sigma^2\)&lt;/span&gt;. Here (and everywhere else) the symbol &lt;span class=&#34;math inline&#34;&gt;\(\langle v,w\rangle\)&lt;/span&gt; represents the inner product of two vectors &lt;span class=&#34;math inline&#34;&gt;\(v\)&lt;/span&gt; and &lt;span class=&#34;math inline&#34;&gt;\(w\)&lt;/span&gt;. This is the most natural probability model that leads to linear regression. In practice the parameters &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt; and &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt; that specify this conditional distribution are unknown and it is desired that they be estimated from data.&lt;/p&gt;
+&lt;p&gt;In this canonical situation we assume that we have a data set &lt;span class=&#34;math inline&#34;&gt;\(\{ (Y_i, \vec{X}_i)\}_{i = 1}^N\)&lt;/span&gt; consisting of samples generated independently of one another from a fixed multivariate distribution for &lt;span class=&#34;math inline&#34;&gt;\((Y, \vec{X})\)&lt;/span&gt; (i.e. we assume our data was sampled IID). To fit the unknown parameters we use MLE. We may choose to use the conditional density &lt;span class=&#34;math inline&#34;&gt;\(p(Y|\vec{X})\)&lt;/span&gt; in the likelihood and this would make it &lt;strong&gt;&lt;em&gt;conditional&lt;/em&gt;&lt;/strong&gt; MLE. Or we may choose the unconditional multivariate density &lt;span class=&#34;math inline&#34;&gt;\(p(Y, \vec{X})\)&lt;/span&gt;. However, if we assume that the marginal distribution of &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt;, (i.e. &lt;span class=&#34;math inline&#34;&gt;\(p(\vec{X})\)&lt;/span&gt;), does not depend on either &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt; or &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt; then because &lt;span class=&#34;math inline&#34;&gt;\(p(Y,\vec{X}) = p(Y|\vec{X})p(\vec{X})\)&lt;/span&gt; building the likelihood using either &lt;span class=&#34;math inline&#34;&gt;\(p(Y|\vec{X})\)&lt;/span&gt; or &lt;span class=&#34;math inline&#34;&gt;\(p(Y,\vec{X})\)&lt;/span&gt; will lead to the same maximization problem because they differ by a constant factor (constant in &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt; and &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt; that is). So we will use the conditional density &lt;span class=&#34;math inline&#34;&gt;\(p(Y|\vec{X})\)&lt;/span&gt;.&lt;/p&gt;
+&lt;p&gt;Because the data is assumed to be generated IID then the full likelihood of the data is&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\mathcal{L}(\beta, \sigma\ |\ \{ (Y_i, \vec{X}_i)\}) = \prod_{i = 1}^N p(Y_i|\vec{X}_i) = \prod_{i=1}^N\frac{1}{\sigma\sqrt{2\pi}}e^{-\frac{1}{2}\big(\frac{Y_i - \langle \vec{X}_i  , \beta\rangle}{\sigma}\big)^2} = \frac{1}{(\sigma^22\pi)^{N/2}}e^{\sum_{i=1}^N-\frac{1}{2}\big(\frac{Y_i - \langle \vec{X}_i  , \beta\rangle}{\sigma}\big)^2}
+\]&lt;/span&gt;
+Because the function &lt;span class=&#34;math inline&#34;&gt;\(f(x) := -\log(x)\)&lt;/span&gt; is decreasing we may instead minimize the negative of the log of this expression:
+&lt;span class=&#34;math display&#34;&gt;\[
+-\log(\mathcal{L}(\beta,\sigma\ |\ \{ (Y_i, \vec{X}_i)\})) = \frac{N}{2}\log(\sigma^22\pi) + \frac{1}{2\sigma^2}\sum_{i=1}^N\bigg(Y_i - \langle \vec{X}_i  , \beta\rangle\bigg)^2
+\]&lt;/span&gt;
+We first minimize with respect to &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt; as this is necessary to do first before finding the minimizing value of &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt;. To do this we need to minimize the only term that depends on &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt;, namely the sum of squares &lt;span class=&#34;math inline&#34;&gt;\(SSE(\beta) := \sum_{i=1}^N\bigg(Y_i - \langle \vec{X}_i , \beta\rangle\bigg)^2\)&lt;/span&gt; (hence Least Squares regression).&lt;/p&gt;
+&lt;div id=&#34;a-geometric-interlude&#34; class=&#34;section level4&#34;&gt;
+&lt;h4&gt;A geometric interlude&lt;/h4&gt;
+&lt;p&gt;Before we do that, let’s think about what the expression &lt;span class=&#34;math inline&#34;&gt;\(SSE(\beta)\)&lt;/span&gt; is. The term &lt;span class=&#34;math inline&#34;&gt;\(\langle \vec{X}_i , \beta\rangle\)&lt;/span&gt; is linear in the unknowns &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt;, and hence so is &lt;span class=&#34;math inline&#34;&gt;\(Y_i - \langle \vec{X}_i , \beta\rangle\)&lt;/span&gt;. Therefore, the square &lt;span class=&#34;math inline&#34;&gt;\(\bigg(Y_i - \langle \vec{X}_i , \beta\rangle\bigg)^2\)&lt;/span&gt; is quadratic in &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt;. Thus since the full expression &lt;span class=&#34;math inline&#34;&gt;\(\sum_{i=1}^N\bigg(Y_i - \langle \vec{X}_i , \beta\rangle\bigg)^2\)&lt;/span&gt; is a sum of quadratic functions in &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt; it too is a quadratic function in &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt;. Since all terms in the sum are squares, the full sum is never negative and its graph in &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt; is a &lt;a href=&#34;https://en.wikipedia.org/wiki/Paraboloid&#34;&gt;non-hyperbolic paraboloid&lt;/a&gt;. Usually such shapes look like bowls. However, some can degenerate so that they become flat in one or more directions. Here’re some examples in R:&lt;/p&gt;
+&lt;p&gt;Non-degenarte paraboloids look like this:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;nice.paraboloid = function(x,y)
+{
+    return(x^2+0.5*y^2)
+}
+x = y = seq(from = -4, to = 4, by = 0.2)
+z = outer(x, y, nice.paraboloid)
+
+persp(x, y, z,
+      main=&amp;quot;Plot of a Non-degenerate 2D Paraboloid&amp;quot;,
+      theta = 30, phi = 15,
+      col = &amp;quot;springgreen&amp;quot;, shade = 0.5)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/004_Regularization/main_files/figure-html/unnamed-chunk-1-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;We can see such a paraboloid is bowl shaped. More technically it’s strictly convex, with a clear unique minimum point. However, paraboloids can degenerate so that they flatten out in some directions:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;degenerate.paraboloid = function(x,y)
+{
+    return(x^2) #Does not change value as y changes
+}
+x = y = seq(from = -4, to = 4, by = 0.2)
+z = outer(x, y, degenerate.paraboloid)
+
+persp(x, y, z,
+      main=&amp;quot;Plot of a Degenerate 2D Paraboloid&amp;quot;,
+      theta = 30, phi = 15,
+      col = &amp;quot;springgreen&amp;quot;, shade = 0.5)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/004_Regularization/main_files/figure-html/unnamed-chunk-2-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;In this example we changed the coefficient of &lt;span class=&#34;math inline&#34;&gt;\(y\)&lt;/span&gt; from 0.5 to 0. The result is that in the &lt;span class=&#34;math inline&#34;&gt;\(y\)&lt;/span&gt;-direction the paraboloid flattened out and it no longer looks bowl shaped. Instead there are infinitely many minimum points all on the axis &lt;span class=&#34;math inline&#34;&gt;\(\{(x,y): x = 0\}\)&lt;/span&gt;. Note that if instead of making the coefficient of &lt;span class=&#34;math inline&#34;&gt;\(y\)&lt;/span&gt; equal to 0 we had made it a positive number very close to zero then the mimima would become unique but would become hard to distinguish from nearby points:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;tricky.paraboloid = function(x,y)
+{
+    return(x^2+ 0.05*y^2) #Notice the coefficient of y is quite small
+}
+x = y = seq(from = -4, to = 4, by = 0.2)
+z = outer(x, y, tricky.paraboloid)
+
+persp(x, y, z,
+      main=&amp;quot;Plot of a Nearly-Degenerate 2D Paraboloid&amp;quot;,
+      theta = 30, phi = 15,
+      col = &amp;quot;springgreen&amp;quot;, shade = 0.5)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/004_Regularization/main_files/figure-html/unnamed-chunk-3-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;These pictures show what can go wrong with the minima of quadratic functions like &lt;span class=&#34;math inline&#34;&gt;\(SSE(\beta)\)&lt;/span&gt; and why regularization may be needed. Now to get back to the minimizing the sum of squares &lt;span class=&#34;math inline&#34;&gt;\(SSE(\beta) = \sum_{i=1}^N\bigg(Y_i - \langle \vec{X}_i , \beta\rangle\bigg)^2\)&lt;/span&gt;. If you’re reading this article I’m going to assume you’ve seen this derivation before so I’ll move a bit fast.&lt;/p&gt;
+&lt;p&gt;First we define &lt;span class=&#34;math inline&#34;&gt;\(Y\in \mathbb{R}^{N\times 1}\)&lt;/span&gt; with &lt;span class=&#34;math inline&#34;&gt;\(i\)&lt;/span&gt;-th component equal to &lt;span class=&#34;math inline&#34;&gt;\(Y_i\)&lt;/span&gt;. (Note an abuse of notation we are making: earlier &lt;span class=&#34;math inline&#34;&gt;\(Y\)&lt;/span&gt; denoted a real valued random variable, but now we are using the same symbol to denote the vector of the &lt;span class=&#34;math inline&#34;&gt;\(N\)&lt;/span&gt; realizations of this random variable.) In addition, let &lt;span class=&#34;math inline&#34;&gt;\(X\in \mathbb{R}^{N\times p}\)&lt;/span&gt; with &lt;span class=&#34;math inline&#34;&gt;\(i\)&lt;/span&gt;-th row equal to &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}_i\)&lt;/span&gt;. Then in matrix notation&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\sum_{i=1}^N\bigg(Y_i - \langle \vec{X}_i  , \beta\rangle\bigg)^2 = (Y - X\beta)^T(Y - X\beta)
+\]&lt;/span&gt;
+Let &lt;span class=&#34;math inline&#34;&gt;\(\hat{\beta} = \text{argmax}_{\beta} \ \ (Y - X\beta)^T(Y - X\beta)\)&lt;/span&gt; be the sought after minimizer. Since &lt;span class=&#34;math inline&#34;&gt;\(\hat{\beta}\)&lt;/span&gt; is a minizer in the interior of the domain of &lt;span class=&#34;math inline&#34;&gt;\(SSE(\beta)\)&lt;/span&gt;, the gradient of &lt;span class=&#34;math inline&#34;&gt;\(SSE(\beta)\)&lt;/span&gt; at &lt;span class=&#34;math inline&#34;&gt;\(\hat{\beta}\)&lt;/span&gt; must be 0:&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+-2X^TY + 2X^TX\hat{\beta} = 0
+\]&lt;/span&gt;
+therefore we obtain the normal equations&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+X^TX\hat{\beta} = X^TY
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;This is basically the same linear algebra problem as before: If the inverse &lt;span class=&#34;math inline&#34;&gt;\((X^TX)^{-1}\)&lt;/span&gt; existed and was numerically nice then we can solve for &lt;span class=&#34;math inline&#34;&gt;\(\hat{\beta} = (X^TX)^{-1}X^TY\)&lt;/span&gt;. However, if this matrix inverse does not exist (as can happen when we do not have enough rows/samples for the given number of columns/unknowns) then this formula is not useful.&lt;/p&gt;
+&lt;p&gt;But as before we can simply regularize by replacing the matrix &lt;span class=&#34;math inline&#34;&gt;\(X^TX\)&lt;/span&gt; by &lt;span class=&#34;math inline&#34;&gt;\(X^TX + \lambda I\)&lt;/span&gt; for some sufficiently large &lt;span class=&#34;math inline&#34;&gt;\(\lambda\)&lt;/span&gt;. Actually since &lt;span class=&#34;math inline&#34;&gt;\(X^TX\)&lt;/span&gt; is non-negative definite&lt;a href=&#34;#fn1&#34; class=&#34;footnote-ref&#34; id=&#34;fnref1&#34;&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/a&gt; and symmetric all of it’s eigenvalues are non-negative. So any &lt;span class=&#34;math inline&#34;&gt;\(\lambda &amp;gt; 0\)&lt;/span&gt; would be sufficient to shift the eigenvalues into positive numbers. Now the regularized problem becomes &lt;span class=&#34;math inline&#34;&gt;\((X^TX + \lambda I)\hat{\beta} = X^TY\)&lt;/span&gt;. Therefore we get the regularized MLE solution:&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\hat{\beta}_{reg} := (X^TX + \lambda I)^{-1}X^TY
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;Does this regularized problem correspond to its own minimization problem? Yes! Working backwards, this new problem is equivalent to&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+-2X^TY + 2X^TX\hat{\beta} + 2\lambda\hat{\beta}= 0
+\]&lt;/span&gt;
+The left had side is the gradient of &lt;span class=&#34;math inline&#34;&gt;\((Y - X\beta)^T(Y - X\beta) + \lambda\sum_{j=1}^p\beta_j^2 = (Y - X\beta)^T(Y - X\beta) + \lambda \langle \beta, \beta\rangle\)&lt;/span&gt; at &lt;span class=&#34;math inline&#34;&gt;\(\beta = \hat{\beta}\)&lt;/span&gt; as can be checked. So the regularized problem corresponds to trying to minimize the expression &lt;span class=&#34;math inline&#34;&gt;\((Y - X\beta)^T(Y - X\beta) + \lambda\sum_{j=1}^p\beta_j^2 = (Y - X\beta)^T(Y - X\beta) + \lambda \langle \beta, \beta\rangle\)&lt;/span&gt;. This of course is &lt;span class=&#34;math inline&#34;&gt;\(L^2\)&lt;/span&gt;-regularization. Thus we have derived &lt;span class=&#34;math inline&#34;&gt;\(L^2\)&lt;/span&gt;-regularization for OLS simply by seeking to transform the inverse problem that arises in OLS so that it may satisfy the Hadamard conditions.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&#34;an-illustrative-example&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;An Illustrative Example&lt;/h3&gt;
+&lt;p&gt;Below we can see geometrically what regularization does. The sum of squares expression &lt;span class=&#34;math inline&#34;&gt;\((Y - X\beta)^T(Y - X\beta)\)&lt;/span&gt; is quadratic in &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt;, but may have a graph that is a degenerate paraboloid. This is what causes it to have multiple minimizers in OLS and what makes the matrix &lt;span class=&#34;math inline&#34;&gt;\(X^TX\)&lt;/span&gt; singular (more on this point in the next section). However the expression &lt;span class=&#34;math inline&#34;&gt;\(\lambda\langle \beta, \beta\rangle = \lambda\sum_{j = 1}^p\beta_j^2\)&lt;/span&gt; is a strictly positive-definite quadratic form. Its graph is a non-degenerate bowl shaped paraboloid.&lt;/p&gt;
+&lt;p&gt;Adding a non-degenerate paraboloid to something that is not bowl shaped makes the second graph more bowl shaped! Moreover it shifts the minimum of the 2nd graph towards the mimimum of the bowl. As an illustration, let’s take a look at an example where this is easy to see.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;rm(list = ls())
+bumpy.function = function(x,y)
+{
+    return(sin(x)+sin(y))
+}
+
+nice.paraboloid = function(x,y)
+{
+    return(0.15*(x^2 + y^2)) #lambda = 0.15 is used
+}
+
+x = y = seq(from = -4, to = 4, by = 0.2)
+bumpy = outer(x, y, bumpy.function)
+paraboloid = outer(x, y, nice.paraboloid)
+bumpy.plus.paraboloid = bumpy + paraboloid
+
+persp(x, y, bumpy,
+      main=&amp;quot;Graph of a bumpy function with multiple minima&amp;quot;,
+      theta = 30, phi = 15,
+      col = &amp;quot;springgreen&amp;quot;, shade = 0.5)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/004_Regularization/main_files/figure-html/unnamed-chunk-4-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;persp(x, y, paraboloid,
+      main=&amp;quot;Graph of a nice paraboloid&amp;quot;,
+      theta = 30, phi = 15,
+      col = &amp;quot;springgreen&amp;quot;, shade = 0.5)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/004_Regularization/main_files/figure-html/unnamed-chunk-4-2.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;persp(x, y, bumpy.plus.paraboloid,
+      main=&amp;quot;Graph of a regularized bumpy function = bumpy function + paraboloid&amp;quot;,
+      theta = 30, phi = 15,
+      col = &amp;quot;springgreen&amp;quot;, shade = 0.5)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/004_Regularization/main_files/figure-html/unnamed-chunk-4-3.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Here we see that the most important geometric aspect of the regularizing term &lt;span class=&#34;math inline&#34;&gt;\(\lambda\langle\beta, \beta\rangle\)&lt;/span&gt; is the fact that it is &lt;a href=&#34;https://en.wikipedia.org/wiki/Convex_function&#34;&gt;strictly convex&lt;/a&gt;!! &lt;strong&gt;&lt;em&gt;Although we will not dwell on it, it is impossible to overstate the theoretical importance of the previous sentence.&lt;/em&gt;&lt;/strong&gt; As a matter of fact, geometrically speaking it’s clear that had we added &lt;strong&gt;any&lt;/strong&gt; strictly convex function to the bumpy function we would have gotten something more bowl shaped. We will not go further into it here but you should know that &lt;a href=&#34;https://en.wikipedia.org/wiki/Convex_analysis&#34;&gt;convexity is one of those properties in mathematics out of which entire fields are created&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;the-hessian-matrix-and-more-complex-models&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;The Hessian matrix and more complex models&lt;/h3&gt;
+&lt;p&gt;In the OLS problem above the Maximum Likelihood estimator turned out to be the one that minimized the sum of squares expression &lt;span class=&#34;math inline&#34;&gt;\(SSE(\beta) := (Y - X\beta)^T(Y - X\beta)\)&lt;/span&gt;. This expression can be expanded in matrix notation as&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+Y^TY - Y^TX\beta - \beta^TX^TY + \beta^TX^TX\beta
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;We see that there is a quadratic term (&lt;span class=&#34;math inline&#34;&gt;\(\beta^TX^TX\beta\)&lt;/span&gt;) and the rest are terms with powers of &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt; less than 2. The matrix of second derivatives of this expression (known as the &lt;a href=&#34;https://en.wikipedia.org/wiki/Hessian_matrix&#34;&gt;Hessian matrix&lt;/a&gt;) is therefore just the matrix of coefficients of this quadratic term: &lt;span class=&#34;math inline&#34;&gt;\(X^TX\)&lt;/span&gt;. This Hessian is exactly what was the star of the show in the OLS problem!&lt;/p&gt;
+&lt;p&gt;The Hessian of a function at a point tells us the convexity of the function at the point. &lt;a href=&#34;https://en.wikipedia.org/wiki/Second_partial_derivative_test&#34;&gt;If the Hessian is positive definite, then near the minimizing point the function is bowl shaped. If the Hessian is negative definite then near a maximizing point the function is shaped like an upside down bowl.&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Moreover, The Hessian is always a symmetric matrix by the &lt;a href=&#34;https://en.wikipedia.org/wiki/Symmetry_of_second_derivatives#Formal_expressions_of_symmetry&#34;&gt;equality of cross-derivatives&lt;/a&gt;. So the previous point is really a statement about Hessian’s eigenvalues. In short, if the Hessian has all positive eigenvalues then it is positive definite and the function is bowl shaped near its minimizer.&lt;/p&gt;
+&lt;p&gt;The OLS Hessian matrix &lt;span class=&#34;math inline&#34;&gt;\(X^TX\)&lt;/span&gt; is symmetric and non-negative definite, so the graph of the sum of squares &lt;span class=&#34;math inline&#34;&gt;\(SSE(\beta) := (Y - X\beta)^T(Y - X\beta)\)&lt;/span&gt; can only fail to be bowl shaped near the minimizer &lt;span class=&#34;math inline&#34;&gt;\(\hat{\beta}\)&lt;/span&gt; if the matrix &lt;span class=&#34;math inline&#34;&gt;\(X^TX\)&lt;/span&gt; has eigenvalues that are equal 0 (or positive but close to 0 in the case numerical instability). In which case, the graph of &lt;span class=&#34;math inline&#34;&gt;\(SSE(\beta)\)&lt;/span&gt; is a degenerate non-hyperbolic paraboloid and there are multiple minimizing solutions &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Thus regularizing the matrix &lt;span class=&#34;math inline&#34;&gt;\(X^TX\)&lt;/span&gt; is just regularizing the Hessian matrix of the function &lt;span class=&#34;math inline&#34;&gt;\(SSE(\beta)\)&lt;/span&gt; we want to minimize!!&lt;/strong&gt; This fact is what allows us to take the idea beyond OLS.&lt;/p&gt;
+&lt;p&gt;Indeed if &lt;span class=&#34;math inline&#34;&gt;\(f(\beta)\)&lt;/span&gt; is any 2nd order differentiable function of &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt; then by the linearity of the derivative&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\text{Hessian}(f + \lambda \langle \beta, \beta\rangle) = \text{Hessian}(f) + \lambda\text{Hessian}(\langle \beta, \beta\rangle) = \text{Hessian}(f) + \lambda I
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;There we used the fact that &lt;span class=&#34;math inline&#34;&gt;\(\text{Hessian}(\langle \beta, \beta\rangle) = \text{Hessian}(\sum_i^p \beta_i^2) = I\)&lt;/span&gt;. Because &lt;span class=&#34;math inline&#34;&gt;\(f\)&lt;/span&gt; is almost arbitrary we see that we can apply &lt;span class=&#34;math inline&#34;&gt;\(L^2\)&lt;/span&gt;-regularization to a very large family of problems, with the goal being to regularize the Hessian of &lt;span class=&#34;math inline&#34;&gt;\(f\)&lt;/span&gt;. As an example let’s look at some other kinds of regression problems. For OLS we assumed the conditional distribution &lt;span class=&#34;math inline&#34;&gt;\(Y \ \ | \ \ \vec{X} \sim \mathcal{N}(\ \langle \vec{X} , \beta\rangle \ ,\ \sigma^2)\)&lt;/span&gt;, but we may have chosen a different conditional distribution.&lt;/p&gt;
+&lt;p&gt;If &lt;span class=&#34;math inline&#34;&gt;\(Y\)&lt;/span&gt; takes on only values in the set &lt;span class=&#34;math inline&#34;&gt;\(\{0,1\}\)&lt;/span&gt; then it is a Bernoulli random variable. This is the case in logistic regression where the conditional distribution of &lt;span class=&#34;math inline&#34;&gt;\(Y\)&lt;/span&gt; given &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt; is
+&lt;span class=&#34;math display&#34;&gt;\[
+Y \ \ | \ \ \vec{X} \sim \mathcal{B}(\ p = \phi(\langle \vec{X}  , \beta\rangle) \ )
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;where &lt;span class=&#34;math inline&#34;&gt;\(\mathcal{B(p)}\)&lt;/span&gt; is a Bernoulli distribution with probability of a positive event equal to &lt;span class=&#34;math inline&#34;&gt;\(p\)&lt;/span&gt;, &lt;span class=&#34;math inline&#34;&gt;\(p = \text{E}[Y|\vec{X}] = \phi(\langle \vec{X} , \beta\rangle)\)&lt;/span&gt; is the probability of a positive event given &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt;, and &lt;span class=&#34;math inline&#34;&gt;\(\phi(t) = \frac{e^t}{1+e^t}\)&lt;/span&gt; is the standard logit. In this case the condition density &lt;span class=&#34;math inline&#34;&gt;\(p(Y|\vec{X})\)&lt;/span&gt; can be written as&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+p(Y|\vec{X}) = p^Y\big(1 - p)\big)^{1-Y} =\phi(\langle \vec{X}  , \beta\rangle)^Y\big(1 - \phi(\langle \vec{X}  , \beta\rangle)\big)^{1-Y}
+\]&lt;/span&gt;
+So the negative log-likelihood is given by&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+-\mathcal{l}(\beta) = -\sum_{i=1}^N Y_i\log(\phi(\langle \vec{X}_i  , \beta\rangle)) + (1-Y_i)\log(1-\phi(\langle \vec{X}_i  , \beta\rangle))
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;This function may or may not look bowl shaped (i.e. strictly convex) near the &lt;span class=&#34;math inline&#34;&gt;\(\hat{\beta}\)&lt;/span&gt; that minimizes it. In case it doesn’t we can make it so by adding &lt;span class=&#34;math inline&#34;&gt;\(\lambda \langle \beta, \beta\rangle = \lambda\sum_{j = 1}^p\beta_j^2\)&lt;/span&gt; for some sufficiently large &lt;span class=&#34;math inline&#34;&gt;\(\lambda\)&lt;/span&gt; and minimizing this new problem. The same applies to generalized linear models, neural networks, etc.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&#34;bias-variance-trade-offs-and-regularization&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Bias-Variance trade offs and Regularization&lt;/h2&gt;
+&lt;p&gt;Above we used regularization methods to make a problem “nicer” in the numerical sense (i.e. satisfying Hadamard’s conditions). But what does “nicer” mean in the statistical context? That is a multifaceted question. The first step is to recognize that what might be viewed as instability from the numerical point of view, can be understood as high variance from the statistical point of view.&lt;/p&gt;
+&lt;p&gt;We illustrate with the OLS estimator. Suppose that the matrix &lt;span class=&#34;math inline&#34;&gt;\(X^TX\)&lt;/span&gt; is indeed invertible. The standard OLS estimator is the random vector given by the normal equations:&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\hat{\beta} = (X^TX)^{-1}X^TY
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;We see that this is an unbiased estimator of &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt;:&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\text{E}[\hat{\beta}] = \text{E}\big[\text{E}[\hat{\beta}|X]\big] = \text{E}\bigg[(X^TX)^{-1}X^T\text{E}[Y|X]\bigg] = \text{E}\bigg[(X^TX)^{-1}X^TX\beta\bigg] = \text{E}[\beta] = \beta
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;Moreover, it’s easy enough to compute the conditional variance of &lt;span class=&#34;math inline&#34;&gt;\(\hat{\beta}\)&lt;/span&gt;:
+&lt;span class=&#34;math display&#34;&gt;\[
+\text{Var}[\hat{\beta}|X] = (X^TX)^{-1}X^T\cdot \text{Var}[Y|X] \cdot X(X^TX)^{-1} = (X^TX)^{-1}X^T\cdot \sigma^2 I \cdot X(X^TX)^{-1} = \sigma^2 (X^TX)^{-1}
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;The &lt;a href=&#34;https://en.wikipedia.org/wiki/Law_of_total_variance&#34;&gt;unconditional variance can be computed as&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\text{Var}[\hat{\beta}] = \text{E}[\text{Var}[\hat{\beta}|X]] + \text{Var}[\text{E}[\hat{\beta}|X]] = \sigma^2\text{E}[(X^TX)^{-1}] + \text{Var}[\beta] = \sigma^2\text{E}[(X^TX)^{-1}]
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;This is harder to compute because it depends on the distribution of the random matrix &lt;span class=&#34;math inline&#34;&gt;\(X\)&lt;/span&gt;. Regardless, we can see that what controls the variance of the estimator &lt;span class=&#34;math inline&#34;&gt;\(\hat{\beta}\)&lt;/span&gt; (whether conditional or not) is the inverse matrix &lt;span class=&#34;math inline&#34;&gt;\((X^TX)^{-1}\)&lt;/span&gt;. If any of the eigenvalues of the matrix &lt;span class=&#34;math inline&#34;&gt;\(X^TX\)&lt;/span&gt; were “close” to &lt;span class=&#34;math inline&#34;&gt;\(0\)&lt;/span&gt; then the eigenvalues of the inverse will be very large, causing the variance of &lt;span class=&#34;math inline&#34;&gt;\(\hat{\beta}\)&lt;/span&gt; to be very large. If you’re familiar with VIFs, this is what causes large &lt;a href=&#34;https://en.wikipedia.org/wiki/Variance_inflation_factor&#34;&gt;variance inflation factors&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Regularization is used to reduce the variance in this estimator. If we denote the regularized estimator by:
+&lt;span class=&#34;math display&#34;&gt;\[
+\hat{\beta}_{reg} = (X^TX + \lambda I)^{-1}X^TY
+\]&lt;/span&gt;
+Then this estimator is biased away from &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt;. To see this we first compute the conditional mean:&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\text{E}[\hat{\beta}_{reg}|X] = (X^TX + \lambda I)^{-1}X^TX\beta = (X^TX + \lambda I)^{-1}(X^TX + \lambda I)\beta - \lambda (X^TX + \lambda I)^{-1}\beta = \beta - \lambda (X^TX + \lambda I)^{-1}\beta
+\]&lt;/span&gt;
+Hence
+&lt;span class=&#34;math display&#34;&gt;\[
+\text{E}[\hat{\beta}_{reg}] = \beta - \lambda\text{E}\big[(X^TX + \lambda I)^{-1}\big]\beta
+\]&lt;/span&gt;
+which is “&lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt; minus something” and hence not equal to &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt;. However the effect on the variance is better:&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\text{Var}[\hat{\beta}_{reg}|X] = (X^TX + \lambda I)^{-1}X^T\cdot\text{Var}[Y|X]\cdot X(X^TX + \lambda I)^{-1} = \sigma^2(X^TX + \lambda I)^{-1}X^TX(X^TX + \lambda I)^{-1}
+\]&lt;/span&gt;
+&lt;span class=&#34;math display&#34;&gt;\[
+= \sigma^2(X^TX + \lambda I)^{-1}(X^TX+\lambda I)(X^TX + \lambda I)^{-1} - \sigma^2\lambda(X^TX + \lambda I)^{-2} =  \sigma^2(X^TX + \lambda I)^{-1} - \sigma^2\lambda(X^TX + \lambda I)^{-2}
+\]&lt;/span&gt;
+This variance formula may look messy but the gist is that instead of inverting &lt;span class=&#34;math inline&#34;&gt;\(X^TX\)&lt;/span&gt; we are inverting &lt;span class=&#34;math inline&#34;&gt;\(X^TX + \lambda I\)&lt;/span&gt;. The matrix &lt;span class=&#34;math inline&#34;&gt;\(X^TX + \lambda I\)&lt;/span&gt; has larger eigenvalues than the matrix &lt;span class=&#34;math inline&#34;&gt;\(X^TX\)&lt;/span&gt;. Therefore &lt;span class=&#34;math inline&#34;&gt;\(\text{Var}[\hat{\beta}_{reg}|X] = \sigma^2(X^TX + \lambda I)^{-1} - \sigma^2\lambda(X^TX + \lambda I)^{-2}\)&lt;/span&gt; is smaller than &lt;span class=&#34;math inline&#34;&gt;\(\text{Var}[\hat{\beta}|X] = \sigma^2 (X^TX)^{-1}\)&lt;/span&gt; in the sense that it has smaller eigenvalues. &lt;strong&gt;Thus regularization has increased bias, but reduced variance.&lt;/strong&gt; Similar effects hold for more complex models than OLS, but instead of chasing formulas the read should try cooking up some numerical examples via Monte Carlo.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;what-about-the-bayesian-view-point&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;What about the Bayesian view point?&lt;/h2&gt;
+&lt;p&gt;A very natural perspective on regularization can be found in Bayesian modeling, where regularization terms amount to simply specifying prior distributions. However, this is standard Bayesian theory and this post is already long enough.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&#34;footnotes&#34;&gt;
+&lt;hr /&gt;
+&lt;ol&gt;
+&lt;li id=&#34;fn1&#34;&gt;&lt;p&gt;Indeed suppose &lt;span class=&#34;math inline&#34;&gt;\(v\in \mathbb{R}^p\)&lt;/span&gt; is any vector. Then &lt;span class=&#34;math inline&#34;&gt;\(\langle v, X^TXv\rangle = \langle Xv,Xv\rangle = ||Xv||^2 \ge 0\)&lt;/span&gt;. Hence &lt;span class=&#34;math inline&#34;&gt;\(X^TX\)&lt;/span&gt; is always non-negative definite.&lt;a href=&#34;#fnref1&#34; class=&#34;footnote-back&#34;&gt;↩︎&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Expectation Maximization, Part 1: Motivation and Recipe</title>
       <link>/post/003_em1/main/</link>
       <pubDate>Wed, 01 Jul 2020 00:00:00 +0000</pubDate>
@@ -821,4 +1127,3 @@ Three
     </item>
     
   </channel>
-</rss>

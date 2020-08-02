@@ -10,7 +10,7 @@ tags: ["regularization", "regular", "singular", "Hessian", "machine learning", "
 
 Many newcomers to machine learning know about regularization, but they may not understand it yet. In particular, they may not know why regularization has that name. In this post we discuss the numerical and statistical significance of regularization methods in machine learning and more general statistical models. We'll try to introduce why one may want to use regularization methods in the first place and how to interpret the fitted model from a statistical point of view.
 
-The post will be long because there are a lot of cute nooks and crannies, and I'm going to assume you know your linear algebra. However, if you already know what an inner product is then I think this post will be worth your time. We will start with a bit of linear algebra, but rest assured that most of the post is on machine learning.
+The post will be long because there are a lot of cute nooks and crannies, and we'll assume you know your linear algebra. However, if you already know what an inner product is then we think this post will be worth your time.
 
 ## Matrices and Linear Ill-Posed Problems
 
@@ -338,13 +338,21 @@ $$
 
 Moreover, it's easy enough to compute the conditional variance of $\hat{\beta}$:
 $$
-\text{Var}[\hat{\beta}|X] = (X^TX)^{-1}X^T\cdot \text{Var}[Y|X] \cdot X(X^TX)^{-1} = (X^TX)^{-1}X^T\cdot \sigma^2 I \cdot X(X^TX)^{-1} = \sigma^2 (X^TX)^{-1}
+\text{Var}[\hat{\beta}|X] = (X^TX)^{-1}X^T\cdot \text{Var}[Y|X] \cdot X(X^TX)^{-1} = (X^TX)^{-1}X^T\cdot \sigma^2 I \cdot X(X^TX)^{-1} 
+$$
+
+$$
+= \sigma^2 (X^TX)^{-1}
 $$
 
 The [unconditional variance can be computed as](https://en.wikipedia.org/wiki/Law_of_total_variance)
 
 $$
-\text{Var}[\hat{\beta}] = \text{E}[\text{Var}[\hat{\beta}|X]] + \text{Var}[\text{E}[\hat{\beta}|X]] = \sigma^2\text{E}[(X^TX)^{-1}] + \text{Var}[\beta] = \sigma^2\text{E}[(X^TX)^{-1}]
+\text{Var}[\hat{\beta}] = \text{E}[\text{Var}[\hat{\beta}|X]] + \text{Var}[\text{E}[\hat{\beta}|X]] 
+$$
+
+$$
+= \sigma^2\text{E}[(X^TX)^{-1}] + \text{Var}[\beta] = \sigma^2\text{E}[(X^TX)^{-1}]
 $$ 
 
 This is harder to compute because it depends on the distribution of the random matrix $X$. Regardless, we can see that what controls the variance of the estimator $\hat{\beta}$ (whether conditional or not) is the inverse matrix $(X^TX)^{-1}$. If any of the eigenvalues of the matrix $X^TX$ were "close" to $0$ then the eigenvalues of the inverse will be very large, causing the variance of $\hat{\beta}$ to be very large. If you're familiar with VIFs, this is what causes large [variance inflation factors](https://en.wikipedia.org/wiki/Variance_inflation_factor).
@@ -356,8 +364,17 @@ $$
 Then this estimator is biased away from $\beta$. To see this we first compute the conditional mean:
 
 $$
-\text{E}[\hat{\beta}_{reg}|X] = (X^TX + \lambda I)^{-1}X^TX\beta = (X^TX + \lambda I)^{-1}(X^TX + \lambda I)\beta - \lambda (X^TX + \lambda I)^{-1}\beta = \beta - \lambda (X^TX + \lambda I)^{-1}\beta
+\text{E}[\hat{\beta}_{reg}|X] = (X^TX + \lambda I)^{-1}X^TX\beta
 $$
+
+$$
+= (X^TX + \lambda I)^{-1}(X^TX + \lambda I)\beta - \lambda (X^TX + \lambda I)^{-1}\beta
+$$
+
+$$
+= \beta - \lambda (X^TX + \lambda I)^{-1}\beta
+$$
+
 Hence
 $$
 \text{E}[\hat{\beta}_{reg}] = \beta - \lambda\text{E}\big[(X^TX + \lambda I)^{-1}\big]\beta
@@ -365,17 +382,26 @@ $$
 which is "$\beta$ minus something" and hence not equal to $\beta$. However the effect on the variance is better:
 
 $$
-\text{Var}[\hat{\beta}_{reg}|X] = (X^TX + \lambda I)^{-1}X^T\cdot\text{Var}[Y|X]\cdot X(X^TX + \lambda I)^{-1} = \sigma^2(X^TX + \lambda I)^{-1}X^TX(X^TX + \lambda I)^{-1}
+\text{Var}[\hat{\beta}_{reg}|X] = (X^TX + \lambda I)^{-1}X^T\cdot\text{Var}[Y|X]\cdot X(X^TX + \lambda I)^{-1}
 $$
+
 $$
-= \sigma^2(X^TX + \lambda I)^{-1}(X^TX+\lambda I)(X^TX + \lambda I)^{-1} - \sigma^2\lambda(X^TX + \lambda I)^{-2} =  \sigma^2(X^TX + \lambda I)^{-1} - \sigma^2\lambda(X^TX + \lambda I)^{-2}
+= \sigma^2(X^TX + \lambda I)^{-1}X^TX(X^TX + \lambda I)^{-1}
+$$
+
+$$
+= \sigma^2(X^TX + \lambda I)^{-1}(X^TX+\lambda I)(X^TX + \lambda I)^{-1} - \sigma^2\lambda(X^TX + \lambda I)^{-2}
+$$
+
+$$
+=  \sigma^2(X^TX + \lambda I)^{-1} - \sigma^2\lambda(X^TX + \lambda I)^{-2}
 $$
 This variance formula may look messy but the gist is that instead of inverting $X^TX$ we are inverting $X^TX + \lambda I$. The matrix $X^TX + \lambda I$ has larger eigenvalues than the matrix $X^TX$. Therefore $\text{Var}[\hat{\beta}_{reg}|X] = \sigma^2(X^TX + \lambda I)^{-1} - \sigma^2\lambda(X^TX + \lambda I)^{-2}$ is smaller than $\text{Var}[\hat{\beta}|X] = \sigma^2 (X^TX)^{-1}$ in the sense that it has smaller eigenvalues. **Thus regularization has increased bias, but reduced variance.** Similar effects hold for more complex models than OLS, but instead of chasing formulas the read should try cooking up some numerical examples via Monte Carlo.
 
 
 ## What about the Bayesian view point?
 
-A very natural perspective on regularization can be found in Bayesian modeling, where regularization terms amount to simply specifying prior distributions. However, this is standard Bayesian theory and this post is already long enough.
+A very natural perspective on regularization can be found in Bayesian modeling, where regularization terms amount to simply specifying prior distributions. However, this is standard Bayesian theory and this post is already long enough :P
 
 
 

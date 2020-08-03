@@ -97,7 +97,7 @@ that maps a matrix to it’s <a href="https://en.wikipedia.org/wiki/Determinant"
 <p><span class="math display">\[
 (A+\lambda L)x = y
 \]</span></p>
-<p>where <span class="math inline">\(L\)</span> is any convenient invertible matrix.</p>
+<p>where <span class="math inline">\(L\)</span> is any convenient invertible matrix. Below, where we regularize OLS, we are not restricted to using the identity matrix <span class="math inline">\(I\)</span> to regularize, but can use any invertible symmetric matrix (preferably one that is positive definite so that a minimizer continues to exist).</p>
 </div>
 <div id="l2-regularization-of-ols" class="section level3">
 <h3><span class="math inline">\(L^2\)</span>-regularization of OLS</h3>
@@ -232,7 +232,7 @@ Y^TY - Y^TX\beta - \beta^TX^TY + \beta^TX^TX\beta
 <p>Moreover, The Hessian is always a symmetric matrix by the <a href="https://en.wikipedia.org/wiki/Symmetry_of_second_derivatives#Formal_expressions_of_symmetry">equality of cross-derivatives</a>. So the previous point is really a statement about Hessian’s eigenvalues. In short, if the Hessian has all positive eigenvalues then it is positive definite and the function is bowl shaped near its minimizer.</p>
 <p>The OLS Hessian matrix <span class="math inline">\(X^TX\)</span> is symmetric and non-negative definite, so the graph of the sum of squares <span class="math inline">\(SSE(\beta) := (Y - X\beta)^T(Y - X\beta)\)</span> can only fail to be bowl shaped near the minimizer <span class="math inline">\(\hat{\beta}\)</span> if the matrix <span class="math inline">\(X^TX\)</span> has eigenvalues that are equal 0 (or positive but close to 0 in the case numerical instability). In which case, the graph of <span class="math inline">\(SSE(\beta)\)</span> is a degenerate non-hyperbolic paraboloid and there are multiple minimizing solutions <span class="math inline">\(\beta\)</span>.</p>
 <p><strong>Thus regularizing the matrix <span class="math inline">\(X^TX\)</span> is just regularizing the Hessian matrix of the function <span class="math inline">\(SSE(\beta)\)</span> we want to minimize!!</strong> This fact is what allows us to take the idea beyond OLS.</p>
-<p>Indeed if <span class="math inline">\(f(\beta)\)</span> is any 2nd order differentiable function of <span class="math inline">\(\beta\)</span> then by the linearity of the derivative</p>
+<p>Indeed if <span class="math inline">\(f(\beta)\)</span> is any 2nd order differentiable cost function in any machine learning model then by the linearity of the derivative</p>
 <p><span class="math display">\[
 \text{Hessian}(f + \lambda \langle \beta, \beta\rangle) = \text{Hessian}(f) + \lambda\text{Hessian}(\langle \beta, \beta\rangle) = \text{Hessian}(f) + \lambda I
 \]</span></p>
@@ -241,7 +241,7 @@ Y^TY - Y^TX\beta - \beta^TX^TY + \beta^TX^TX\beta
 <span class="math display">\[
 Y \ \ | \ \ \vec{X} \sim \mathcal{B}(\ p = \phi(\langle \vec{X}  , \beta\rangle) \ )
 \]</span></p>
-<p>where <span class="math inline">\(\mathcal{B(p)}\)</span> is a Bernoulli distribution with probability of a positive event equal to <span class="math inline">\(p\)</span>, <span class="math inline">\(p = \text{E}[Y|\vec{X}] = \phi(\langle \vec{X} , \beta\rangle)\)</span> is the probability of a positive event given <span class="math inline">\(\vec{X}\)</span>, and <span class="math inline">\(\phi(t) = \frac{e^t}{1+e^t}\)</span> is the standard logit. In this case the condition density <span class="math inline">\(p(Y|\vec{X})\)</span> can be written as</p>
+<p>where <span class="math inline">\(\mathcal{B(p)}\)</span> is a Bernoulli distribution with probability of a positive event equal to <span class="math inline">\(p\)</span>, <span class="math inline">\(p = \text{E}[Y|\vec{X}] = \phi(\langle \vec{X} , \beta\rangle)\)</span> is the probability of a positive event given <span class="math inline">\(\vec{X}\)</span>, and <span class="math inline">\(\phi(t) = \frac{e^t}{1+e^t}\)</span> is the standard logit. In this case the conditional density <span class="math inline">\(p(Y|\vec{X})\)</span> can be written as</p>
 <p><span class="math display">\[
 p(Y|\vec{X}) = p^Y\big(1 - p)\big)^{1-Y} =\phi(\langle \vec{X}  , \beta\rangle)^Y\big(1 - \phi(\langle \vec{X}  , \beta\rangle)\big)^{1-Y}
 \]</span>
@@ -263,21 +263,22 @@ So the negative log-likelihood is given by</p>
 <p><span class="math display">\[
 \text{E}[\hat{\beta}] = \text{E}\big[\text{E}[\hat{\beta}|X]\big] = \text{E}\bigg[(X^TX)^{-1}X^T\text{E}[Y|X]\bigg] = \text{E}\bigg[(X^TX)^{-1}X^TX\beta\bigg] = \text{E}[\beta] = \beta
 \]</span></p>
-<p>Moreover, it’s easy enough to compute the conditional variance of <span class="math inline">\(\hat{\beta}\)</span>:
+<p>Moreover, it’s easy enough to compute the conditional covariance matrix of <span class="math inline">\(\hat{\beta}\)</span>:
 <span class="math display">\[
 \text{Var}[\hat{\beta}|X] = (X^TX)^{-1}X^T\cdot \text{Var}[Y|X] \cdot X(X^TX)^{-1} = (X^TX)^{-1}X^T\cdot \sigma^2 I \cdot X(X^TX)^{-1} 
 \]</span></p>
 <p><span class="math display">\[
 = \sigma^2 (X^TX)^{-1}
 \]</span></p>
-<p>The <a href="https://en.wikipedia.org/wiki/Law_of_total_variance">unconditional variance can be computed as</a></p>
+<p>The <a href="https://en.wikipedia.org/wiki/Law_of_total_variance">unconditional covariance matrix can be computed as</a></p>
 <p><span class="math display">\[
 \text{Var}[\hat{\beta}] = \text{E}[\text{Var}[\hat{\beta}|X]] + \text{Var}[\text{E}[\hat{\beta}|X]] 
 \]</span></p>
 <p><span class="math display">\[
 = \sigma^2\text{E}[(X^TX)^{-1}] + \text{Var}[\beta] = \sigma^2\text{E}[(X^TX)^{-1}]
 \]</span></p>
-<p>This is harder to compute because it depends on the distribution of the random matrix <span class="math inline">\(X\)</span>. Regardless, we can see that what controls the variance of the estimator <span class="math inline">\(\hat{\beta}\)</span> (whether conditional or not) is the inverse matrix <span class="math inline">\((X^TX)^{-1}\)</span>. If any of the eigenvalues of the matrix <span class="math inline">\(X^TX\)</span> were “close” to <span class="math inline">\(0\)</span> then the eigenvalues of the inverse will be very large, causing the variance of <span class="math inline">\(\hat{\beta}\)</span> to be very large. If you’re familiar with VIFs, this is what causes large <a href="https://en.wikipedia.org/wiki/Variance_inflation_factor">variance inflation factors</a>.</p>
+<p>This is harder to compute because it depends on the distribution of the random matrix <span class="math inline">\(X\)</span>. Regardless, we can see that what controls the variance of the estimator <span class="math inline">\(\hat{\beta}\)</span> (whether conditional or not) is the inverse matrix <span class="math inline">\((X^TX)^{-1}\)</span>. This is interesting because it shows that the matrix we identified as the Hessian of the OLS cost function (<span class="math inline">\(X^TX\)</span>) is also the matrix that controls the covariance of the OLS estimator.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>If any of the eigenvalues of the matrix <span class="math inline">\(X^TX\)</span> were “close” to <span class="math inline">\(0\)</span> then the eigenvalues of the inverse will be very large, causing the variance of <span class="math inline">\(\hat{\beta}\)</span> to be very large. If you’re familiar with VIFs, this is what causes large <a href="https://en.wikipedia.org/wiki/Variance_inflation_factor">variance inflation factors</a>.</p>
 <p>Regularization is used to reduce the variance in this estimator. If we denote the regularized estimator by:
 <span class="math display">\[
 \hat{\beta}_{reg} = (X^TX + \lambda I)^{-1}X^TY
@@ -319,5 +320,6 @@ This variance formula may look messy but the gist is that instead of inverting <
 <hr />
 <ol>
 <li id="fn1"><p>Indeed suppose <span class="math inline">\(v\in \mathbb{R}^p\)</span> is any vector. Then <span class="math inline">\(\langle v, X^TXv\rangle = \langle Xv,Xv\rangle = ||Xv||^2 \ge 0\)</span>. Hence <span class="math inline">\(X^TX\)</span> is always non-negative definite.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>This is a general feature of Maximum Likelihood estimators called “<em>asymptotic efficiency</em>”, where the covariance matrix of the MLE estimator approaches a “best possible” covariance matrix. Essentially the best possible covariance matrix that an unbiased estimator of <span class="math inline">\(\beta\)</span> can have is given given by the <a href="https://en.wikipedia.org/wiki/Cram%C3%A9r%E2%80%93Rao_bound">Cramer-Rao Bound</a> and is equal to the inverse of the <a href="https://en.wikipedia.org/wiki/Fisher_information">Fisher Information matrix</a>, whose <span class="math inline">\(ij\)</span>-component is <span class="math inline">\(-\text{E}[\partial^2\log(p(Y, \vec{X}| \beta))/\partial \beta_i\partial \beta_j]\)</span>. The beauty is that the Hessian of the negative loglikelihood is the sample estimator of this Fisher Information (where expectation is replaced by average over samples).<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>

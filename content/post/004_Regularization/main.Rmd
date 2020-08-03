@@ -120,7 +120,7 @@ $$
 (A+\lambda L)x = y
 $$
 
-where $L$ is any convenient invertible matrix.
+where $L$ is any convenient invertible matrix. Below, where we regularize OLS, we are not restricted to using the identity matrix $I$ to regularize, but can use any invertible symmetric matrix (preferably one that is positive definite so that a minimizer continues to exist).
 
 ### $L^2$-regularization of OLS
 
@@ -293,7 +293,7 @@ The OLS Hessian matrix $X^TX$ is symmetric and non-negative definite, so the gra
 
 **Thus regularizing the matrix $X^TX$ is just regularizing the Hessian matrix of the function $SSE(\beta)$ we want to minimize!!** This fact is what allows us to take the idea beyond OLS.
 
-Indeed if $f(\beta)$ is any 2nd order differentiable function of $\beta$ then by the linearity of the derivative
+Indeed if $f(\beta)$ is any 2nd order differentiable cost function in any machine learning model then by the linearity of the derivative
 
 $$
 \text{Hessian}(f + \lambda \langle \beta, \beta\rangle) = \text{Hessian}(f) + \lambda\text{Hessian}(\langle \beta, \beta\rangle) = \text{Hessian}(f) + \lambda I
@@ -306,7 +306,7 @@ $$
 Y \ \ | \ \ \vec{X} \sim \mathcal{B}(\ p = \phi(\langle \vec{X}  , \beta\rangle) \ )
 $$
 
-where $\mathcal{B(p)}$ is a Bernoulli distribution with probability of a positive event equal to $p$, $p = \text{E}[Y|\vec{X}] = \phi(\langle \vec{X}  , \beta\rangle)$ is the probability of a positive event given $\vec{X}$, and $\phi(t) = \frac{e^t}{1+e^t}$ is the standard logit. In this case the condition density $p(Y|\vec{X})$ can be written as
+where $\mathcal{B(p)}$ is a Bernoulli distribution with probability of a positive event equal to $p$, $p = \text{E}[Y|\vec{X}] = \phi(\langle \vec{X}  , \beta\rangle)$ is the probability of a positive event given $\vec{X}$, and $\phi(t) = \frac{e^t}{1+e^t}$ is the standard logit. In this case the conditional density $p(Y|\vec{X})$ can be written as
 
 $$
 p(Y|\vec{X}) = p^Y\big(1 - p)\big)^{1-Y} =\phi(\langle \vec{X}  , \beta\rangle)^Y\big(1 - \phi(\langle \vec{X}  , \beta\rangle)\big)^{1-Y}
@@ -336,7 +336,7 @@ $$
 \text{E}[\hat{\beta}] = \text{E}\big[\text{E}[\hat{\beta}|X]\big] = \text{E}\bigg[(X^TX)^{-1}X^T\text{E}[Y|X]\bigg] = \text{E}\bigg[(X^TX)^{-1}X^TX\beta\bigg] = \text{E}[\beta] = \beta
 $$
 
-Moreover, it's easy enough to compute the conditional variance of $\hat{\beta}$:
+Moreover, it's easy enough to compute the conditional covariance matrix of $\hat{\beta}$:
 $$
 \text{Var}[\hat{\beta}|X] = (X^TX)^{-1}X^T\cdot \text{Var}[Y|X] \cdot X(X^TX)^{-1} = (X^TX)^{-1}X^T\cdot \sigma^2 I \cdot X(X^TX)^{-1} 
 $$
@@ -345,7 +345,7 @@ $$
 = \sigma^2 (X^TX)^{-1}
 $$
 
-The [unconditional variance can be computed as](https://en.wikipedia.org/wiki/Law_of_total_variance)
+The [unconditional covariance matrix can be computed as](https://en.wikipedia.org/wiki/Law_of_total_variance)
 
 $$
 \text{Var}[\hat{\beta}] = \text{E}[\text{Var}[\hat{\beta}|X]] + \text{Var}[\text{E}[\hat{\beta}|X]] 
@@ -355,7 +355,10 @@ $$
 = \sigma^2\text{E}[(X^TX)^{-1}] + \text{Var}[\beta] = \sigma^2\text{E}[(X^TX)^{-1}]
 $$ 
 
-This is harder to compute because it depends on the distribution of the random matrix $X$. Regardless, we can see that what controls the variance of the estimator $\hat{\beta}$ (whether conditional or not) is the inverse matrix $(X^TX)^{-1}$. If any of the eigenvalues of the matrix $X^TX$ were "close" to $0$ then the eigenvalues of the inverse will be very large, causing the variance of $\hat{\beta}$ to be very large. If you're familiar with VIFs, this is what causes large [variance inflation factors](https://en.wikipedia.org/wiki/Variance_inflation_factor).
+This is harder to compute because it depends on the distribution of the random matrix $X$. Regardless, we can see that what controls the variance of the estimator $\hat{\beta}$ (whether conditional or not) is the inverse matrix $(X^TX)^{-1}$. This is interesting because it shows that the matrix we identified as the Hessian of the OLS cost function ($X^TX$) is also the matrix that controls the covariance of the OLS estimator.[^2]
+
+
+If any of the eigenvalues of the matrix $X^TX$ were "close" to $0$ then the eigenvalues of the inverse will be very large, causing the variance of $\hat{\beta}$ to be very large. If you're familiar with VIFs, this is what causes large [variance inflation factors](https://en.wikipedia.org/wiki/Variance_inflation_factor).
 
 Regularization is used to reduce the variance in this estimator. If we denote the regularized estimator by:
 $$
@@ -410,3 +413,4 @@ A very natural perspective on regularization can be found in Bayesian modeling, 
 
 
 [^1]: Indeed suppose $v\in \mathbb{R}^p$ is any vector. Then $\langle v, X^TXv\rangle = \langle Xv,Xv\rangle = ||Xv||^2 \ge 0$. Hence $X^TX$ is always non-negative definite. 
+[^2]: This is a general feature of Maximum Likelihood estimators called "*asymptotic efficiency*", where the covariance matrix of the MLE estimator approaches a "best possible" covariance matrix. Essentially the best possible covariance matrix that an unbiased estimator of $\beta$ can have is given given by the [Cramer-Rao Bound](https://en.wikipedia.org/wiki/Cram%C3%A9r%E2%80%93Rao_bound) and is equal to the inverse of the [Fisher Information matrix](https://en.wikipedia.org/wiki/Fisher_information), whose $ij$-component is $-\text{E}[\partial^2\log(p(Y, \vec{X}| \beta))/\partial \beta_i\partial \beta_j]$. The beauty is that the Hessian of the negative loglikelihood is the sample estimator of this Fisher Information (where expectation is replaced by average over samples).

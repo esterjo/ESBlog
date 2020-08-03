@@ -336,6 +336,325 @@ This variance formula may look messy but the gist is that instead of inverting &
 &lt;/ol&gt;
 &lt;/div&gt;
 </description>
+      <content:encoded>
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>Many newcomers to machine learning know about regularization, but they may not understand it yet. In particular, they may not know why regularization has that name. In this post we discuss the numerical and statistical significance of regularization methods in machine learning and more general statistical models. We’ll try to introduce why one may want to use regularization methods in the first place and how to interpret the fitted model from a statistical point of view.</p>
+<p>The post will be long because there are a lot of cute nooks and crannies, and we’ll assume you know your linear algebra. However, if you already know what an inner product is then we think this post will be worth your time.</p>
+</div>
+<div id="matrices-and-linear-ill-posed-problems" class="section level2">
+<h2>Matrices and Linear Ill-Posed Problems</h2>
+<p>Suppose that we have a matrix <span class="math inline">\(A\in \mathbb{R}^{N \times p}\)</span>, a vector <span class="math inline">\(y\in \mathbb{R}^N\)</span>, and that we seek a vector <span class="math inline">\(\beta\in\mathbb{R}^p\)</span> such that <span class="math inline">\(A\beta = y\)</span>. How would one solve this problem? One answer might be to simply apply the inverse matrix to both sides of the equation: <span class="math inline">\(\beta = A^{-1}y\)</span>. However, there are three problems with this:</p>
+<ol style="list-style-type: decimal">
+<li>A matrix inverse <span class="math inline">\(A^{-1}\)</span> may not exist.</li>
+<li>Even if the matrix inverse exists it can be extremely expensive to calculate this inverse and apply the result to <span class="math inline">\(y\)</span>.</li>
+<li>Even if we are somehow able to calculate <span class="math inline">\(A^{-1}y\)</span> the solution may not be very stable. Small numerical changes in either <span class="math inline">\(A\)</span> or <span class="math inline">\(y\)</span> may lead to large changes in the solution <span class="math inline">\(\beta\)</span>.</li>
+</ol>
+<p>Issue 2 above is not really a problem in the sense that <a href="https://www.johndcook.com/blog/2010/01/19/dont-invert-that-matrix/">one should never really need to find <span class="math inline">\(A^{-1}\)</span> to compute <span class="math inline">\(A^{-1}y\)</span></a>. Instead the most efficient numerical algorithms typically compute <span class="math inline">\(A^{-1}y\)</span> by using special factorizations of <span class="math inline">\(A\)</span>, such as <a href="https://en.wikipedia.org/wiki/QR_decomposition">QR decomposition</a>.</p>
+<p>The other two issues are very important and are inextricably linked to each other and to regularization in machine learning.</p>
+<ul>
+<li><p>Issue 3 means just what is says: that the solution <span class="math inline">\(\beta\)</span> may change a lot if the known data <span class="math inline">\(A\)</span> and/or <span class="math inline">\(y\)</span> only change a little.</p></li>
+<li><p>Issue 1 means that the matrix is not invertible. A matrix that is not invertible is called <strong><em>singular</em></strong>. A matrix that is invertible is usually called <strong><em>nonsingular</em></strong>, but a less common synonym is <a href="https://mathworld.wolfram.com/RegularMatrix.html"><strong><em>regular</em></strong></a> and this is where the name <em>regularization</em> comes from. When a matrix is singular it means that the problem <span class="math inline">\(A\beta = y\)</span> may have either no solution at all or have at least 2 distinct solutions.</p></li>
+</ul>
+<p>Any one of these issues being true means that the linear problem <span class="math inline">\(A\beta = y\)</span> is ill-posed in the sense that it violates Hadamard’s conditions for a <a href="https://en.wikipedia.org/wiki/Well-posed_problem">well-posed problem</a>. To be well-posed:</p>
+<ol style="list-style-type: decimal">
+<li>A problem must have a solution</li>
+<li>The solution must be unique</li>
+<li>The solution’s behavior must be stable/continuous with respect to the data</li>
+</ol>
+<p>These conditions are of extreme practical importance. They basically define what it means for a problem to be solvable <strong><em>in practice</em></strong>. In the case of the linear algebra problem above regularization means “<em>making the matrix regular</em>” so that these conditions will hold true on the regularized problem. That’s where the name comes from.</p>
+<p>Ok, cool but why are these conditions important to ML or statistics? Consider the case of Maximum Likelihood Estimation (MLE) of a parametric model (although the lesson applies more generally):</p>
+<ol style="list-style-type: decimal">
+<li>In MLE we estimate a model’s unknown parameters by maximizing the log-likelihood. If no such maximizing values of the parameters can be found then the optimization problem does not have a solution and we can not obtain estimates for the unknown parameters to begin with! So, mirroring the first Hadamard condition, we require a maximizer to exist.</li>
+<li>Non-Bayesian statistical models naturally assume that a single fixed set of parameters exists that specifies the relevant distributions. If MLE gives multiple sets of parameters that maximize the likelihood (as happens in the presence of multiple local maxima) we may have no way to tell which maximizer is the one that estimates the actual parameters the best! So, mirroring the second Hadamard condition, we require the maximizer to be unique.</li>
+<li>Statistical models assume that data is in part random and so is subject to changes. If the estimated values of the parameters change a lot when the data changes a little then it’s impossible to tell when the MLE estimated parameters are in fact good estimates of the true parameters and when they are not! So, mirroring the third Hadamard condition, we require the maximizer to be stable with respect to changes in the data used for the fit.</li>
+</ol>
+<p>Regularization is one way to change the problem so that these conditions are met.</p>
+</div>
+<div id="some-examples" class="section level2">
+<h2>Some examples</h2>
+<p>Ok, let’s look at some examples!</p>
+<div id="shifting-the-eigenvalues-of-a-symmetric-matrix" class="section level3">
+<h3>Shifting the eigenvalues of a Symmetric Matrix</h3>
+<p>Suppose we are asked to solve the linear inverse problem from above <span class="math inline">\(A\beta = y\)</span>, but that this time <span class="math inline">\(A\in \mathbb{R}^{N\times N}\)</span> is a symmetric matrix. The <a href="https://pages.mtu.edu/~msgocken/ma5630spring2003/lectures/spectral/spectral/node2.html">spectral theorem for symmetric matrices</a> tells us that <span class="math inline">\(A\)</span> can be represented as</p>
+<p><span class="math display">\[
+A = QDQ^T
+\]</span>
+where <span class="math inline">\(Q\)</span> is an <a href="https://en.wikipedia.org/wiki/Orthogonal_matrix">orthogonal matrix</a> and <span class="math inline">\(D\)</span> is a diagonal matrix. Moreover, the columns of <span class="math inline">\(Q\)</span> are the eigenvectors of <span class="math inline">\(A\)</span>, and the diagonal elements of <span class="math inline">\(D\)</span> are the corresponding (real) eigenvalues. <a href="https://mast.queensu.ca/~br66/419/spectraltheoremproof.pdf">Here’s</a> a proof if you care for it.</p>
+<p>This representation shows us exactly what the theoretical difficulty is in the inverse problem. Inverting <span class="math inline">\(Q\)</span> is easy. Indeed orthogonal matrices are always invertible, with the inverse given by the transpose: <span class="math inline">\(Q^{-1} = Q^T\)</span>. The geometric significance of orthogonal matrices comes from the fact (basically their definition) that they preserve the inner product of vectors: If we denote the inner product by <span class="math inline">\(\langle \cdot,\cdot\rangle\)</span> then for any <span class="math inline">\(x,y \in R^N\)</span></p>
+<p><span class="math display">\[
+\langle x, y \rangle = \langle Qx, Qy \rangle
+\]</span>
+Thus (using the definition of the transpose) <span class="math inline">\(\langle x, y \rangle = \langle Q^TQx, y \rangle\)</span>. Since this holds for any <span class="math inline">\(y\)</span>, then <span class="math inline">\(x = Q^TQx\)</span> for all <span class="math inline">\(x\)</span>. Since this holds for all <span class="math inline">\(x\)</span> then <span class="math inline">\(Q^TQ = I\)</span> and so <span class="math inline">\(Q^T\)</span> is the inverse of <span class="math inline">\(Q\)</span>.</p>
+<p>No, the difficulty is simply in inverting the diagonal matrix <span class="math inline">\(D = \text{diag}(\sigma_1, \sigma_2, ..., \sigma_N)\)</span>. If none of the eigenvalues <span class="math inline">\(\sigma_i\)</span> are <span class="math inline">\(0\)</span> then <span class="math inline">\(D^{-1} = \text{diag}(\sigma_1^{-1}, \sigma_2^{-1}, ..., \sigma_N^{-1})\)</span>. In this case there isn’t any direction that <span class="math inline">\(D\)</span> (and hence <span class="math inline">\(A\)</span>) squashes into <span class="math inline">\(0\)</span>. However, if some of the <span class="math inline">\(\sigma_i\)</span>’s are <span class="math inline">\(0\)</span> then we can not invert <span class="math inline">\(D\)</span> and the problem will fail to satisfy at least one of the first 2 Hadamard conditions. Even if none of the <span class="math inline">\(\sigma_i\)</span>’s are exactly <span class="math inline">\(0\)</span>, some may be numerically very close to <span class="math inline">\(0\)</span> in comparison to the others. In that case the value of their reciprocals may be enormously large and may lead to numerical instability in the problem, violating the 3rd Hadamard condition. This would be a big problem in practice because computers <a href="https://floating-point-gui.de/errors/propagation/">hate mixing floating point numbers that are drastically different in size</a>.</p>
+<p>To address this issue we note that we can shift the eigenvalues of <span class="math inline">\(A\)</span> by adding a multiple of an identity matrix:</p>
+<p><span class="math display">\[
+A \to  A + \lambda I
+\]</span>
+If <span class="math inline">\(\sigma\)</span> is an eigenvalue of <span class="math inline">\(A\)</span> then <span class="math inline">\(\sigma+\lambda\)</span> is an eigenvalue of <span class="math inline">\(A+\lambda I\)</span>. This is because every vector is an eigenvector of <span class="math inline">\(I\)</span>: If <span class="math inline">\(Av = \sigma v\)</span> then trivially <span class="math inline">\(\lambda Iv = \lambda v\)</span>, so adding gives <span class="math inline">\((A+\lambda I)v = (\sigma + \lambda)v\)</span>. This can also be seen form the representation above:
+<span class="math display">\[
+A + \lambda I = QDQ^T + \lambda QQ^T = Q(D + \lambda I)Q^T = Q\tilde{D}Q^T
+\]</span>
+where <span class="math inline">\(\tilde{D}= \text{diag}(\sigma_1 + \lambda, \sigma_2 + \lambda, ..., \sigma_N + \lambda)\)</span>. Therefore, if we choose <span class="math inline">\(\lambda &gt; \min\{\sigma_1, \sigma_2, ..., \sigma_N\}+ \delta\)</span> for some <span class="math inline">\(\delta &gt; 0\)</span>, then all the shifted eigenvalues satisfy <span class="math inline">\(\sigma_i + \lambda &gt; \delta &gt; 0\)</span> and the new shifted problem</p>
+<p><span class="math display">\[
+(A+\lambda I)x = y
+\]</span>
+will be solvable with solution given by
+<span class="math display">\[
+x = Q(D + \lambda I)^{-1}Q^Ty
+\]</span>
+If <span class="math inline">\(\lambda\)</span> is sufficiently large this inverse will exist and will be numerically stable (all of the eigenvalues will have been shifted away from 0).</p>
+<p>Making the change <span class="math inline">\(A \to A + \lambda I\)</span> regularized the problem into one that satisfied Hadamard’s conditions, which is fundamentally the point of regularization. The change we made was essentially to replace the <span class="math inline">\(A^{-1}\)</span> with the approximation <span class="math inline">\((A+\lambda I)^{-1}\)</span>, but we could have used other approximations as well, for example partial sums of the <a href="https://en.wikipedia.org/wiki/Invertible_matrix#By_Neumann_series">Neumann Series Expansion of the <span class="math inline">\(A^{-1}\)</span></a>. Regardless, the general principle illustrated above is basically to replace one problem by an approximate problem that does not suffer the same existence/stability issues.</p>
+</div>
+<div id="regularization-as-a-perturbation-of-an-invertible-matrix" class="section level3">
+<h3>Regularization as a perturbation of an invertible matrix</h3>
+<p>Above we regularized the ill-posed problem <span class="math inline">\(A\beta = y\)</span> by replacing it with the problem <span class="math inline">\((A+\lambda I)x = y\)</span>. Let’s go a bit deeper with this process.<strong>You may skip this section on your first read.</strong></p>
+<p>Dividing by <span class="math inline">\(\lambda\)</span>, the problem <span class="math inline">\((A+\lambda I)x = y\)</span> is equivalent to the problem</p>
+<p><span class="math display">\[
+(\epsilon A+I)x = \epsilon y
+\]</span>
+where <span class="math inline">\(\epsilon := \frac{1}{\lambda}\)</span>. When <span class="math inline">\(\lambda\)</span> is large <span class="math inline">\(\epsilon\)</span> is small, and vice versa. Hence for large <span class="math inline">\(\lambda\)</span> the matrix <span class="math inline">\(\epsilon A+I\)</span> can be seen as a small perturbation from the identity matrix <span class="math inline">\(I\)</span>.</p>
+<p>Now because <span class="math inline">\(I\)</span> is invertible then for a small enough <span class="math inline">\(\epsilon\)</span> (and hence for a large enough <span class="math inline">\(\lambda\)</span>) the preturbed matrix <span class="math inline">\(\epsilon A+I\)</span> is also invertible! Why? That’s a great question! The previous section gave one proof, but there are some much nicer ways to see why:</p>
+<p><strong>Proof:</strong> Consider the function
+<span class="math display">\[
+\det:\mathbb{R}^{N\times N} \to \mathbb{R}
+\]</span>
+that maps a matrix to it’s <a href="https://en.wikipedia.org/wiki/Determinant">determinant</a>. Because the space <span class="math inline">\(\mathbb{R}^{N\times N}\)</span> of <span class="math inline">\(N\times N\)</span> matrices is just the Euclidean inner product space <span class="math inline">\(\mathbb{R}^{N^2}\)</span> with some extra algebraic structure, and because <span class="math inline">\(\det(A)\)</span> is a polynomial function of the elements of a matrix <span class="math inline">\(A\)</span>, <span class="math inline">\(\det\)</span> is a continuous function on <span class="math inline">\(\mathbb{R}^{N\times N}\)</span>.</p>
+<p>By <a href="https://en.wikipedia.org/wiki/Cramer%27s_rule">Cramer’s Rule</a>, a matrix <span class="math inline">\(A\)</span> is invertible if and only if <span class="math inline">\(\det(A) \ne 0\)</span>. Because <span class="math inline">\(\det\)</span> is a continuous function on <span class="math inline">\(\mathbb{R}^{N\times N}\)</span> then the set of invertible matrices is an open subset of <span class="math inline">\(\mathbb{R}^{N\times N}\)</span>! Hence for every invertible matrix <span class="math inline">\(L\in\mathbb{R}^{N\times N}\)</span> and every arbitrary matrix <span class="math inline">\(A\in\mathbb{R}^{N\times N}\)</span> there exists an <span class="math inline">\(\epsilon_0 &gt; 0\)</span> such that for all <span class="math inline">\(\epsilon &lt; \epsilon_0\)</span> the matrix <span class="math inline">\(\epsilon A+L\)</span> is invertible. <strong>QED</strong></p>
+<p>There’s a version of the theorem in Banach spaces, but we don’t need it.</p>
+<p>Noticed that the only thing we needed about the matrix <span class="math inline">\(I\)</span> in the above proof was that it was invertible. Therefore, we never needed to restrict attention to just the identity matrix <span class="math inline">\(I\)</span>, but could have used any invertible matrix to regularize the problem:</p>
+<p><span class="math display">\[
+(A+\lambda L)x = y
+\]</span></p>
+<p>where <span class="math inline">\(L\)</span> is any convenient invertible matrix. Below, where we regularize OLS, we are not restricted to using the identity matrix <span class="math inline">\(I\)</span> to regularize, but can use any invertible symmetric matrix (preferably one that is positive definite so that a minimizer continues to exist).</p>
+</div>
+<div id="l2-regularization-of-ols" class="section level3">
+<h3><span class="math inline">\(L^2\)</span>-regularization of OLS</h3>
+<p>With this example we begin moving towards the statistical part of the post. One of the most widely known examples of regularization is what is often called <span class="math inline">\(L^2\)</span>-regularization, or <a href="https://en.wikipedia.org/wiki/Tikhonov_regularization">Tikhonov</a> regularization of Ordinary Least Squares.</p>
+<p>Suppose <span class="math inline">\(Y\)</span> is a real valued random variable and <span class="math inline">\(\vec{X}\)</span> is a random vector with values in <span class="math inline">\(\mathbb{R}^p\)</span>. Suppose that we have the conditional relationship</p>
+<p><span class="math display">\[
+Y \ \ | \ \ \vec{X} \sim \mathcal{N}(\ \langle \vec{X}  , \beta\rangle \ ,\ \sigma^2)
+\]</span></p>
+<p>where <span class="math inline">\(\mathcal{N}(\mu, \sigma^2)\)</span> denotes the univariate normal distribution with mean <span class="math inline">\(\mu\)</span> and variance <span class="math inline">\(\sigma^2\)</span>. Here (and everywhere else) the symbol <span class="math inline">\(\langle v,w\rangle\)</span> represents the inner product of two vectors <span class="math inline">\(v\)</span> and <span class="math inline">\(w\)</span>. This is the most natural probability model that leads to linear regression. In practice the parameters <span class="math inline">\(\beta\)</span> and <span class="math inline">\(\sigma\)</span> that specify this conditional distribution are unknown and it is desired that they be estimated from data.</p>
+<p>In this canonical situation we assume that we have a data set <span class="math inline">\(\{ (Y_i, \vec{X}_i)\}_{i = 1}^N\)</span> consisting of samples generated independently of one another from a fixed multivariate distribution for <span class="math inline">\((Y, \vec{X})\)</span> (i.e. we assume our data was sampled IID). To fit the unknown parameters we use MLE. We may choose to use the conditional density <span class="math inline">\(p(Y|\vec{X})\)</span> in the likelihood and this would make it <strong><em>conditional</em></strong> MLE. Or we may choose the unconditional multivariate density <span class="math inline">\(p(Y, \vec{X})\)</span>. However, if we assume that the marginal distribution of <span class="math inline">\(\vec{X}\)</span>, (i.e. <span class="math inline">\(p(\vec{X})\)</span>), does not depend on either <span class="math inline">\(\beta\)</span> or <span class="math inline">\(\sigma\)</span> then because <span class="math inline">\(p(Y,\vec{X}) = p(Y|\vec{X})p(\vec{X})\)</span> building the likelihood using either <span class="math inline">\(p(Y|\vec{X})\)</span> or <span class="math inline">\(p(Y,\vec{X})\)</span> will lead to the same maximization problem because they differ by a constant factor (constant in <span class="math inline">\(\beta\)</span> and <span class="math inline">\(\sigma\)</span> that is). So we will use the conditional density <span class="math inline">\(p(Y|\vec{X})\)</span>.</p>
+<p>Because the data is assumed to be generated IID then the full likelihood of the data is</p>
+<p><span class="math display">\[
+\mathcal{L}(\beta, \sigma\ |\ \{ (Y_i, \vec{X}_i)\}) = \prod_{i = 1}^N p(Y_i|\vec{X}_i) = \prod_{i=1}^N\frac{1}{\sigma\sqrt{2\pi}}e^{-\frac{1}{2}\big(\frac{Y_i - \langle \vec{X}_i  , \beta\rangle}{\sigma}\big)^2} = \frac{1}{(\sigma^22\pi)^{N/2}}e^{\sum_{i=1}^N-\frac{1}{2}\big(\frac{Y_i - \langle \vec{X}_i  , \beta\rangle}{\sigma}\big)^2}
+\]</span>
+Because the function <span class="math inline">\(f(x) := -\log(x)\)</span> is decreasing we may instead minimize the negative of the log of this expression:
+<span class="math display">\[
+-\log(\mathcal{L}(\beta,\sigma\ |\ \{ (Y_i, \vec{X}_i)\})) = \frac{N}{2}\log(\sigma^22\pi) + \frac{1}{2\sigma^2}\sum_{i=1}^N\bigg(Y_i - \langle \vec{X}_i  , \beta\rangle\bigg)^2
+\]</span>
+We first minimize with respect to <span class="math inline">\(\beta\)</span> as this is necessary to do first before finding the minimizing value of <span class="math inline">\(\sigma\)</span>. To do this we need to minimize the only term that depends on <span class="math inline">\(\beta\)</span>, namely the sum of squares <span class="math inline">\(SSE(\beta) := \sum_{i=1}^N\bigg(Y_i - \langle \vec{X}_i , \beta\rangle\bigg)^2\)</span> (hence Least Squares regression).</p>
+<div id="a-geometric-interlude" class="section level4">
+<h4>A geometric interlude</h4>
+<p>Before we do that, let’s think about what the expression <span class="math inline">\(SSE(\beta)\)</span> is. The term <span class="math inline">\(\langle \vec{X}_i , \beta\rangle\)</span> is linear in the unknowns <span class="math inline">\(\beta\)</span>, and hence so is <span class="math inline">\(Y_i - \langle \vec{X}_i , \beta\rangle\)</span>. Therefore, the square <span class="math inline">\(\bigg(Y_i - \langle \vec{X}_i , \beta\rangle\bigg)^2\)</span> is quadratic in <span class="math inline">\(\beta\)</span>. Thus since the full expression <span class="math inline">\(\sum_{i=1}^N\bigg(Y_i - \langle \vec{X}_i , \beta\rangle\bigg)^2\)</span> is a sum of quadratic functions in <span class="math inline">\(\beta\)</span> it too is a quadratic function in <span class="math inline">\(\beta\)</span>. Since all terms in the sum are squares, the full sum is never negative and its graph in <span class="math inline">\(\beta\)</span> is a <a href="https://en.wikipedia.org/wiki/Paraboloid">non-hyperbolic paraboloid</a>. Usually such shapes look like bowls. However, some can degenerate so that they become flat in one or more directions. Here’re some examples in R:</p>
+<p>Non-degenarte paraboloids look like this:</p>
+<pre class="r"><code>nice.paraboloid = function(x,y)
+{
+    return(x^2+0.5*y^2)
+}
+x = y = seq(from = -4, to = 4, by = 0.2)
+z = outer(x, y, nice.paraboloid)
+
+persp(x, y, z,
+      main=&quot;Plot of a Non-degenerate 2D Paraboloid&quot;,
+      theta = 30, phi = 15,
+      col = &quot;springgreen&quot;, shade = 0.5)</code></pre>
+<p><img src="/post/004_Regularization/main_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+<p>We can see such a paraboloid is bowl shaped. More technically it’s strictly convex, with a clear unique minimum point. However, paraboloids can degenerate so that they flatten out in some directions:</p>
+<pre class="r"><code>degenerate.paraboloid = function(x,y)
+{
+    return(x^2) #Does not change value as y changes
+}
+x = y = seq(from = -4, to = 4, by = 0.2)
+z = outer(x, y, degenerate.paraboloid)
+
+persp(x, y, z,
+      main=&quot;Plot of a Degenerate 2D Paraboloid&quot;,
+      theta = 30, phi = 15,
+      col = &quot;springgreen&quot;, shade = 0.5)</code></pre>
+<p><img src="/post/004_Regularization/main_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<p>In this example we changed the coefficient of <span class="math inline">\(y\)</span> from 0.5 to 0. The result is that in the <span class="math inline">\(y\)</span>-direction the paraboloid flattened out and it no longer looks bowl shaped. Instead there are infinitely many minimum points all on the axis <span class="math inline">\(\{(x,y): x = 0\}\)</span>. Note that if instead of making the coefficient of <span class="math inline">\(y\)</span> equal to 0 we had made it a positive number very close to zero then the mimima would become unique but would become hard to distinguish from nearby points:</p>
+<pre class="r"><code>tricky.paraboloid = function(x,y)
+{
+    return(x^2+ 0.05*y^2) #Notice the coefficient of y is quite small
+}
+x = y = seq(from = -4, to = 4, by = 0.2)
+z = outer(x, y, tricky.paraboloid)
+
+persp(x, y, z,
+      main=&quot;Plot of a Nearly-Degenerate 2D Paraboloid&quot;,
+      theta = 30, phi = 15,
+      col = &quot;springgreen&quot;, shade = 0.5)</code></pre>
+<p><img src="/post/004_Regularization/main_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>These pictures show what can go wrong with the minima of quadratic functions like <span class="math inline">\(SSE(\beta)\)</span> and why regularization may be needed. Now to get back to the minimizing the sum of squares <span class="math inline">\(SSE(\beta) = \sum_{i=1}^N\bigg(Y_i - \langle \vec{X}_i , \beta\rangle\bigg)^2\)</span>. If you’re reading this article I’m going to assume you’ve seen this derivation before so I’ll move a bit fast.</p>
+<p>First we define <span class="math inline">\(Y\in \mathbb{R}^{N\times 1}\)</span> with <span class="math inline">\(i\)</span>-th component equal to <span class="math inline">\(Y_i\)</span>. (Note an abuse of notation we are making: earlier <span class="math inline">\(Y\)</span> denoted a real valued random variable, but now we are using the same symbol to denote the vector of the <span class="math inline">\(N\)</span> realizations of this random variable.) In addition, let <span class="math inline">\(X\in \mathbb{R}^{N\times p}\)</span> with <span class="math inline">\(i\)</span>-th row equal to <span class="math inline">\(\vec{X}_i\)</span>. Then in matrix notation</p>
+<p><span class="math display">\[
+\sum_{i=1}^N\bigg(Y_i - \langle \vec{X}_i  , \beta\rangle\bigg)^2 = (Y - X\beta)^T(Y - X\beta)
+\]</span>
+Let <span class="math inline">\(\hat{\beta} = \text{argmax}_{\beta} \ \ (Y - X\beta)^T(Y - X\beta)\)</span> be the sought after minimizer. Since <span class="math inline">\(\hat{\beta}\)</span> is a minizer in the interior of the domain of <span class="math inline">\(SSE(\beta)\)</span>, the gradient of <span class="math inline">\(SSE(\beta)\)</span> at <span class="math inline">\(\hat{\beta}\)</span> must be 0:</p>
+<p><span class="math display">\[
+-2X^TY + 2X^TX\hat{\beta} = 0
+\]</span>
+therefore we obtain the normal equations</p>
+<p><span class="math display">\[
+X^TX\hat{\beta} = X^TY
+\]</span></p>
+<p>This is basically the same linear algebra problem as before: If the inverse <span class="math inline">\((X^TX)^{-1}\)</span> existed and was numerically nice then we can solve for <span class="math inline">\(\hat{\beta} = (X^TX)^{-1}X^TY\)</span>. However, if this matrix inverse does not exist (as can happen when we do not have enough rows/samples for the given number of columns/unknowns) then this formula is not useful.</p>
+<p>But as before we can simply regularize by replacing the matrix <span class="math inline">\(X^TX\)</span> by <span class="math inline">\(X^TX + \lambda I\)</span> for some sufficiently large <span class="math inline">\(\lambda\)</span>. Actually since <span class="math inline">\(X^TX\)</span> is non-negative definite<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> and symmetric all of it’s eigenvalues are non-negative. So any <span class="math inline">\(\lambda &gt; 0\)</span> would be sufficient to shift the eigenvalues into positive numbers. Now the regularized problem becomes <span class="math inline">\((X^TX + \lambda I)\hat{\beta} = X^TY\)</span>. Therefore we get the regularized MLE solution:</p>
+<p><span class="math display">\[
+\hat{\beta}_{reg} := (X^TX + \lambda I)^{-1}X^TY
+\]</span></p>
+<p>Does this regularized problem correspond to its own minimization problem? Yes! Working backwards, this new problem is equivalent to</p>
+<p><span class="math display">\[
+-2X^TY + 2X^TX\hat{\beta} + 2\lambda\hat{\beta}= 0
+\]</span>
+The left had side is the gradient of <span class="math inline">\((Y - X\beta)^T(Y - X\beta) + \lambda\sum_{j=1}^p\beta_j^2 = (Y - X\beta)^T(Y - X\beta) + \lambda \langle \beta, \beta\rangle\)</span> at <span class="math inline">\(\beta = \hat{\beta}\)</span> as can be checked. So the regularized problem corresponds to trying to minimize the expression <span class="math inline">\((Y - X\beta)^T(Y - X\beta) + \lambda\sum_{j=1}^p\beta_j^2 = (Y - X\beta)^T(Y - X\beta) + \lambda \langle \beta, \beta\rangle\)</span>. This of course is <span class="math inline">\(L^2\)</span>-regularization. Thus we have derived <span class="math inline">\(L^2\)</span>-regularization for OLS simply by seeking to transform the inverse problem that arises in OLS so that it may satisfy the Hadamard conditions.</p>
+</div>
+</div>
+<div id="an-illustrative-example" class="section level3">
+<h3>An Illustrative Example</h3>
+<p>Below we can see geometrically what regularization does. The sum of squares expression <span class="math inline">\((Y - X\beta)^T(Y - X\beta)\)</span> is quadratic in <span class="math inline">\(\beta\)</span>, but may have a graph that is a degenerate paraboloid. This is what causes it to have multiple minimizers in OLS and what makes the matrix <span class="math inline">\(X^TX\)</span> singular (more on this point in the next section). However the expression <span class="math inline">\(\lambda\langle \beta, \beta\rangle = \lambda\sum_{j = 1}^p\beta_j^2\)</span> is a strictly positive-definite quadratic form. Its graph is a non-degenerate bowl shaped paraboloid.</p>
+<p>Adding a non-degenerate paraboloid to something that is not bowl shaped makes the second graph more bowl shaped! Moreover it shifts the minimum of the 2nd graph towards the mimimum of the bowl. As an illustration, let’s take a look at an example where this is easy to see.</p>
+<pre class="r"><code>rm(list = ls())
+bumpy.function = function(x,y)
+{
+    return(sin(x)+sin(y))
+}
+
+nice.paraboloid = function(x,y)
+{
+    return(0.15*(x^2 + y^2)) #lambda = 0.15 is used
+}
+
+x = y = seq(from = -4, to = 4, by = 0.2)
+bumpy = outer(x, y, bumpy.function)
+paraboloid = outer(x, y, nice.paraboloid)
+bumpy.plus.paraboloid = bumpy + paraboloid
+
+persp(x, y, bumpy,
+      main=&quot;Graph of a bumpy function with multiple minima&quot;,
+      theta = 30, phi = 15,
+      col = &quot;springgreen&quot;, shade = 0.5)</code></pre>
+<p><img src="/post/004_Regularization/main_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<pre class="r"><code>persp(x, y, paraboloid,
+      main=&quot;Graph of a nice paraboloid&quot;,
+      theta = 30, phi = 15,
+      col = &quot;springgreen&quot;, shade = 0.5)</code></pre>
+<p><img src="/post/004_Regularization/main_files/figure-html/unnamed-chunk-4-2.png" width="672" /></p>
+<pre class="r"><code>persp(x, y, bumpy.plus.paraboloid,
+      main=&quot;Graph of a regularized bumpy function = bumpy function + paraboloid&quot;,
+      theta = 30, phi = 15,
+      col = &quot;springgreen&quot;, shade = 0.5)</code></pre>
+<p><img src="/post/004_Regularization/main_files/figure-html/unnamed-chunk-4-3.png" width="672" /></p>
+<p>Here we see that the most important geometric aspect of the regularizing term <span class="math inline">\(\lambda\langle\beta, \beta\rangle\)</span> is the fact that it is <a href="https://en.wikipedia.org/wiki/Convex_function">strictly convex</a>!! <strong><em>Although we will not dwell on it, it is impossible to overstate the theoretical importance of the previous sentence.</em></strong> As a matter of fact, geometrically speaking it’s clear that had we added <strong>any</strong> strictly convex function to the bumpy function we would have gotten something more bowl shaped. We will not go further into it here but you should know that <a href="https://en.wikipedia.org/wiki/Convex_analysis">convexity is one of those properties in mathematics out of which entire fields are created</a>.</p>
+</div>
+<div id="the-hessian-matrix-and-more-complex-models" class="section level3">
+<h3>The Hessian matrix and more complex models</h3>
+<p>In the OLS problem above the Maximum Likelihood estimator turned out to be the one that minimized the sum of squares expression <span class="math inline">\(SSE(\beta) := (Y - X\beta)^T(Y - X\beta)\)</span>. This expression can be expanded in matrix notation as</p>
+<p><span class="math display">\[
+Y^TY - Y^TX\beta - \beta^TX^TY + \beta^TX^TX\beta
+\]</span></p>
+<p>We see that there is a quadratic term (<span class="math inline">\(\beta^TX^TX\beta\)</span>) and the rest are terms with powers of <span class="math inline">\(\beta\)</span> less than 2. The matrix of second derivatives of this expression (known as the <a href="https://en.wikipedia.org/wiki/Hessian_matrix">Hessian matrix</a>) is therefore just the matrix of coefficients of this quadratic term: <span class="math inline">\(X^TX\)</span>. This Hessian is exactly what was the star of the show in the OLS problem!</p>
+<p>The Hessian of a function at a point tells us the convexity of the function at the point. <a href="https://en.wikipedia.org/wiki/Second_partial_derivative_test">If the Hessian is positive definite, then near the minimizing point the function is bowl shaped. If the Hessian is negative definite then near a maximizing point the function is shaped like an upside down bowl.</a></p>
+<p>Moreover, The Hessian is always a symmetric matrix by the <a href="https://en.wikipedia.org/wiki/Symmetry_of_second_derivatives#Formal_expressions_of_symmetry">equality of cross-derivatives</a>. So the previous point is really a statement about Hessian’s eigenvalues. In short, if the Hessian has all positive eigenvalues then it is positive definite and the function is bowl shaped near its minimizer.</p>
+<p>The OLS Hessian matrix <span class="math inline">\(X^TX\)</span> is symmetric and non-negative definite, so the graph of the sum of squares <span class="math inline">\(SSE(\beta) := (Y - X\beta)^T(Y - X\beta)\)</span> can only fail to be bowl shaped near the minimizer <span class="math inline">\(\hat{\beta}\)</span> if the matrix <span class="math inline">\(X^TX\)</span> has eigenvalues that are equal 0 (or positive but close to 0 in the case numerical instability). In which case, the graph of <span class="math inline">\(SSE(\beta)\)</span> is a degenerate non-hyperbolic paraboloid and there are multiple minimizing solutions <span class="math inline">\(\beta\)</span>.</p>
+<p><strong>Thus regularizing the matrix <span class="math inline">\(X^TX\)</span> is just regularizing the Hessian matrix of the function <span class="math inline">\(SSE(\beta)\)</span> we want to minimize!!</strong> This fact is what allows us to take the idea beyond OLS.</p>
+<p>Indeed if <span class="math inline">\(f(\beta)\)</span> is any 2nd order differentiable cost function in any machine learning model then by the linearity of the derivative</p>
+<p><span class="math display">\[
+\text{Hessian}(f + \lambda \langle \beta, \beta\rangle) = \text{Hessian}(f) + \lambda\text{Hessian}(\langle \beta, \beta\rangle) = \text{Hessian}(f) + \lambda I
+\]</span></p>
+<p>There we used the fact that <span class="math inline">\(\text{Hessian}(\langle \beta, \beta\rangle) = \text{Hessian}(\sum_i^p \beta_i^2) = I\)</span>. Because <span class="math inline">\(f\)</span> is almost arbitrary we see that we can apply <span class="math inline">\(L^2\)</span>-regularization to a very large family of problems, with the goal being to regularize the Hessian of <span class="math inline">\(f\)</span>. As an example let’s look at some other kinds of regression problems. For OLS we assumed the conditional distribution <span class="math inline">\(Y \ \ | \ \ \vec{X} \sim \mathcal{N}(\ \langle \vec{X} , \beta\rangle \ ,\ \sigma^2)\)</span>, but we may have chosen a different conditional distribution.</p>
+<p>If <span class="math inline">\(Y\)</span> takes on only values in the set <span class="math inline">\(\{0,1\}\)</span> then it is a Bernoulli random variable. This is the case in logistic regression where the conditional distribution of <span class="math inline">\(Y\)</span> given <span class="math inline">\(\vec{X}\)</span> is
+<span class="math display">\[
+Y \ \ | \ \ \vec{X} \sim \mathcal{B}(\ p = \phi(\langle \vec{X}  , \beta\rangle) \ )
+\]</span></p>
+<p>where <span class="math inline">\(\mathcal{B(p)}\)</span> is a Bernoulli distribution with probability of a positive event equal to <span class="math inline">\(p\)</span>, <span class="math inline">\(p = \text{E}[Y|\vec{X}] = \phi(\langle \vec{X} , \beta\rangle)\)</span> is the probability of a positive event given <span class="math inline">\(\vec{X}\)</span>, and <span class="math inline">\(\phi(t) = \frac{e^t}{1+e^t}\)</span> is the standard logit. In this case the conditional density <span class="math inline">\(p(Y|\vec{X})\)</span> can be written as</p>
+<p><span class="math display">\[
+p(Y|\vec{X}) = p^Y\big(1 - p)\big)^{1-Y} =\phi(\langle \vec{X}  , \beta\rangle)^Y\big(1 - \phi(\langle \vec{X}  , \beta\rangle)\big)^{1-Y}
+\]</span>
+So the negative log-likelihood is given by</p>
+<p><span class="math display">\[
+-\mathcal{l}(\beta) = -\sum_{i=1}^N Y_i\log(\phi(\langle \vec{X}_i  , \beta\rangle)) + (1-Y_i)\log(1-\phi(\langle \vec{X}_i  , \beta\rangle))
+\]</span></p>
+<p>This function may or may not look bowl shaped (i.e. strictly convex) near the <span class="math inline">\(\hat{\beta}\)</span> that minimizes it. In case it doesn’t we can make it so by adding <span class="math inline">\(\lambda \langle \beta, \beta\rangle = \lambda\sum_{j = 1}^p\beta_j^2\)</span> for some sufficiently large <span class="math inline">\(\lambda\)</span> and minimizing this new problem. The same applies to generalized linear models, neural networks, etc.</p>
+</div>
+</div>
+<div id="bias-variance-trade-offs-and-regularization" class="section level2">
+<h2>Bias-Variance trade offs and Regularization</h2>
+<p>Above we used regularization methods to make a problem “nicer” in the numerical sense (i.e. satisfying Hadamard’s conditions). But what does “nicer” mean in the statistical context? That is a multifaceted question. The first step is to recognize that what might be viewed as instability from the numerical point of view, can be understood as high variance from the statistical point of view.</p>
+<p>We illustrate with the OLS estimator. Suppose that the matrix <span class="math inline">\(X^TX\)</span> is indeed invertible. The standard OLS estimator is the random vector given by the normal equations:</p>
+<p><span class="math display">\[
+\hat{\beta} = (X^TX)^{-1}X^TY
+\]</span></p>
+<p>We see that this is an unbiased estimator of <span class="math inline">\(\beta\)</span>:</p>
+<p><span class="math display">\[
+\text{E}[\hat{\beta}] = \text{E}\big[\text{E}[\hat{\beta}|X]\big] = \text{E}\bigg[(X^TX)^{-1}X^T\text{E}[Y|X]\bigg] = \text{E}\bigg[(X^TX)^{-1}X^TX\beta\bigg] = \text{E}[\beta] = \beta
+\]</span></p>
+<p>Moreover, it’s easy enough to compute the conditional covariance matrix of <span class="math inline">\(\hat{\beta}\)</span>:
+<span class="math display">\[
+\text{Var}[\hat{\beta}|X] = (X^TX)^{-1}X^T\cdot \text{Var}[Y|X] \cdot X(X^TX)^{-1} = (X^TX)^{-1}X^T\cdot \sigma^2 I \cdot X(X^TX)^{-1} 
+\]</span></p>
+<p><span class="math display">\[
+= \sigma^2 (X^TX)^{-1}
+\]</span></p>
+<p>The <a href="https://en.wikipedia.org/wiki/Law_of_total_variance">unconditional covariance matrix can be computed as</a></p>
+<p><span class="math display">\[
+\text{Var}[\hat{\beta}] = \text{E}[\text{Var}[\hat{\beta}|X]] + \text{Var}[\text{E}[\hat{\beta}|X]] 
+\]</span></p>
+<p><span class="math display">\[
+= \sigma^2\text{E}[(X^TX)^{-1}] + \text{Var}[\beta] = \sigma^2\text{E}[(X^TX)^{-1}]
+\]</span></p>
+<p>This is harder to compute because it depends on the distribution of the random matrix <span class="math inline">\(X\)</span>. Regardless, we can see that what controls the variance of the estimator <span class="math inline">\(\hat{\beta}\)</span> (whether conditional or not) is the inverse matrix <span class="math inline">\((X^TX)^{-1}\)</span>. This is interesting because it shows that the matrix we identified as the Hessian of the OLS cost function (<span class="math inline">\(X^TX\)</span>) is also the matrix that controls the covariance of the OLS estimator.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>If any of the eigenvalues of the matrix <span class="math inline">\(X^TX\)</span> were “close” to <span class="math inline">\(0\)</span> then the eigenvalues of the inverse will be very large, causing the variance of <span class="math inline">\(\hat{\beta}\)</span> to be very large. If you’re familiar with VIFs, this is what causes large <a href="https://en.wikipedia.org/wiki/Variance_inflation_factor">variance inflation factors</a>.</p>
+<p>Regularization is used to reduce the variance in this estimator. If we denote the regularized estimator by:
+<span class="math display">\[
+\hat{\beta}_{reg} = (X^TX + \lambda I)^{-1}X^TY
+\]</span>
+Then this estimator is biased away from <span class="math inline">\(\beta\)</span>. To see this we first compute the conditional mean:</p>
+<p><span class="math display">\[
+\text{E}[\hat{\beta}_{reg}|X] = (X^TX + \lambda I)^{-1}X^TX\beta
+\]</span></p>
+<p><span class="math display">\[
+= (X^TX + \lambda I)^{-1}(X^TX + \lambda I)\beta - \lambda (X^TX + \lambda I)^{-1}\beta
+\]</span></p>
+<p><span class="math display">\[
+= \beta - \lambda (X^TX + \lambda I)^{-1}\beta
+\]</span></p>
+<p>Hence
+<span class="math display">\[
+\text{E}[\hat{\beta}_{reg}] = \beta - \lambda\text{E}\big[(X^TX + \lambda I)^{-1}\big]\beta
+\]</span>
+which is “<span class="math inline">\(\beta\)</span> minus something” and hence not equal to <span class="math inline">\(\beta\)</span>. However the effect on the variance is better:</p>
+<p><span class="math display">\[
+\text{Var}[\hat{\beta}_{reg}|X] = (X^TX + \lambda I)^{-1}X^T\cdot\text{Var}[Y|X]\cdot X(X^TX + \lambda I)^{-1}
+\]</span></p>
+<p><span class="math display">\[
+= \sigma^2(X^TX + \lambda I)^{-1}X^TX(X^TX + \lambda I)^{-1}
+\]</span></p>
+<p><span class="math display">\[
+= \sigma^2(X^TX + \lambda I)^{-1}(X^TX+\lambda I)(X^TX + \lambda I)^{-1} - \sigma^2\lambda(X^TX + \lambda I)^{-2}
+\]</span></p>
+<p><span class="math display">\[
+=  \sigma^2(X^TX + \lambda I)^{-1} - \sigma^2\lambda(X^TX + \lambda I)^{-2}
+\]</span>
+This variance formula may look messy but the gist is that instead of inverting <span class="math inline">\(X^TX\)</span> we are inverting <span class="math inline">\(X^TX + \lambda I\)</span>. The matrix <span class="math inline">\(X^TX + \lambda I\)</span> has larger eigenvalues than the matrix <span class="math inline">\(X^TX\)</span>. Therefore <span class="math inline">\(\text{Var}[\hat{\beta}_{reg}|X] = \sigma^2(X^TX + \lambda I)^{-1} - \sigma^2\lambda(X^TX + \lambda I)^{-2}\)</span> is smaller than <span class="math inline">\(\text{Var}[\hat{\beta}|X] = \sigma^2 (X^TX)^{-1}\)</span> in the sense that it has smaller eigenvalues. <strong>Thus regularization has increased bias, but reduced variance.</strong> Similar effects hold for more complex models than OLS, but instead of chasing formulas the read should try cooking up some numerical examples via Monte Carlo.</p>
+</div>
+<div id="what-about-the-bayesian-view-point" class="section level2">
+<h2>What about the Bayesian view point?</h2>
+<p>A very natural perspective on regularization can be found in Bayesian modeling, where regularization terms amount to simply specifying prior distributions. However, this is standard Bayesian theory and this post is already long enough :P</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Indeed suppose <span class="math inline">\(v\in \mathbb{R}^p\)</span> is any vector. Then <span class="math inline">\(\langle v, X^TXv\rangle = \langle Xv,Xv\rangle = ||Xv||^2 \ge 0\)</span>. Hence <span class="math inline">\(X^TX\)</span> is always non-negative definite.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>This is a general feature of Maximum Likelihood estimators called “<em>asymptotic efficiency</em>”, where the covariance matrix of the MLE estimator approaches a “best possible” covariance matrix as the sample size increases. Essentially the best possible covariance matrix that an unbiased estimator of <span class="math inline">\(\beta\)</span> can have is given given by the <a href="https://en.wikipedia.org/wiki/Cram%C3%A9r%E2%80%93Rao_bound">Cramer-Rao Bound</a> and is determined by the inverse of the <a href="https://en.wikipedia.org/wiki/Fisher_information">Fisher Information matrix</a>, whose <span class="math inline">\(ij\)</span>-component is <span class="math inline">\(-\text{E}[\partial^2\log(p(Y, \vec{X}| \beta))/\partial \beta_i\partial \beta_j]\)</span>. The beauty is that the Hessian of the negative loglikelihood is the sample estimator of this Fisher Information (where expectation is replaced by average over samples). This is why the Hessian is showing up as the determining factor in estimator covariance.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
+</content:encoded>	
     </item>
     
     <item>
@@ -528,6 +847,191 @@ Q(\theta | \theta_m) \ := \ \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \th
 &lt;/ol&gt;
 &lt;/div&gt;
 </description>
+      <content:encoded>
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>This is the first in a series of posts on Expectation Maximization (EM) type algorithms. Our goal will be to motivate some of the theory behind these algorithms. In later posts we will implement examples in C++, often with the help of the <a href="http://eigen.tuxfamily.org/index.php?title=Main_Page">Eigen</a> linear algebra library.</p>
+</div>
+<div id="maximum-likelihood" class="section level2">
+<h2>Maximum likelihood</h2>
+<p>A large subset of statistics is concerned with determining properties of a distribution by using data that is assumed to be generated by that distribution. A common example is <a href="https://en.wikipedia.org/wiki/Maximum_likelihood_estimation">Maximum Likelihood Estimation</a> (MLE). Here one assumes that a vector of observed data <span class="math inline">\(\vec{x}\in\mathbb{R}^N\)</span> is the realization of a random vector <span class="math inline">\(\vec{X}\)</span> with a probability density <span class="math inline">\(p(\vec{X} \ | \ \theta)\)</span> that depends on a vector of parameters <span class="math inline">\(\theta\)</span>. MLE amounts to estimating <span class="math inline">\(\theta\)</span> with the value that makes this probability density has high as possible for the observed data:</p>
+<p><span class="math display">\[
+\hat{\theta} := \text{argmax}_{\theta} \ \ p(\vec{x} \ | \ \theta)
+\]</span>
+As a function of <span class="math inline">\(\theta\)</span>, the density <span class="math inline">\(\mathcal{L}(\theta; \vec{x}) := p(\vec{x} \ | \ \theta)\)</span> is called the likelihood. Because probability densities are positive for the realized values <span class="math inline">\(\vec{x}\)</span> of <span class="math inline">\(\vec{X}\)</span>, the above problem is equivalent to maximizing the logarithm of the likelihood:
+<span class="math display">\[
+\hat{\theta} := \text{argmax}_{\theta} \ \ \log(p(\vec{x} \ | \ \theta))
+\]</span>
+(The main practical reason behind this log transformation is that it often makes the problem easier numerically. The theoretical advantage is that it ties MLE to the theory of the <a href="https://en.wikipedia.org/wiki/Fisher_information">Fisher Information</a>).</p>
+</div>
+<div id="dependence-structures-and-problems-with-hidden-variables" class="section level2">
+<h2>Dependence structures and problems with hidden variables</h2>
+<p>The situation in the last section can be summarized by the simple dependence structure (or <em>Markov</em> diagram) <span class="math inline">\(\theta \to \vec{X}\)</span>. That is, given the value of <span class="math inline">\(\theta\)</span> we can determined the distribution of <span class="math inline">\(\vec{X}\)</span>, namely <span class="math inline">\(p(\vec{X} \ | \ \theta)\)</span>.</p>
+<p>However, in many applications we may only have partial observations of the data we want, with some of the relevant information remaining unobserved/hidden. For example, suppose 100 identical and independent dice are thrown in an experiment. The dice are not necessarily uniformly weighted, with probabilities of landing 1,2,…,6 given by <span class="math inline">\(\theta = [p_1, p_2,...,p_6]\)</span>. Suppose the dice land with values represented by <span class="math inline">\(\vec{X} = [X_1, X_2, ... X_{100}]\)</span> with <span class="math inline">\(X_i\)</span> being the number the <span class="math inline">\(i^{th}\)</span> die lands on. Suppose also that in the experiment we are only able to observe whether each die landed on an even or odd number. That is, we observe a vector <span class="math inline">\(\vec{Y}\)</span> given by</p>
+<p><span class="math display">\[
+Y_i = X_i \mod 2
+\]</span></p>
+<p>for <span class="math inline">\(i \in \{1, 2, ... 100\}\)</span>. In this case the dependence structure is a little more complex: <span class="math inline">\(\theta \to \vec{X} \to \vec{Y}\)</span>. That is, once we know the value of <span class="math inline">\(\vec{X}\)</span> we can fully specify the distribution of <span class="math inline">\(\vec{Y}\)</span> without knowing the value of <span class="math inline">\(\theta\)</span>. We would have the Markov property for densities:</p>
+<p><span class="math display">\[
+p(\vec{y} \ | \ \vec{x}, \theta) = p(\vec{y} \ | \ \vec{x})
+\]</span></p>
+<p>In general, we have a dependence structure given by <span class="math inline">\(\theta \to \vec{X} \to \vec{Y}\)</span>, we observe only <span class="math inline">\(\vec{Y}=\vec{y}\)</span> and we want to estimate the parameters <span class="math inline">\(\theta\)</span>. The MLE estimator would be:
+<span class="math display">\[
+\hat{\theta} := \text{argmax}_{\theta} \ \ \log(p(\vec{y} \ | \ \theta))
+\]</span>
+All of the theory of MLE applies in this case. In the example above this would be relatively easy. However, there are times this maximization problem is very difficult. Often the density <span class="math inline">\(p(\vec{y} \ | \ \theta)\)</span> may be much more complicated than the density <span class="math inline">\(p(\vec{x} \ | \ \theta)\)</span> of the hidden data that we wish we had.</p>
+<p>In such as situation, if we knew <span class="math inline">\(\vec{x}\)</span> then we can replace the above problem with <span class="math inline">\(\hat{\theta} := \text{argmax}_{\theta} \ \ \log(p(\vec{x} \ | \ \theta))\)</span>. In fact, we wouldn’t even need to know exactly what the value of <span class="math inline">\(\vec{x}\)</span> is but only what the value of <span class="math inline">\(\log(p(\vec{x} \ | \ \theta))\)</span> is for a given <span class="math inline">\(\theta\)</span>.</p>
+</div>
+<div id="a-general-recipe-for-em-algorithms" class="section level2">
+<h2>A general recipe for EM algorithms</h2>
+<p>The idea of EM is indeed to try and maximize <span class="math inline">\(\log(p(\vec{x} \ | \ \theta))\)</span> instead of <span class="math inline">\(\log(p(\vec{y} \ | \ \theta))\)</span>, but because we do not know <span class="math inline">\(\log(p(\vec{x} \ | \ \theta))\)</span> to instead use an approximation/estimate of it.</p>
+<p>How to approximate such an expression? The quantity <span class="math inline">\(\log(p(\vec{x} \ | \ \theta))\)</span> is a random variable (depending on the unknown value <span class="math inline">\(\vec{x}\)</span> of <span class="math inline">\(\vec{X}\)</span>). To estimate it in a meaningful way we need to use the most informative distribution related to <span class="math inline">\(\vec{x}\)</span>. Because we know <span class="math inline">\(\vec{y}\)</span> the best such distribution is <span class="math inline">\(p(\vec{x}|\vec{y},\theta)\)</span>.</p>
+<p>The problem is this distribution (or any other) will necessarily depend <span class="math inline">\(\theta\)</span>, which we do not know! At first this seems like a circular trap, because to estimate <span class="math inline">\(\log(p(\vec{x} \ | \ \theta))\)</span> using <span class="math inline">\(p(\vec{x}|\vec{y},\theta)\)</span> we need to know <span class="math inline">\(\theta\)</span>, but to estimate <span class="math inline">\(\theta\)</span> we need to know <span class="math inline">\(\log(p(\vec{x} \ | \ \theta))\)</span>. However the trap hints at a solution: simply alternate between estimating the random variable <span class="math inline">\(\log(p(\vec{x} \ | \ \theta))\)</span> using a current guess of <span class="math inline">\(\theta\)</span> and then use this updated estimate of <span class="math inline">\(\log(p(\vec{x} \ | \ \theta))\)</span> to update our guess of <span class="math inline">\(\theta\)</span>. More formally we can summarize EM in 5 steps:</p>
+<ul>
+<li><p><strong>Step 1:</strong> Let <span class="math inline">\(m = 0\)</span>. Make an initial estimate <span class="math inline">\(\theta_m\)</span> for <span class="math inline">\(\theta\)</span>.</p></li>
+<li><p><strong>Step 2:</strong> Given the observed data <span class="math inline">\(\vec{y}\)</span> and pretending for the moment that our current guess <span class="math inline">\(\theta_m\)</span> is correct, construct the conditional probability distribution <span class="math inline">\(p(\vec{x}|\vec{y},\theta_m)\)</span> of the hidden data <span class="math inline">\(\vec{x}\)</span> given all known information.</p></li>
+<li><p><strong>Step 3:</strong> Using the distribution <span class="math inline">\(p(\vec{x}|\vec{y},\theta_m)\)</span> construct an estimator/approximation of the desired log-likelihood <span class="math inline">\(\log(p(\vec{x} \ | \ \theta))\)</span> for arbitrary <span class="math inline">\(\theta\)</span>. We denote this approximation by <span class="math inline">\(Q(\theta|\theta_m)\)</span>.</p></li>
+<li><p><strong>Step 4:</strong> Set <span class="math inline">\(\theta_{m+1}\)</span> equal to a value of <span class="math inline">\(\theta\)</span> that maximizes the current approximation <span class="math inline">\(Q(\theta|\theta_m)\)</span> of <span class="math inline">\(\log(p(\vec{x} \ | \ \theta))\)</span>.</p></li>
+<li><p><strong>Step 5:</strong> Return to step 2 and repeat until some stopping criteria is met.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p></li>
+</ul>
+<p>Practically speaking, this algorithm would be applied when each of these steps is significantly easier than the original MLE problem of <span class="math inline">\(\hat{\theta} := \text{argmax}_{\theta} \ \ \log(p(\vec{y} \ | \ \theta))\)</span>. As a general example, this is often the case when the model is linear with respect to <span class="math inline">\(\vec{X}\)</span>, but the information loss of going from <span class="math inline">\(\vec{X}\)</span> to <span class="math inline">\(\vec{Y}\)</span> is nonlinear and non-invertible (we’ll give examples in later posts).</p>
+</div>
+<div id="constructing-an-estimator-for-logpvecx-theta" class="section level2">
+<h2>Constructing an estimator for <span class="math inline">\(\log(p(\vec{X} \ | \ \theta))\)</span></h2>
+<p>How do we fill in the blank left by step 3 above? That is, how do we use the probability density <span class="math inline">\(p(\vec{x}|\vec{y},\theta_m)\)</span> to estimate the value of the random variable <span class="math inline">\(\log(p(\vec{X} \ | \ \theta))\)</span>? Two possibilities come to mind.</p>
+<div id="point-estimate-type-em" class="section level3">
+<h3>Point-estimate type EM</h3>
+<p>One possibility is to let
+<span class="math display">\[
+\vec{x}_m = \vec{x}_m(\vec{y}, \theta_m) := \text{argmax}_{\vec{x}} \ p(\vec{x}|\vec{y},\theta_m)
+\]</span>
+and then define
+<span class="math display">\[
+Q(\theta | \theta_m) := \log(p(\vec{x}_m \ | \ \theta))
+\]</span>
+This is called point-estimate EM. Here we use “the most likely” value of <span class="math inline">\(\vec{X}\)</span> as determined by the density <span class="math inline">\(p(\vec{x}|\vec{y},\theta_m)\)</span> and then impute this value into our log-likelihood that we want to maximize. Another possibility would be to let</p>
+<p><span class="math display">\[
+\vec{x}_m = \vec{x}_m(\vec{y}, \theta_m) := \ \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \vec{X}\big]
+\]</span>
+and let <span class="math inline">\(Q\)</span> be as before.</p>
+<p>The idea of these type of EM algorithms is to first estimate the missing data <span class="math inline">\(\vec{x}\)</span> and then impute the result into <span class="math inline">\(log(p(\vec{x}\ |\ \theta))\)</span>.</p>
+</div>
+<div id="expectation-em-i.e.-standard-em" class="section level3">
+<h3>Expectation EM (i.e. standard EM)</h3>
+<p>There is a theoretically more elegant way. As mentioned earlier, we do not in fact need an estimate of the missing data <span class="math inline">\(\vec{x}\)</span>. One of the best ways to estimate the value of a random variable with respect to a conditional distribution is to simply compute the conditional expectation of that variable with respect to that conditional distribution:</p>
+<p><span class="math display">\[
+Q(\theta | \theta_m) \ := \ \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(\vec{X} \ | \ \theta)) \big] = \int_{\mathcal{X}} \log(p(\vec{x} \ | \ \theta)) \ p(\vec{x}|\vec{y},\theta_m) \ d\vec{x} 
+\]</span>
+Here we’re computing the mean of <span class="math inline">\(\log(p(\vec{X} \ | \ \theta))\)</span> with respect to the density <span class="math inline">\(p(\vec{x}|\vec{y},\theta_m)\)</span>. As is common when using expectations, this second method has some advantages we’ll see later. When we refer to EM we will always mean this case, unless otherwise specified.</p>
+</div>
+</div>
+<div id="qthetatheta_m-for-i.i.d.-samples" class="section level2">
+<h2><span class="math inline">\(Q(\theta|\theta_m)\)</span> for I.I.D. samples</h2>
+<p>So far everything has been rather general, applying to any random vectors <span class="math inline">\(\vec{X}\)</span> and <span class="math inline">\(\vec{Y}\)</span>. Many problems assume that data are generated independently and identically distributed (I.I.D.) so it’s helpful to have a formulation for this particular case.</p>
+<p><strong>Proposition:</strong> Suppose that the components of <span class="math inline">\(\vec{X}\)</span> are IID (given <span class="math inline">\(\theta\)</span>), that is:
+<span class="math display">\[
+p(\vec{x}|\theta) = \prod_{i = 1}^N p(x_i|\theta) \  \qquad \forall x, \theta
+\]</span>
+Suppose also that the dependence structure <span class="math inline">\(\theta \to \vec{X} \to \vec{Y}\)</span> splits into subgraphs as <span class="math inline">\(\theta \to X_i \to Y_i\)</span> for all <span class="math inline">\(i = 1, 2, ..., N\)</span>. This just means that given <span class="math inline">\(X_i\)</span>, the distribution <span class="math inline">\(Y_i\)</span> is independent of all other variables:
+<span class="math display">\[
+p(y_i|\vec{x}, \theta, y_1, y_2, ..., y_{i-1}, y_{i+1}, ..., y_N) = p(y_i|x_i)
+\]</span>
+Then <span class="math inline">\(Q(\theta|\theta_m):= \ \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m} \big[ \log(p(\vec{X} \ | \ \theta)) \big]\)</span> can be written as:
+<span class="math display">\[
+Q(\theta|\theta_m) = \sum_{i=1}^N Q_i(\theta|\theta_m)
+\]</span>
+where
+<span class="math display">\[
+Q_i(\theta|\theta_m) := \ \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big].
+\]</span>
+<strong>Proof:</strong> The proof begins by showing that the joint elements <span class="math inline">\((X_i,Y_i)\)</span> are independent across <span class="math inline">\(i\)</span>, that is:
+<span class="math display">\[
+p(\vec{x},\vec{y}|\theta) = \prod_{i = 1}^N p(x_i, y_i|\theta). 
+\]</span>
+To prove this we start by applying the multiplication theorem for probability densities:
+<span class="math display">\[\begin{equation}
+  \begin{aligned}
+
+p(\vec{x},\vec{y}|\theta) &amp;= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_N|\vec{x},\theta)p(\vec{x}|\theta) \qquad \text{by the multiplication theorem}\\
+
+    &amp;= p(y_1|x_1,\theta)...p(y_N|x_N,\theta)p(\vec{x}|\theta) \qquad \text{by conditional independence but keeping theta} \\
+    &amp;= p(\vec{x}|\theta)\prod_{i=1}^Np(y_i|x_i,\theta) \\
+    &amp;=\prod_{i=1}^Np(y_i|x_i,\theta)p(x_i|\theta) \qquad \text{by independence of the x&#39;s} \\
+    &amp;= \prod_{i=1}^Np(y_i,x_i|\theta).
+  \end{aligned}
+\end{equation}\]</span></p>
+<p>Next we have that for each <span class="math inline">\(i\)</span></p>
+<p><span class="math display">\[\begin{equation}
+  \begin{aligned}
+  
+  p(x_i|\vec{y},\theta) &amp;= \frac{p(x_i,\vec{y}|\theta)}{p(\vec{y}|\theta)} \qquad \text{by Bayes} \\
+  
+  &amp;= \frac{\int p(\vec{x},\vec{y}|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int p(\vec{x},\vec{y}|\theta)d\vec{x}} \\
+  
+  &amp;= \frac{\int \prod_{j=1}^Np(y_j,x_j|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int \prod_{j=1}^Np(y_j,x_j|\theta)d\vec{x}} \\
+  
+  &amp;= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N \int p(y_j,x_j|\theta)dx_j}{\prod_{j=1}^N\int p(y_j,x_j|\theta) dx_j} \\
+  
+  &amp;= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N p(y_j|\theta)}{\prod_{j=1}^N p(y_j|\theta)}\\
+  
+  &amp;= \frac{p(x_i,y_i|\theta)}{p(y_i|\theta)}\\
+  
+  &amp;= p(x_i|y_i,\theta)
+
+  \end{aligned}
+\end{equation}\]</span></p>
+<p>Hence <span class="math inline">\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)</span>. Therefore we have</p>
+<p><span class="math display">\[\begin{equation}
+  \begin{aligned}
+  
+  Q(\theta, \theta_m) &amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(\vec{X} \ | \ \theta)) \big] \\
+  
+  &amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(\prod_{i = 1}^N p(X_i \ | \ \theta)) \big] \\
+  
+  &amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \sum_{i = 1}^N \log(p(X_i \ | \ \theta)) \big]\\
+  
+  &amp;= \sum_{i = 1}^N \text{E}_{X_i \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big] \\
+  
+  &amp;= \sum_{i = 1}^N \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big]
+  
+  = \sum_{i=1}^N Q_i(\theta|\theta_m)
+
+  \end{aligned}
+\end{equation}\]</span>
+Where we used <span class="math inline">\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)</span> in the 2nd to last equality. <strong>QED</strong></p>
+</div>
+<div id="maximum-a-posteriori-em-and-regularizing-priors" class="section level2">
+<h2>Maximum A Posteriori EM and regularizing priors</h2>
+<p>The EM algorithm is easily extendable to regularized MLE. This is usually referred to as Maximum A Posteriori (MAP) in the Bayesian setting, which we adopt. Here the penalty term is interpreted as the log of the prior density on <span class="math inline">\(\theta\)</span>, and the function to be maximized is the posterior density of <span class="math inline">\(\theta\)</span> given the data. By Bayes’ Theorem
+<span class="math display">\[
+p(\theta|\vec{y}) \propto p(\vec{y}|\theta)p(\theta)
+\]</span>
+where the proportionality constant is independent of <span class="math inline">\(\theta\)</span>. Thus the MAP estimator is
+<span class="math display">\[
+\hat{\theta}_{MAP} := \text{argmax}_{\theta} \ \log(p(\theta|\vec{y})) \ = \text{argmax}_{\theta} \ \log(p(\vec{y}|\theta)) + \log(p(\theta))
+\]</span>
+The way to extend EM to this situation is clear (at least formally): Simply replace the maximization step (step 4 above) in EM with maximizing <span class="math inline">\(Q(\theta|\theta_m) + \log(p(\theta))\)</span> instead of simply <span class="math inline">\(Q(\theta|\theta_m)\)</span>:</p>
+<p><span class="math display">\[
+\theta_{m+1} := \text{argmax}_{\theta} \ \ \ Q(\theta|\theta_m) + \log(p(\theta))
+\]</span>
+where as before <span class="math inline">\(Q\)</span> is given by</p>
+<p><span class="math display">\[
+Q(\theta | \theta_m) \ := \ \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(\vec{X} \ | \ \theta)) \big] = \int_{\mathcal{X}} \log(p(\vec{x} \ | \ \theta)) \ p(\vec{x}|\vec{y},\theta_m) \ d\vec{x} 
+\]</span></p>
+</div>
+<div id="monotonicity-of-the-em-algorithm" class="section level2">
+<h2>Monotonicity of the EM algorithm</h2>
+<p>At this point the reader has all the theory needed to begin applying EM where they believe it’s a good fit. Before we end the post though let’s mention at least one result that shows that EM is indeed a generalization of MLE to the case of hidden data: under relatively weak assumptions of the algorithm causes the log-likelihood <span class="math inline">\(\log(p(\vec{y}|\theta_m))\)</span> to be an <a href="https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm#Proof_of_correctness">increasing sequence in <span class="math inline">\(m\)</span></a>.</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Step 2 allows for a whole family of such algorithms, one for each possible approximator to <span class="math inline">\(\log(p(\vec{x} \ | \ \theta))\)</span>. Step 4 can also be generalized. Since the value of <span class="math inline">\(\theta_{m+1}\)</span> maximizes <span class="math inline">\(Q(\theta | \theta_m)\)</span> then <span class="math inline">\(Q(\theta_{m+1} | \theta_m) \ge Q(\theta_m | \theta_m)\)</span>. Instead of seeking to maximize <span class="math inline">\(Q(\theta | \theta_m)\)</span> we may simply seek a value of <span class="math inline">\(\theta_{m+1}\)</span> that improves on <span class="math inline">\(\theta_m\)</span> in the sense of this inequality. For step 5, the stopping criteria are up to the implementer.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
+</content:encoded>	
     </item>
     
     <item>
@@ -664,6 +1168,135 @@ print(y)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Anyway this was just a small example. There are many many directions one can choose to take with metaprogramming. Even creating new preprocessing directives such as unrolling loops, defining constexprs, etc.&lt;/p&gt;
 &lt;/div&gt;
 </description>
+      <content:encoded>
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>In this post we give a simple illustrative example of how data generated by R code can be used by compiled languages such as C++ at compile time, instead of run-time, inside Rmarkdown.</p>
+<p>This is an example of inter-language code generation. Metaprogramming/code generation is an extremely powerful technique but it’s also one that is very easy to overdo. This is just a fun example to learn from. Thorough testing is very important for any production code.</p>
+</div>
+<div id="using-other-languages-in-rmarkdown" class="section level2">
+<h2>Using other languages in Rmarkdown</h2>
+<p>Out of the box Rmarkdown can work with the following languages assuming a proper back-end is available:</p>
+<pre class="r"><code>names(knitr::knit_engines$get())</code></pre>
+<pre><code>##  [1] &quot;awk&quot;         &quot;bash&quot;        &quot;coffee&quot;      &quot;gawk&quot;        &quot;groovy&quot;     
+##  [6] &quot;haskell&quot;     &quot;lein&quot;        &quot;mysql&quot;       &quot;node&quot;        &quot;octave&quot;     
+## [11] &quot;perl&quot;        &quot;psql&quot;        &quot;Rscript&quot;     &quot;ruby&quot;        &quot;sas&quot;        
+## [16] &quot;scala&quot;       &quot;sed&quot;         &quot;sh&quot;          &quot;stata&quot;       &quot;zsh&quot;        
+## [21] &quot;highlight&quot;   &quot;Rcpp&quot;        &quot;tikz&quot;        &quot;dot&quot;         &quot;c&quot;          
+## [26] &quot;fortran&quot;     &quot;fortran95&quot;   &quot;asy&quot;         &quot;cat&quot;         &quot;asis&quot;       
+## [31] &quot;stan&quot;        &quot;block&quot;       &quot;block2&quot;      &quot;js&quot;          &quot;css&quot;        
+## [36] &quot;sql&quot;         &quot;go&quot;          &quot;python&quot;      &quot;julia&quot;       &quot;sass&quot;       
+## [41] &quot;scss&quot;        &quot;theorem&quot;     &quot;lemma&quot;       &quot;corollary&quot;   &quot;proposition&quot;
+## [46] &quot;conjecture&quot;  &quot;definition&quot;  &quot;example&quot;     &quot;exercise&quot;    &quot;proof&quot;      
+## [51] &quot;remark&quot;      &quot;solution&quot;</code></pre>
+<p>Although we can use R’s native foreign function interface to call compiled code, for C++ a higher level alternative is to use <a href="https://cran.r-project.org/web/packages/Rcpp/index.html">Rcpp</a>. In Rmarkdown we can <a href="https://bookdown.org/yihui/rmarkdown/language-engines.html#rcpp">compile C++ code chunks using Rcpp and export the compiled functions to be available for use in R</a>.</p>
+<p>As a common example, we can compile the following code</p>
+<pre class="cpp"><code>#include &lt;Rcpp.h&gt;
+using namespace Rcpp;
+
+// [[Rcpp::export]]
+NumericVector timesTwo(NumericVector x) 
+{
+    return x * 2;
+}</code></pre>
+<p>and use the exported function in R</p>
+<pre class="r"><code>timesTwo(1:10)</code></pre>
+<pre><code>##  [1]  2  4  6  8 10 12 14 16 18 20</code></pre>
+</div>
+<div id="registering-a-user-defined-language-engine-in-knitr" class="section level2">
+<h2>Registering a user-defined language engine in Knitr</h2>
+<p>We can create <a href="https://bookdown.org/yihui/rmarkdown-cookbook/custom-engine.html">user-defined engines</a> to control exactly how the code chunk is sourced, or even modify existing engines. To get an idea we can look at the default Rcpp engine used by knitr:</p>
+<pre class="r"><code>knitr::knit_engines$get()$Rcpp</code></pre>
+<pre><code>## function (options) 
+## {
+##     sourceCpp = getFromNamespace(&quot;sourceCpp&quot;, &quot;Rcpp&quot;)
+##     code = one_string(options$code)
+##     opts = options$engine.opts
+##     cache = options$cache &amp;&amp; (&quot;cacheDir&quot; %in% names(formals(sourceCpp)))
+##     if (cache) {
+##         opts$cacheDir = paste(valid_path(options$cache.path, 
+##             options$label), &quot;sourceCpp&quot;, sep = &quot;_&quot;)
+##         opts$cleanupCacheDir = TRUE
+##     }
+##     if (!is.environment(opts$env)) 
+##         opts$env = knit_global()
+##     if (options$eval) {
+##         message(&quot;Building shared library for Rcpp code chunk...&quot;)
+##         do.call(sourceCpp, c(list(code = code), opts))
+##     }
+##     options$engine = &quot;cpp&quot;
+##     engine_output(options, code, &quot;&quot;)
+## }
+## &lt;environment: namespace:knitr&gt;</code></pre>
+<p>Using the default engine above as a template we can define a new knitr engine for compiling C++. One that can read and make use of more dynamic R data in C++ before compilation (or even dynamically create <code>Makevars</code> files to control compilation flags). First let’s include the knitr package:</p>
+<pre class="r"><code>library(knitr)</code></pre>
+<p>Next let’s take a crack at defining a new engine to compile C++ code. In this example we will modify the current Rcpp engine to take in an <code>extra</code> field (but otherwise behave the same).</p>
+<pre class="r"><code>knit_engines$set(RcppFoo = function(options) {
+    
+    extra = options$extra
+    
+    sourceCpp = getFromNamespace(&quot;sourceCpp&quot;, &quot;Rcpp&quot;)
+    
+    ## Code is read as a list of strings, one list element per line
+    ## Here we append extra code that may be defined in R to the 
+    ## code written in the chunk
+    code = c(extra, options$code)
+    code = paste(code, collapse = &#39;\n&#39;)
+    opts = options$engine.opts
+    
+    if (!is.environment(opts$env)) 
+        opts$env = knit_global()
+
+    if (options$eval) {    
+        message(&quot;Building shared library for Rcpp code chunk...&quot;)
+        do.call(sourceCpp, c(list(code = code), opts))
+    }
+    options$engine = &quot;cpp&quot;
+    engine_output(options, 
+                  options$code, 
+                  paste(&quot;Added the lines:\n&quot;, 
+                      paste(extra, collapse = &#39;\n&#39;), 
+                      sep = &#39;\n&#39;))
+})</code></pre>
+<p>Next we test by creating some data in R and using that as a compile time constant in C++. Here we pass values of pi and e as static const doubles to C++ (a much cleaner API is possible of course).</p>
+<pre class="r"><code>constants = list(
+    paste(&#39;static const double Pi =&#39;, pi, &#39;;&#39;),
+    paste(&#39;static const double Euler =&#39;, exp(1),&#39;;&#39;)
+)</code></pre>
+<p>This already highlights a danger as we have not considered exactly how R might convert these double precision floating point numbers to strings. Regardless, we proceed. To use the new engine we run the engine as <code>{RcppFoo test_chunk, extra = constants}</code></p>
+<pre class="cpp"><code>#include &lt;Rcpp.h&gt;
+using namespace Rcpp;
+
+// [[Rcpp::export]]
+NumericVector timesFoo(NumericVector x) 
+{
+    return x * Pi + Euler;
+}</code></pre>
+<pre><code>## Added the lines:
+## 
+## static const double Pi = 3.14159265358979 ;
+## static const double Euler = 2.71828182845905 ;</code></pre>
+<pre class="r"><code>x = timesFoo(1:10)
+print(x)</code></pre>
+<pre><code>##  [1]  5.859874  9.001467 12.143060 15.284652 18.426245 21.567838 24.709430
+##  [8] 27.851023 30.992616 34.134208</code></pre>
+<p>We get <strong>almost</strong> the same result as in R</p>
+<pre class="r"><code>y = pi*(1:10)+exp(1)
+print(y)</code></pre>
+<pre><code>##  [1]  5.859874  9.001467 12.143060 15.284652 18.426245 21.567838 24.709430
+##  [8] 27.851023 30.992616 34.134208</code></pre>
+<p>But metaprogramming can be dangerous when mixed with floating point arithmetic. In this case some loss of precision occurred with the doubles when converting to strings:</p>
+<pre class="r"><code>x - y</code></pre>
+<pre><code>##  [1]  1.776357e-15  0.000000e+00 -3.552714e-15 -7.105427e-15 -1.065814e-14
+##  [6] -1.421085e-14 -1.776357e-14 -1.776357e-14 -2.131628e-14 -2.842171e-14</code></pre>
+<pre class="r"><code>as.double(as.character(pi))*(1:10) + as.double(as.character(exp(1))) - x</code></pre>
+<pre><code>##  [1] 0.000000e+00 0.000000e+00 0.000000e+00 0.000000e+00 0.000000e+00
+##  [6] 3.552714e-15 3.552714e-15 0.000000e+00 0.000000e+00 0.000000e+00</code></pre>
+<p>Anyway this was just a small example. There are many many directions one can choose to take with metaprogramming. Even creating new preprocessing directives such as unrolling loops, defining constexprs, etc.</p>
+</div>
+</content:encoded>	
     </item>
     
     <item>
@@ -852,6 +1485,187 @@ print(R$sdev^2)&lt;/code&gt;&lt;/pre&gt;
 &lt;/ol&gt;
 &lt;/div&gt;
 </description>
+      <content:encoded>
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p><a href="https://en.wikipedia.org/wiki/Principal_component_analysis">Principal component analysis</a> is one of the most commonly used techniques in statistical modeling and machine learning. In typical applications it serves as a (linear) dimensionality reduction, allowing one to project high dimensional data onto a lower dimensional subspace. This can help make a problem that was previously computationally intractable easier, or can help transform feature variables into something more useful. However, most presentations fail to give a sense of “why” and students are left without an understanding of exactly what PCA is and what assumptions it makes. This can lead to model risk issues and prevent users from being able to modify the technique when different assumptions hold. The purpose of this post is to rectify this with a derivation for those that want to know why, which should be everyone. For fun we implement what we learn at the end in a few lines of C++.</p>
+<div id="a-note-on-difficulty" class="section level3">
+<h3>A note on difficulty</h3>
+<p>To understand what follows you need to understand linear algebra and undergraduate probability. <strong>The proof that follows is as clear, honest, and self-contained as I think is possible, but most will not find it easy</strong>. In my opinion if a truly easy and theoretically honest proof were possible you would have already seen it.</p>
+</div>
+</div>
+<div id="deriving-pca" class="section level2">
+<h2>Deriving PCA</h2>
+<p>As scientists our data is often times multidimensional because it involves measurements of many features of the world. Equally often, our data may have some “randomness” in it that we can not capture (so that if the experiment that was run to obtain the data were rerun the results may not be exactly the same).</p>
+<p>Let <span class="math inline">\(\vec{X} = [X^1, X^2, ..., X^d]\)</span> be a <span class="math inline">\(d\)</span>-dimensional random vector <a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> that represents the measured values of <span class="math inline">\(d\)</span> feature variables.</p>
+<p>We want to capture the “shape” of the randomness of <span class="math inline">\(\vec{X}\)</span>. For example, in what directions does <span class="math inline">\(\vec{X}\)</span> vary the most? In what directions does it vary the least? This is important because if, for example, <span class="math inline">\(\vec{X}\)</span> had a lot of randomness in its first coordinate <span class="math inline">\(X^1\)</span>, but had very little randomness in the other coordinates, then independent measurements of <span class="math inline">\(\vec{X}\)</span> would differ a lot in the first coordinate, but not much in the others. The other coordinates would all give roughly the same values and hence roughly the same information. The other coordinates would in a sense be redundant: replacing <span class="math inline">\(\vec{X}\)</span> by <span class="math inline">\(X^1\)</span> would not lose a lot of information but would have the benefit of having to deal with only 1 feature as opposed to <span class="math inline">\(d\)</span> features (i.e. a dimensionality reduction).</p>
+<p>To proceed we need to define some measure of variation or randomness. A good one is variance. Our goal is to decompose <span class="math inline">\(\vec{X}\)</span> into vectors along which <span class="math inline">\(\vec{X}\)</span> has the most variance. Directions are represented by unit vectors (i.e. vectors of length 1). If <span class="math inline">\(\vec{\omega}\)</span> is a non-random unit vector, then the component of <span class="math inline">\(\vec{X}\)</span> along <span class="math inline">\(\vec{\omega}\)</span> is given by</p>
+<p><span class="math display">\[
+\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\ \vec{\omega}
+\]</span>
+where <span class="math inline">\(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\)</span> denotes the inner product in <span class="math inline">\(\mathbb{R}^d\)</span> (aka, dot product). Since <span class="math inline">\(\vec{\omega}\)</span> is not random, the randomness of <span class="math inline">\(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\ \vec{\omega}\)</span> is controlled entirely by the coefficient <span class="math inline">\(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\)</span>. To find the direction of maximal variance is to simply find <span class="math inline">\(\vec{\omega}\)</span> that maximizes the variance of this inner product. In other words we want</p>
+<p><span class="math display">\[
+\vec{\omega}_1 := \text{argmax} \ \ \text{Var}( \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle ) 
+\]</span>
+where the argmax is taken over all <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(||\vec{\omega}|| = 1\)</span><a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>. We begin:</p>
+<p><span class="math display">\[\begin{equation}
+  \begin{aligned}
+
+\text{Var}( \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle )  &amp;= 
+\text{E}\bigg[\bigg(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle - \text{E}[\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle]\bigg)^2\bigg] \\
+
+
+    &amp;= \text{E}[\langle\ \vec{\omega}\ , \ \vec{X} - \text{E}[\vec{X}] \ \rangle^2] \\
+    
+    
+    &amp;= \text{E}\bigg[\ \bigg(\sum_i\omega_i(X^i - \text{E}[X^i])\bigg)^2\bigg] \\
+    
+    
+    &amp;= \text{E}\bigg[ \sum_{i,j}\omega_i\omega_j(X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \bigg] \\
+    
+    
+    &amp;= \sum_{i,j}\omega_i\omega_j \ \text{E}\bigg[ \ (X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \ \bigg] \\
+    
+    
+    &amp;= \sum_{i,j}\omega_i\omega_j \ \text{Cov}(X^i, X^j) \\
+    
+    
+    &amp;= \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle
+  \end{aligned}
+\end{equation}\]</span></p>
+<p>where <span class="math inline">\(\text{Cov}(\vec{X})\)</span> is the covariance matrix of <span class="math inline">\(\vec{X}\)</span>. So</p>
+<p><span class="math display">\[
+\vec{\omega}_1 := \text{argmax} \ \ \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle 
+\]</span>
+again the argmax is taken over all <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(||\vec{\omega}|| = 1\)</span>. This problem is called a “variational problem”, but why so is not important at the moment.</p>
+<p>This <span class="math inline">\(\vec{\omega}_1\)</span> must be the first eigenvector of the matrix <span class="math inline">\(\text{Cov}(\vec{X})\)</span>. Why? <strong>This is the hard part. If you can understand what follows you’re golden</strong>. There are multiple ways to see why this is the case:</p>
+<p>One is by Lagrange multipliers. If we write <span class="math inline">\(f(\vec{\omega}) := \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle\)</span> then</p>
+<p><span class="math display">\[\begin{equation}
+\begin{aligned}
+
+f(\vec{\omega} + \vec{h}) - f(\vec{\omega}) &amp;=  \langle \ \vec{\omega} + \vec{h} \ , \ \text{Cov}(\vec{X})(\vec{\omega}+\vec{h}) \ \rangle - \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle \\
+
+    &amp;= \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{h}\rangle \ + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle \\
+    
+    &amp;= 2\langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle
+
+\end{aligned}
+\end{equation}\]</span></p>
+<p>where we first expanded the first term using the bilinearity of the inner product, canceled like terms, and lastly used the symmetry of the covariance matrix to combine two terms. In the above expression the first order term in <span class="math inline">\(\vec{h}\)</span> is given by <span class="math inline">\(\langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle\)</span>. The other term is quadratic in <span class="math inline">\(\vec{h}\)</span>. By definition the differential of <span class="math inline">\(f\)</span> at <span class="math inline">\(\vec{\omega}\)</span> is this linear term:</p>
+<p><span class="math display">\[
+df_{\vec{\omega}} \ (\vec{h}) = \langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle
+\]</span></p>
+<p>By definition<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> the gradient of <span class="math inline">\(f\)</span> at <span class="math inline">\(\vec{\omega}\)</span> is just the vector in the above expression which the inner product with <span class="math inline">\(\vec{h}\)</span> is being taken:</p>
+<p><span class="math display">\[
+\nabla_{\vec{\omega}} f = 2 \ \text{Cov}(\vec{X}) \ \vec{\omega}
+\]</span>
+Because our variational problem is to maximize <span class="math inline">\(f(\vec{\omega})\)</span> on the unit sphere where <span class="math inline">\(||\vec{\omega}|| = 1\)</span>, then the gradient of <span class="math inline">\(f\)</span> at the maximizing point <span class="math inline">\(\vec{\omega}_1\)</span> must be orthogonal (i.e. perpendicular, i.e. normal) to the surface of the unit sphere at that point<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>. The direction (i.e. unit vector) perpendicular to the unit sphere at <span class="math inline">\(\vec{\omega}_1\)</span> is <span class="math inline">\(\vec{\omega}_1\)</span> itself with its starting point translated to the surface!</p>
+<p><img src="/img/Spherical_unit_vectors.png" /></p>
+<p>Thus the gradient of <span class="math inline">\(f\)</span> at <span class="math inline">\(\vec{\omega}_1\)</span> must be collinear with (and hence a multiple of) <span class="math inline">\(\vec{\omega}_1\)</span>:</p>
+<p><span class="math display">\[
+\nabla_{\vec{\omega}_1}f  = \lambda&#39; \ \vec{\omega}_1
+\]</span>
+for some number <span class="math inline">\(\lambda&#39;\)</span>. Thus</p>
+<p><span class="math display">\[
+\text{Cov}(\vec{X}) \ \vec{\omega}_1 = \frac{\lambda&#39;}{2} \ \vec{\omega}_1 =: \lambda \ \vec{\omega}_1
+\]</span>
+Hence <span class="math inline">\(\vec{\omega}_1\)</span> is an eigenvector of <span class="math inline">\(\text{Cov}(\vec{X})\)</span>. We note that the eigenvalue <span class="math inline">\(\lambda\)</span> is just the variance we wanted to maximize:</p>
+<p><span class="math display">\[
+\langle \ \vec{\omega}_1 \ , \ \text{Cov}(\vec{X}) \ \vec{\omega}_1 \ \rangle = \langle \ \vec{\omega}_1 \ , \lambda \vec{\omega}_1 \ \rangle = \lambda\langle \ \vec{\omega}_1 \ , \vec{\omega}_1 \ \rangle = \lambda ||\vec{\omega}||^2 = \lambda
+\]</span>
+Thus we see that eigenvectors capture directions of maximal variance and eigenvalues capture the value of the variance in that maximal direction! We can also see why the variance is a nice measure of variation/randomness. Because it’s <strong>quadratic</strong> in its arguments, derivatives of it become <strong>linear</strong>, leading to <strong>linear</strong> eigenvalue problems, which are very well understood by mathematicians.</p>
+<p>We proceed as follows. Let <span class="math inline">\(\vec{X}_{new} = \vec{X} - \langle\vec{\omega}_1,\vec{X}\rangle\vec{\omega}_1\)</span>. This <span class="math inline">\(\vec{X}_{new}\)</span> is just the component of <span class="math inline">\(\vec{X}\)</span> orthogonal to <span class="math inline">\(\vec{\omega}_1\)</span>. Intuitively it’s the part of <span class="math inline">\(\vec{X}\)</span> that <span class="math inline">\(\vec{\omega}_1\)</span> can not explain.</p>
+<p>Just as before we want to capture the direction of maximal variance of <span class="math inline">\(\vec{X}_{new}\)</span>. I.e. we want a vector <span class="math inline">\(\vec{\omega}_2\)</span> with <span class="math inline">\(||\vec{\omega}_2||=1\)</span> such that <span class="math inline">\(\text{Var}(\langle \vec{\omega}_2, \vec{X}_{new}\rangle)\)</span> is maximal.</p>
+<p>Since <span class="math inline">\(\vec{X}_{new} \perp \vec{\omega}_1\)</span><a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> then <span class="math inline">\(\langle \vec{\omega}, \vec{X}_{new}\rangle = \langle \vec{\omega} - \alpha\vec{\omega}_1, \vec{X}_{new}\rangle\)</span> for any <span class="math inline">\(\alpha \in \mathbb{R}\)</span>. Therefore by replacing <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(\vec{\omega} - \langle\vec{\omega}_1,\vec{\omega}\rangle\vec{\omega}_1\)</span> we may restrict our maximization problem to maximizing <span class="math inline">\(\text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle)\)</span> over all <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(||\vec{\omega}|| = 1\)</span> and <span class="math inline">\(\vec{\omega} \perp \vec{\omega}_1\)</span>.</p>
+<p>We transform this expression as follows:</p>
+<p><span class="math display">\[\begin{equation}
+\begin{aligned}
+
+\text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle) &amp;= \text{Var}(\langle \vec{\omega}, \vec{X} - \langle\vec{\omega}_1,\vec{X}\rangle\vec{\omega}_1\rangle) \\
+
+    &amp;= \text{Var}(\langle \vec{\omega}, \vec{X}\rangle) \qquad \text{Since }\vec{\omega}\perp\vec{\omega}_1 \\
+    
+    &amp;= \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle \qquad \text{By the earlier computation}
+
+\end{aligned}
+\end{equation}\]</span></p>
+<p>So the vector <span class="math inline">\(\vec{\omega}_2\)</span> is given by the new variational problem</p>
+<p><span class="math display">\[
+\vec{\omega}_2 = \text{argmax} \ \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle
+\]</span>
+where the argmax is taken over all <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(||\vec{\omega}|| = 1\)</span> and <span class="math inline">\(\vec{\omega} \perp \vec{\omega}_1\)</span>. Now <span class="math inline">\(\langle \vec{\omega}_2, \vec{X}_{new}\rangle = \langle \vec{\omega}_2, \vec{X}\rangle\)</span> is of maximal variance in a direction perpendicular to <span class="math inline">\(\vec{\omega}_1\)</span>.</p>
+<p>Notice that this is the same maximization problem as before, but now restricted to a lower dimensional subspace (the subspace that is prependicular to <span class="math inline">\(\vec{\omega}_1\)</span>). The same Lagrange multiplier calculation as before can be applied again in this subspace. This shows that <span class="math inline">\(\vec{\omega}_2\)</span> is an eigenvector of <span class="math inline">\(\text{Cov}(\vec{X})\)</span> with eigenvalue <span class="math inline">\(\langle \vec{\omega}_2, \text{Cov}(\vec{X})\vec{\omega}_2\rangle\)</span>. This eigenvalue must be less than or equal to the eigenvalue of <span class="math inline">\(\vec{\omega}_1\)</span> because the maximum of the same expression is being taken over a smaller set for <span class="math inline">\(\vec{\omega}_2\)</span>.</p>
+<p>We can continue this process until all eigenvectors are exhausted. By decomposing <span class="math inline">\(\vec{X}\)</span> into linear combinations of the eigenvectors <span class="math inline">\(\vec{\omega}_i\)</span> we may choose to capture as much or as little of the variance of <span class="math inline">\(\vec{X}\)</span> as we please. For example, by projecting onto the first k eigenvectors we may capture the k-dimensional variance of <span class="math inline">\(\vec{X}\)</span>:</p>
+<p><span class="math display">\[
+\vec{X}_k := \sum_{i = 1}^k\langle\vec{\omega}_i,\vec{X}\rangle\vec{\omega}_i
+\]</span></p>
+</div>
+<div id="sample-estimators" class="section level2">
+<h2>Sample estimators</h2>
+<p>In practice we do not know the matrix <span class="math inline">\(\text{Cov}(\vec{X})\)</span>, but instead have a data matrix <span class="math inline">\(\{ \vec{X}_j \}_{j=1}^N\)</span> of row vectors representing realizations of the random vector <span class="math inline">\(\vec{X}\)</span>.</p>
+<p>Statistics is often concerned with constructing sample estimators of quantities. If our data rows are sampled IID from the distribution of <span class="math inline">\(\vec{X}\)</span> then in lieu of <span class="math inline">\(\text{Cov}(X^i,X^j)\)</span> we construct the sample covariances:</p>
+<p><span class="math display">\[
+S^2_{i,j} := \frac{1}{N-1}\sum_{n=1}^N\bigg(X^i_n - \bar{X}^i\bigg)\bigg(X^j_n - \bar{X}^j\bigg)
+\]</span>
+where <span class="math inline">\(\bar{X}^i\)</span> is the mean of the <span class="math inline">\(i^{\text{th}}\)</span> feature column. This estimator is a statistic constructed for its favorable distributional properties under IID assumptions as <span class="math inline">\(N\)</span> becomes large. In particular, it converges to <span class="math inline">\(\text{Cov}(X^i,X^j)\)</span> in some sense.</p>
+</div>
+<div id="implementing-in-eigen" class="section level2">
+<h2>Implementing in Eigen</h2>
+<p>The derivation above gives us one formula to carry out PCA: simply compute the sample covariance matrix of the data and extract its eigenvectors and eigenvalues. This may or may not be the most numerically efficient/stable algorithm to use (I haven’t checked), but this is easy enough to implement in most numerical computing languages. Here we implement it in C++ using the <a href="http://eigen.tuxfamily.org/">Eigen</a> library. To make it more interactive we use the <a href="https://cran.r-project.org/web/packages/RcppEigen/index.html">RcppEigen</a> package in R to allow using the function in R sessions:</p>
+<pre class="cpp"><code>#include &lt;RcppEigen.h&gt;
+
+// [[Rcpp::depends(RcppEigen)]]
+
+using namespace Eigen;
+
+
+// [[Rcpp::export]]
+Rcpp::List EigenDecomp(const Map&lt;MatrixXd&gt; M) 
+{
+    //Constructing sample covariance matrix 
+    MatrixXd centered = M.rowwise() - M.colwise().mean();
+    MatrixXd cov = centered.adjoint() * centered/(M.rows()-1);
+    
+    //Using Eigen&#39;s eigensolver (with default settings)
+    SelfAdjointEigenSolver&lt;MatrixXd&gt; eig(cov);
+    
+    VectorXd values = eig.eigenvalues();
+    MatrixXd vectors = eig.eigenvectors();
+    
+    //Returning results as a R-list
+    return Rcpp::List::create(Rcpp::Named(&quot;Cov&quot;) = cov,
+                           Rcpp::Named(&quot;values&quot;) = values,
+                           Rcpp::Named(&quot;vectors&quot;) = vectors);
+}</code></pre>
+<p>Note on compilation: I’m using a laptop with an i7-8750h CPU running Windows 10. The compiler is the version of <a href="http://mingw-w64.org/doku.php">mingw-w64</a> that comes with <a href="https://cran.r-project.org/bin/windows/Rtools/">Rtools40</a> (i.e. the Windows port of GCC 8.3.0). By creating a Makevars.win file in an <code>./Documents/.R</code> folder file I altered R’s default flags for g++ to use:</p>
+<pre><code>CXXFLAGS = -march=native -O3 -Wno-ignored-attributes $(DEBUGFLAG)</code></pre>
+<p>Eigen is a template expression library that relies heavily on the compiler using the best options for the machine at hand. Here we’ve used <code>-march=native</code> which enables all instruction subsets supported by my local machine. For more info running <code>g++ -march=native -Q --help=target</code> in the command line will show you what compiler flags this turns on. For example mine enables flags targeting AVX2, as well as a variety of others. The <code>-Wno-ignored-attributes</code> suppresses the large number of ignored attributes warnings that an expression template library like Eigen can produce. Let’s compare with R’s built in PCA function <a href="https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/prcomp">prcomp</a></p>
+<pre class="r"><code>set.seed(42)
+X = matrix(rnorm(10000*4), 10000, 4)
+
+R = prcomp(X)
+
+Cpp = EigenDecomp(X)
+
+print(R$sdev^2)</code></pre>
+<pre><code>## [1] 1.036884 1.021022 1.013685 1.001778</code></pre>
+<pre class="r"><code>print(Cpp$values)</code></pre>
+<pre><code>## [1] 1.001778 1.013685 1.021022 1.036884</code></pre>
+<p>The eigenvalues are exactly the same, just in opposite order. Next time we might link an optimized BLAS library such as Intel’s MKL, but I suspect the plain Eigen version is quite competitive.</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>The exact definition of “random variable” or “random vector” is unimportant. For mathematicians this means that there is a probability space <span class="math inline">\((\Omega, \mathcal{M}, \mathbf{P})\)</span> and that <span class="math inline">\(\vec{X}:\Omega \mapsto \mathbb{R}^d\)</span> is a Borel-measurable map.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Note on existence. A vector that attains the maximum must exist because the expression being maximized is continuous (in fact quadratic) in <span class="math inline">\(\vec{\omega}\)</span> and the unit sphere in <span class="math inline">\(\mathbb{R}^d\)</span> is compact.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>And this is indeed the true definition of the <a href="https://en.wikipedia.org/wiki/Gradient#Differential_or_(exterior)_derivative">gradient of a function</a>.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>This is the method of <a href="https://en.wikipedia.org/wiki/Lagrange_multiplier#Modern_formulation_via_differentiable_manifolds">Lagrange multipliers</a>. It can be proven easily as follows. Let <span class="math inline">\(\vec{v}\)</span> be any vector tangent to the sphere at the maximizing point <span class="math inline">\(\vec{\omega}_1\)</span>, and let <span class="math inline">\(\gamma(t)\)</span> be a smooth curve on the sphere going through <span class="math inline">\(\vec{\omega}_1\)</span> with <span class="math inline">\(\gamma&#39;(t) = \vec{v}\)</span>. Then the function <span class="math inline">\(f(\gamma(t))\)</span> achieves a maximum at the value of <span class="math inline">\(t\)</span> at which <span class="math inline">\(\gamma(t) = \vec{\omega}_1\)</span> so it’s derivative must be 0 there. Thus <span class="math inline">\(0 = d/dt(f(\gamma(t))) = df_{\vec{\omega}_1} \ (\gamma&#39;(t)) = \langle \gamma&#39;(t),\nabla_{\vec{\omega}_1}f\rangle = \langle\vec{v},\nabla_{\vec{\omega}_1}f\rangle\)</span>. Since <span class="math inline">\(\vec{v}\)</span> was an arbitrary tangent vector this shows that <span class="math inline">\(\nabla_{\vec{\omega}_1}f\)</span> is orthogonal to every tangent vector and hence is a normal vector.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>The symbol <span class="math inline">\(\perp\)</span> means “prependicular to”.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
+</content:encoded>	
     </item>
     
   </channel>

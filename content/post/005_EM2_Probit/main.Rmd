@@ -1,5 +1,5 @@
 ---
-title: "Expectation Maximization, Part 2: Illustrating Bias-Variance Trade Off of Regularization with Probit Regression"
+title: "Expectation Maximization, Part 2: Fitting Regularized Probit Regression using EM in C++"
 author: "Edger Sterjo"
 date: 2020-08-01
 categories: ["R","C++"]
@@ -243,7 +243,7 @@ print(summary(Z.cpp - Z.r))
 ```
 
 
-Not bad. Next we need a function to compute (regularized) least squares. For the solution we use the normal equations. According to the [Eigen tutorial on th matter](https://eigen.tuxfamily.org/dox-devel/group__LeastSquares.html) the normal equations are the fastest but least numerically stable option. For us this is good enough. Again we create a small wrapper to test from R:
+Not bad. Next we need a function to compute (regularized) least squares. For the solution we use the normal equations. According to the [Eigen tutorial on the matter](https://eigen.tuxfamily.org/dox-devel/group__LeastSquares.html) the normal equations are the fastest but least numerically stable option. For us this is good enough. Again we create a small wrapper to test from R:
 
 ```{Rcpp, eval = FALSE}
 VectorXd RLS(const VectorXd& Z, 
@@ -365,6 +365,6 @@ print(data.frame(beta = beta,
 				 R = probit.glm))
 ```
 
-We see the base R version is much faster, and converges much more quickly. Note this is not due to weak compiler flags on the part of Eigen. A local Makevars file in `Documents/.R` overrides the defaults to use the optimization flags `-O3 -march=native`.
+We see the base R version is much faster, and converges much more quickly. Note, this is not due to weak compiler flags on our part. A local Makevars file in `Documents/.R` overrides the default R build flags to use the optimizations `-O3 -march=native`.
 
 No, instead [`glm.fit`](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/glm) uses [iteratively reweighted least squares (IRLS)](https://en.wikipedia.org/wiki/Iteratively_reweighted_least_squares) to fit the model, not EM as can be seen in the [source code](https://github.com/SurajGupta/r-source/blob/master/src/library/stats/R/glm.R). So EM is not a very fast algorithm to fit probit models. In the future we'll implement IRLS in Eigen (or Fortran, or Julia).

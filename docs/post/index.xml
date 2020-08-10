@@ -1748,7 +1748,7 @@ Q(\theta | \theta_m) \ := \ \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \th
     </item>
     
     <item>
-      <title>Passing expressions and data from R to C&#43;&#43; at compile-time in Rmarkdown</title>
+      <title>Passing expressions and data from R to C&#43;&#43; before compile-time in Rmarkdown</title>
       <link>/post/002_compile_time_data_r_to_cpp/main/</link>
       <pubDate>Sun, 21 Jun 2020 00:00:00 +0000</pubDate>
       <guid>/post/002_compile_time_data_r_to_cpp/main/</guid>

@@ -1,0 +1,370 @@
+---
+title: "Expectation Maximization, Part 2: Illustrating Bias-Variance Trade Off of Regularization with Probit Regression"
+author: "Edger Sterjo"
+date: 2020-08-01
+categories: ["R","C++"]
+tags: ["r","rcpp","eigen","c++","expectation maximization", "em algorithm","em","regularization", "machine learning", "statistical learning", "bias variance tradeoff"]
+---
+
+## Introduction
+
+In the [first post](https://edsterjo.netlify.app/post/003_em1/main/) in this series we discussed Expectation Maximization (EM) type algorithms. In the post [prior to this one](https://edsterjo.netlify.app/post/004_regularization/main/) we discussed regularization and showed how it leads to a bias-variance trade off in OLS models. Here we implement fitting for $L^2$-regularized [probit regression](https://en.wikipedia.org/wiki/Probit_model) using EM. To make it more interesting we will code everything from scratch using the [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) linear algebra library, via [RcppEigen](https://cran.r-project.org/web/packages/RcppEigen/index.html).
+
+
+## Probit Regression as a censored OLS model
+
+In our first post on EM algorithms we emphasized that EM is particularly useful for models that have censored data. Suppose we have the following censored model. Suppose $Y^*$ is a real valued random variable and $\vec{X}$ is a random vector with values in $\mathbb{R}^p$. Suppose that we have the conditional relationship
+
+$$
+Y^* \ \ | \ \ \vec{X} \sim \mathcal{N}(\ \langle \vec{X}  , \beta\rangle \ ,\ 1)
+$$
+
+where $\mathcal{N}(\mu, \sigma^2)$ denotes the univariate normal distribution with mean $\mu$ and variance $\sigma^2$. Here (and everywhere else) the symbol $\langle v,w\rangle$ represents the Euclidean inner product (aka, [dot product](https://en.wikipedia.org/wiki/Dot_product)) of two vectors $v$ and $w$.
+
+In this case we may write $Y^* = \langle \vec{X}  , \beta\rangle -  \epsilon$, where $\epsilon \sim \mathcal{N}(0,1)$ is standard normal, which can be taken independent of $\vec{X}$ or this distribution can be simply assumed conditional on $\vec{X}$.
+
+Instead of observing $Y^*$ in the data however, we observe the censored variable
+$$
+Y := 
+\begin{cases}
+1, & \text{if} \ \ Y^* > 0 \\
+0, & \text{otherwise}
+\end{cases}
+$$
+Hence we have that $Y \ |\vec{X} \sim \text{Bernoulli}(p)$ where
+$$
+p = P(Y = 1 | \vec{X}) = P(Y^* > 0 | \vec{X}) = P\bigg(Y^* - \langle \vec{X},\beta\rangle > - \langle \vec{X},\beta\rangle\ \ \bigg|\ \ \vec{X}\bigg) = P(\epsilon < \langle \vec{X},\beta\rangle\ | \vec{X})
+$$
+Since $\epsilon \sim \mathcal{N}(0,1)$ this last probability is equal to $\Phi(\langle \vec{X},\beta\rangle)$ where $\Phi$ denotes the standard normal CDF. This derives the probit model.
+
+Before we proceed, notice 2 points which we won't dwell on:
+
+* If the variance of $Y^*$ had been $\sigma^2 \ne 1$ then the value of $\sigma$ would not be able to be estimated from data without knowing $\beta$ since $P(Y^* > 0 |\vec{X}) = P(Y^*/\sigma > 0 | \vec{X})$.
+* If the distributional relationship between $Y$ and $\vec{X}$ had been such that the error term $\epsilon$ where a logistic random variable, instead of a normal one, then the censored problem would have become logistic regression.
+
+For the regression itself we assume that we have a data set $\{ (y_i, \vec{x}_i)\}_{i = 1}^N$ consisting of samples generated independently of one another from a fixed multivariate distribution for $(Y, \vec{X})$ (i.e. we assume our data was sampled IID).
+
+
+
+
+## Fitting Probit Regression via EM
+
+Since probit regression arises from a censored normal OLS model, and since OLS is relatively easy to fit, probit regression is an excellent candidate for applying Expectation Maximization for fitting. A small difference will be that all of the probability densities involved will be conditional on the observed covariates $\{\vec{x}_i\}_{i = 1}^N$ since regression is a conditional relationship.
+
+Let's recall the standard EM algorithm for the case of the regression problem above:
+
+* **Step 1:** Let $m = 0$. Make an initial estimate $\beta_m$ for $\beta$.
+
+* **Step 2:** Given the observed data $\{(y_i, \vec{x}_i)\}_{i = 1}^N$ and pretending for the moment that our current guess $\beta_m$ is correct, construct the conditional probability distribution $p(\{y^*_i\}\ \ |\ \ \{(y_i, \vec{x}_i)\},\ \beta_m)$ of the hidden data $\{Y^*_i\}$ given all known information.
+
+* **Step 3:** Using the distribution $p(\{y^*_i\}\ \ |\ \ \{(y_i, \vec{x}_i)\},\ \beta_m)$ construct the following estimator/approximation of the desired log-likelihood $\log(p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\}))$ for arbitrary values of $\beta$:
+
+$$
+Q(\beta | \beta_m) \ := \ \text{E}_{\{Y^*_i\}\ \ |\ \ \{(Y_i=y_i,\ \vec{X}_i=\vec{x}_i)\},\ \beta_m}  \big[ \log(p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\})) \big] 
+$$
+$$
+= \int_{\mathcal{Y^*}} \log(p(\{y^*_i\} \ | \ \beta, \{\vec{x}_i\})) \ p(\{y^*_i\}\  |\  \{(y_i, \vec{x}_i)\}, \beta_m) \ dy_1^*...dy^*_N 
+$$
+
+* **Step 4:** Set $\beta_{m+1}$ equal to a value of $\beta$ that maximizes the current approximation $Q(\beta|\beta_m)$ of $\log(p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\}))$.
+
+* **Step 5:** Return to step 2 and repeat until some stopping criteria is met.
+
+These formulas may seem difficult at the moment because they are in such a general form. As we specify things for our particular problem things will become more concrete. Now because $Y^*|\vec{X}\sim \mathcal{N}(\ \langle \vec{X}  , \beta\rangle \ ,\ 1)$ is a normal linear regression relationship we have
+$$
+p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\}) = \frac{1}{(2\pi)^{N/2}}e^{\sum_{i=1}^N-\frac{1}{2}\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2}
+$$
+
+Hence
+$$
+\log(p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\})) = const -\frac{1}{2} \sum_{i=1}^N\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2
+$$
+
+and so the $Q$-function is
+$$
+Q(\beta | \beta_m) \ = \ \text{E}_{\{Y^*_i\}\ \ |\ \ \{(Y_i=y_i,\ \vec{X}_i=\vec{x}_i)\},\ \beta_m}  \bigg[ -\frac{1}{2} \sum_{i=1}^N\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2 \bigg] + const
+$$
+
+Since the data samples are assumed IID we can apply the [representation we derived in the first post in the series](https://edsterjo.netlify.app/post/003_em1/main/) where instead of taking the expectation over all samples, we sum over the expectations of each individual sample:
+
+$$
+Q(\beta | \beta_m) \ = \ const - \frac{1}{2}\sum_{i = 1}^N\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \bigg[\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2 \bigg]
+$$
+
+Note that in the EM algorithm we do not actually need to evaluate this function. Instead in step 4 we simply want to find the value of $\beta$ that maximizes it. In addition, as we discussed in the first post, if we wanted to incorporate a prior distribution $p(\beta)$ on $\beta$ for the purpose of regularization we would replace the problem of maximizing $Q(\beta|\beta_m)$ by maximizing $Q(\beta|\beta_m) + \log(p(\beta))$ instead. For the purpose of $L^2$-regularization we could simply take $\beta \sim \mathcal{N}(\vec{0}, \frac{1}{\lambda})$. In that case
+$$
+Q(\beta|\beta_m) + \log(p(\beta)) = \ const - \frac{1}{2}\sum_{i = 1}^N\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \bigg[\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2 \bigg] - \frac{\lambda}{2}\langle \beta, \beta\rangle
+$$
+
+(the $const$ may now depend on $\lambda$ which we always treat as a constant). We will focus on maximizing this regularized function, knowing that we can simply let $\lambda = 0$ to remove the regularization. At the maximizing point we need the gradient with respect to $\beta$ to equal 0:
+$$
+\nabla_{\beta} \ \big(Q(\beta|\beta_m) + \log(p(\beta))\big) = 0
+$$
+
+(where the $0$ represents the zero vector in $\mathbb{R}^p$). Interchanging gradients first with the summation, then with the expectation (since all random variables have nice distributions) gives
+$$
+0 = \sum_{i = 1}^N\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \bigg[\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)\vec{x}_i \bigg] - \lambda \beta
+$$
+$$
+= \sum_{i = 1}^N\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \big[Y^*_i\big]\vec{x}_i - \sum_{i = 1}^N\langle \vec{x}_i  , \beta\rangle\vec{x}_i  - \lambda \beta
+$$
+
+Let $X\in\mathbb{R}^{N\times p}$ be an $N\times p$ matrix whose $i$-th row is $\vec{x}_i$, and let $Z\in \mathbb{R}^{N\times 1}$ be a vector with $i$-th component $z_i = \text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \big[Y^*_i\big]$. Then in matrix notation the above becomes
+$$
+0 = X^TZ - X^TX\beta - \lambda\beta \\= X^TZ - (X^TX\beta + \lambda I)\beta
+$$
+
+This looks very familiar! It looks exactly like the normal equations of OLS if the target variable had been $Z$. The value of $Z = \big(\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \big[Y^*_i\big]\big)_{i=1}^N$ is just the value of $Y^*$ we would guess given the values $y_i$ of the censored variable and $\vec{x}_i$ of the covariates. Basically EM is telling us to impute a conditional average for the missing data $Y^*$, fit OLS, and repeat. Solving for $\beta$ gives
+$$
+\beta_{m+1} = (X^TX + \lambda I)^{-1}X^TZ
+$$
+This can be implemented once we know the value of $Z$. Since $Z_i = \text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \big[Y^*_i\big]$ then this is just the mean of a truncated normal distribution:
+$$
+\text{E}_{Y^*_i\ \ |\ \ Y_i=1,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \big[Y^*_i\big] = \langle \vec{x}_i  , \beta_m\rangle + \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{1 - \Phi(-\langle \vec{x}_i  , \beta_m\rangle)}
+$$
+
+$$
+\text{E}_{Y^*_i\ \ |\ \ Y_i=0,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \big[Y^*_i\big] = \langle \vec{x}_i  , \beta_m\rangle - \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{\Phi(-\langle \vec{x}_i  , \beta_m\rangle)}
+$$
+where $\phi$ and $\Phi$ are the standard normal PDF and CDF respectively. Therefore, we can summarize the EM algorithm for Probit Regression as:
+
+* **Step 1:** Let $m = 0$. Make an initial estimate $\beta_m$ for $\beta$.
+* **Step 2:** Impute the censored data according to
+
+$$
+z_i =
+\begin{cases}
+\langle \vec{x}_i  , \beta_m\rangle + \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{1 - \Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, & \text{if} \ \ y_i = 1 \\
+\langle \vec{x}_i  , \beta_m\rangle - \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{\Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, & \text{if} \ \ y_i = 0
+\end{cases}
+$$
+
+* **Step 3:** Solve the regularized OLS problem to update $\beta$:
+
+$$
+\beta_{m+1} = (X^TX + \lambda I)^{-1}X^TZ
+$$
+
+* **Step 4:** Return to step 2 and repeat until some stopping criteria is met.
+
+
+
+## Implementing in C++ using Eigen
+
+The algorithm above is easily implementable in R, Numpy, Matlab, etc., but for fun we'll implement it in C++ using the Eigen linear algebra library. We do this in Rmarkdown using the [RcppEigen](https://cran.r-project.org/web/packages/RcppEigen/index.html) package in R.
+
+```{Rcpp, ref.label=knitr::all_rcpp_labels(), include=FALSE}
+```
+
+First we include the necessary header files. Here `RcppEigen.h` includes the Eigen library itself, as well as all the necessary boilerplate code of Rcpp to integrate Eigen (and C++) with R.
+
+```{Rcpp, eval = FALSE}
+#include <RcppEigen.h>
+#include <algorithm>
+#include <limits>
+
+// [[Rcpp::depends(RcppEigen)]]
+
+using namespace Eigen;
+```
+
+Next we define two functions that will be needed in computing the vector $Z$, whose computation requires the normal distribution's PDF and CDF. We'll use R's own built-in functions `dnorm` and `pnorm`. These functions are written in C or Fortran (and hence can be called from any language with a C interface) and are very well tested. So instead of rolling our own versions we may as well use R's.
+
+```{Rcpp, eval = FALSE}
+// [[Rcpp::export]]
+double positive(const double mu) 
+{
+	double num = R::dnorm(mu, 0, 1, false);
+	double den = 1 - R::pnorm(-mu, 0, 1, true, false);
+	
+	return mu + num/den;
+}
+
+// [[Rcpp::export]]
+double negative(double mu)
+{
+	double num = R::dnorm(mu, 0, 1, false);
+	double den = R::pnorm(-mu, 0, 1, true, false);
+	
+	return mu - num/den;
+}
+```
+
+Next we want a function that actually computes the $Z$ vector, given $X$ and $\beta_m$. We could use some of Eigen's nifty [nullary expressions](https://eigen.tuxfamily.org/dox/TopicCustomizing_NullaryExpr.html), but a simple for-loop with a ternay conditional will do. We also create a wrapper function so that we can test from R:
+
+```{Rcpp, eval = FALSE}
+VectorXd impute(const MatrixXd& X,
+                const VectorXd& beta,
+                const VectorXi& Y)
+{
+	VectorXd Z = X * beta;
+	
+	// If Y(i) is non-zero use the function 
+	// positive, else use negative
+	for(int i = 0; i != Z.size(); ++i)
+		Z(i) = (Y(i) == (int)1) ? (positive(Z(i))) : (negative(Z(i)));
+	
+	return Z;
+}
+
+// A wrapper function to test from R
+// [[Rcpp::export]]
+VectorXd impute_test(const Map<MatrixXd> X,
+                     const Map<VectorXd> beta,
+                     const Map<VectorXi> Y)
+{
+	return impute(X, beta, Y);
+}
+```
+
+Comparing to an R implementation is trivial:
+```{r}
+X = matrix(rnorm(100*10), ncol = 10)
+beta = matrix(rnorm(10), ncol = 1)
+Y = matrix(sample(c(0L,1L), size = 100, replace = T), ncol = 1)
+
+# Using the C++ implementation
+Z.cpp = impute_test(X, beta, Y)
+
+# Building one in in R
+imputeR = function(X, beta, Y)
+{
+	positiveR = function(Z){Z + dnorm(Z)/(1-pnorm(-Z))}
+	negativeR = function(Z){Z - dnorm(Z)/pnorm(-Z)}
+	
+	Z = X %*% beta
+	return(ifelse((Y == 1L), positiveR(Z), negativeR(Z)))
+}
+
+Z.r = imputeR(X, beta, Y)
+
+# Checking range of values
+print(summary(Z.cpp - Z.r))
+```
+
+
+Not bad. Next we need a function to compute (regularized) least squares. For the solution we use the normal equations. According to the [Eigen tutorial on th matter](https://eigen.tuxfamily.org/dox-devel/group__LeastSquares.html) the normal equations are the fastest but least numerically stable option. For us this is good enough. Again we create a small wrapper to test from R:
+
+```{Rcpp, eval = FALSE}
+VectorXd RLS(const VectorXd& Z, 
+             const MatrixXd& X, 
+             const double lambda = 0.0)
+{
+	// Creating an identity matrix
+	MatrixXd lambda_eye = lambda * MatrixXd::Identity(X.cols(), X.cols());
+	
+	// Using (regularized) normal equations
+	if(lambda >= std::numeric_limits<double>::min())
+		return (X.transpose() * X + lambda_eye).ldlt().solve(X.transpose() * Z);
+	
+	return (X.transpose() * X).ldlt().solve(X.transpose() * Z);
+}
+
+// [[Rcpp::export]]
+VectorXd RLS_test(const Map<VectorXd> Z, 
+                  const Map<MatrixXd> X,
+                  double lambda = 0.0)
+{
+	return RLS(Z, X, lambda);
+}
+```
+
+Testing in R:
+```{r}
+set.seed(1234)
+X = matrix(rnorm(100*10), ncol = 10)
+beta = matrix(rnorm(10), ncol = 1)
+Z = X %*% beta + matrix(rnorm(100), ncol = 1)
+
+beta_hat.r = lm.fit(X, Z, method = "qr")$coefficients
+beta_hat.cpp = RLS_test(Z, X, 0)
+
+print(data.frame(beta = beta, 
+				 beta_hat.r = beta_hat.r, 
+				 beta_hat.cpp = beta_hat.cpp))
+
+print(summary(beta_hat.cpp - beta_hat.r))
+```
+Not bad at all. Note that R's very powerful `lm.fit` function uses QR decomposition to solve the least squares problem. This method is a bit slower in principle than the $LDL^T$ decomposition we used for the normal equations above, but it's also higher quality numerically.
+
+As for a test with a non-trivial regularization constant:
+
+```{r}
+lambda = 15
+beta_hat_reg.r = solve(t(X) %*% X + lambda*diag(10), t(X) %*% Z)
+beta_hat_reg.cpp = RLS_test(Z, X, lambda)
+
+print(data.frame(beta = beta, 
+				 beta_hat_reg.r = beta_hat_reg.r, 
+				 beta_hat_reg.cpp = beta_hat_reg.cpp))
+
+print(summary(beta_hat_reg.cpp - beta_hat_reg.r))
+```
+Very good. Again, we see that the regularized least squares estimates are biased away from the true values, and towards the 0 vector.
+
+Now we bring it all together into one algorithm:
+
+```{Rcpp, eval = FALSE}
+// [[Rcpp::export]]
+VectorXd Probit(const Map<VectorXi> Y, 
+                const Map<MatrixXd> X, 
+                double lambda = 0.0,
+                int num_iter = 100)
+{
+
+	// Making sure Lambda is non-negative;
+	lambda = std::max(lambda, 0.0);
+	
+	// Making sure the number of rows of X is the 
+	// same as the number of rows of Y
+	assert(Y.size() == X.rows());
+	
+	// Initialize beta to 0 values
+	VectorXd beta = VectorXd::Zero(X.cols());
+	
+	// Iteration
+	for(int i = 0; i < num_iter; ++i)
+	{
+		// Impute the Z vector
+		VectorXd Z = impute(X, beta, Y);
+		
+		// Solve (regularized) Least Squares 
+		beta = RLS(Z, X, lambda);
+	}
+	
+	return beta;
+}
+```
+
+Below we carry out a comparison of the base R implementation of (unregularized) probit regression against our implementation.
+
+```{r, cache=TRUE}
+library(MASS)
+
+N = 10000
+p = 4
+
+set.seed(1234)
+S = matrix(rnorm(p*p), ncol = p)
+S = t(S) %*% S
+
+X = MASS::mvrnorm(n = N, mu = rep(0.0, times = p), Sigma = S)
+
+beta = matrix((1:p)/2, ncol = 1)
+
+Z = X %*% beta + matrix(rnorm(N))
+Y = as.integer(Z > 0)
+
+system.time(probit.cpp100 <- Probit(Y, X, 0.0, 100))
+system.time(probit.cpp10000 <- Probit(Y, X, 0.0, 10000))
+system.time(probit.glm <- glm(Y ~ X - 1, family = binomial(link = "probit"))$coefficients)
+
+print(data.frame(beta = beta, 
+				 Cpp_100_iter = probit.cpp100,
+				 Cpp_10000_iter = probit.cpp10000,
+				 R = probit.glm))
+```
+
+We see the base R version is much faster, and converges much more quickly. Note this is not due to weak compiler flags on the part of Eigen. A local Makevars file in `Documents/.R` overrides the defaults to use the optimization flags `-O3 -march=native`.
+
+No, instead [`glm.fit`](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/glm) uses [iteratively reweighted least squares (IRLS)](https://en.wikipedia.org/wiki/Iteratively_reweighted_least_squares) to fit the model, not EM as can be seen in the [source code](https://github.com/SurajGupta/r-source/blob/master/src/library/stats/R/glm.R). So EM is not a very fast algorithm to fit probit models. In the future we'll implement IRLS in Eigen (or Fortran, or Julia).

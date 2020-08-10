@@ -5,12 +5,719 @@
     <link>/tag/eigen/</link>
       <atom:link href="/tag/eigen/index.xml" rel="self" type="application/rss+xml" />
     <description>eigen</description>
-    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Sat, 20 Jun 2020 00:00:00 +0000</lastBuildDate>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Sat, 01 Aug 2020 00:00:00 +0000</lastBuildDate>
     <image>
       <url>/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png</url>
       <title>eigen</title>
       <link>/tag/eigen/</link>
     </image>
+    
+    <item>
+      <title>Expectation Maximization, Part 2: Illustrating Bias-Variance Trade Off of Regularization with Probit Regression</title>
+      <link>/post/005_em2_probit/main/</link>
+      <pubDate>Sat, 01 Aug 2020 00:00:00 +0000</pubDate>
+      <guid>/post/005_em2_probit/main/</guid>
+      <description>
+
+
+&lt;div id=&#34;introduction&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;In the &lt;a href=&#34;https://edsterjo.netlify.app/post/003_em1/main/&#34;&gt;first post&lt;/a&gt; in this series we discussed Expectation Maximization (EM) type algorithms. In the post &lt;a href=&#34;https://edsterjo.netlify.app/post/004_regularization/main/&#34;&gt;prior to this one&lt;/a&gt; we discussed regularization and showed how it leads to a bias-variance trade off in OLS models. Here we implement fitting for &lt;span class=&#34;math inline&#34;&gt;\(L^2\)&lt;/span&gt;-regularized &lt;a href=&#34;https://en.wikipedia.org/wiki/Probit_model&#34;&gt;probit regression&lt;/a&gt; using EM. To make it more interesting we will code everything from scratch using the &lt;a href=&#34;http://eigen.tuxfamily.org/index.php?title=Main_Page&#34;&gt;Eigen&lt;/a&gt; linear algebra library, via &lt;a href=&#34;https://cran.r-project.org/web/packages/RcppEigen/index.html&#34;&gt;RcppEigen&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;probit-regression-as-a-censored-ols-model&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Probit Regression as a censored OLS model&lt;/h2&gt;
+&lt;p&gt;In our first post on EM algorithms we emphasized that EM is particularly useful for models that have censored data. Suppose we have the following censored model. Suppose &lt;span class=&#34;math inline&#34;&gt;\(Y^*\)&lt;/span&gt; is a real valued random variable and &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt; is a random vector with values in &lt;span class=&#34;math inline&#34;&gt;\(\mathbb{R}^p\)&lt;/span&gt;. Suppose that we have the conditional relationship&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+Y^* \ \ | \ \ \vec{X} \sim \mathcal{N}(\ \langle \vec{X}  , \beta\rangle \ ,\ 1)
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;where &lt;span class=&#34;math inline&#34;&gt;\(\mathcal{N}(\mu, \sigma^2)\)&lt;/span&gt; denotes the univariate normal distribution with mean &lt;span class=&#34;math inline&#34;&gt;\(\mu\)&lt;/span&gt; and variance &lt;span class=&#34;math inline&#34;&gt;\(\sigma^2\)&lt;/span&gt;. Here (and everywhere else) the symbol &lt;span class=&#34;math inline&#34;&gt;\(\langle v,w\rangle\)&lt;/span&gt; represents the Euclidean inner product (aka, &lt;a href=&#34;https://en.wikipedia.org/wiki/Dot_product&#34;&gt;dot product&lt;/a&gt;) of two vectors &lt;span class=&#34;math inline&#34;&gt;\(v\)&lt;/span&gt; and &lt;span class=&#34;math inline&#34;&gt;\(w\)&lt;/span&gt;.&lt;/p&gt;
+&lt;p&gt;In this case we may write &lt;span class=&#34;math inline&#34;&gt;\(Y^* = \langle \vec{X} , \beta\rangle - \epsilon\)&lt;/span&gt;, where &lt;span class=&#34;math inline&#34;&gt;\(\epsilon \sim \mathcal{N}(0,1)\)&lt;/span&gt; is standard normal, which can be taken independent of &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt; or this distribution can be simply assumed conditional on &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt;.&lt;/p&gt;
+&lt;p&gt;Instead of observing &lt;span class=&#34;math inline&#34;&gt;\(Y^*\)&lt;/span&gt; in the data however, we observe the censored variable
+&lt;span class=&#34;math display&#34;&gt;\[
+Y := 
+\begin{cases}
+1, &amp;amp; \text{if} \ \ Y^* &amp;gt; 0 \\
+0, &amp;amp; \text{otherwise}
+\end{cases}
+\]&lt;/span&gt;
+Hence we have that &lt;span class=&#34;math inline&#34;&gt;\(Y \ |\vec{X} \sim \text{Bernoulli}(p)\)&lt;/span&gt; where
+&lt;span class=&#34;math display&#34;&gt;\[
+p = P(Y = 1 | \vec{X}) = P(Y^* &amp;gt; 0 | \vec{X}) = P\bigg(Y^* - \langle \vec{X},\beta\rangle &amp;gt; - \langle \vec{X},\beta\rangle\ \ \bigg|\ \ \vec{X}\bigg) = P(\epsilon &amp;lt; \langle \vec{X},\beta\rangle\ | \vec{X})
+\]&lt;/span&gt;
+Since &lt;span class=&#34;math inline&#34;&gt;\(\epsilon \sim \mathcal{N}(0,1)\)&lt;/span&gt; this last probability is equal to &lt;span class=&#34;math inline&#34;&gt;\(\Phi(\langle \vec{X},\beta\rangle)\)&lt;/span&gt; where &lt;span class=&#34;math inline&#34;&gt;\(\Phi\)&lt;/span&gt; denotes the standard normal CDF. This derives the probit model.&lt;/p&gt;
+&lt;p&gt;Before we proceed, notice 2 points which we won’t dwell on:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;If the variance of &lt;span class=&#34;math inline&#34;&gt;\(Y^*\)&lt;/span&gt; had been &lt;span class=&#34;math inline&#34;&gt;\(\sigma^2 \ne 1\)&lt;/span&gt; then the value of &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt; would not be able to be estimated from data without knowing &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt; since &lt;span class=&#34;math inline&#34;&gt;\(P(Y^* &amp;gt; 0 |\vec{X}) = P(Y^*/\sigma &amp;gt; 0 | \vec{X})\)&lt;/span&gt;.&lt;/li&gt;
+&lt;li&gt;If the distributional relationship between &lt;span class=&#34;math inline&#34;&gt;\(Y\)&lt;/span&gt; and &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt; had been such that the error term &lt;span class=&#34;math inline&#34;&gt;\(\epsilon\)&lt;/span&gt; where a logistic random variable, instead of a normal one, then the censored problem would have become logistic regression.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;For the regression itself we assume that we have a data set &lt;span class=&#34;math inline&#34;&gt;\(\{ (y_i, \vec{x}_i)\}_{i = 1}^N\)&lt;/span&gt; consisting of samples generated independently of one another from a fixed multivariate distribution for &lt;span class=&#34;math inline&#34;&gt;\((Y, \vec{X})\)&lt;/span&gt; (i.e. we assume our data was sampled IID).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;fitting-probit-regression-via-em&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Fitting Probit Regression via EM&lt;/h2&gt;
+&lt;p&gt;Since probit regression arises from a censored normal OLS model, and since OLS is relatively easy to fit, probit regression is an excellent candidate for applying Expectation Maximization for fitting. A small difference will be that all of the probability densities involved will be conditional on the observed covariates &lt;span class=&#34;math inline&#34;&gt;\(\{\vec{x}_i\}_{i = 1}^N\)&lt;/span&gt; since regression is a conditional relationship.&lt;/p&gt;
+&lt;p&gt;Let’s recall the standard EM algorithm for the case of the regression problem above:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Step 1:&lt;/strong&gt; Let &lt;span class=&#34;math inline&#34;&gt;\(m = 0\)&lt;/span&gt;. Make an initial estimate &lt;span class=&#34;math inline&#34;&gt;\(\beta_m\)&lt;/span&gt; for &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt;.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Step 2:&lt;/strong&gt; Given the observed data &lt;span class=&#34;math inline&#34;&gt;\(\{(y_i, \vec{x}_i)\}_{i = 1}^N\)&lt;/span&gt; and pretending for the moment that our current guess &lt;span class=&#34;math inline&#34;&gt;\(\beta_m\)&lt;/span&gt; is correct, construct the conditional probability distribution &lt;span class=&#34;math inline&#34;&gt;\(p(\{y^*_i\}\ \ |\ \ \{(y_i, \vec{x}_i)\},\ \beta_m)\)&lt;/span&gt; of the hidden data &lt;span class=&#34;math inline&#34;&gt;\(\{Y^*_i\}\)&lt;/span&gt; given all known information.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Step 3:&lt;/strong&gt; Using the distribution &lt;span class=&#34;math inline&#34;&gt;\(p(\{y^*_i\}\ \ |\ \ \{(y_i, \vec{x}_i)\},\ \beta_m)\)&lt;/span&gt; construct the following estimator/approximation of the desired log-likelihood &lt;span class=&#34;math inline&#34;&gt;\(\log(p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\}))\)&lt;/span&gt; for arbitrary values of &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt;:&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+Q(\beta | \beta_m) \ := \ \text{E}_{\{Y^*_i\}\ \ |\ \ \{(Y_i=y_i,\ \vec{X}_i=\vec{x}_i)\},\ \beta_m}  \big[ \log(p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\})) \big] 
+\]&lt;/span&gt;
+&lt;span class=&#34;math display&#34;&gt;\[
+= \int_{\mathcal{Y^*}} \log(p(\{y^*_i\} \ | \ \beta, \{\vec{x}_i\})) \ p(\{y^*_i\}\  |\  \{(y_i, \vec{x}_i)\}, \beta_m) \ dy_1^*...dy^*_N 
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Step 4:&lt;/strong&gt; Set &lt;span class=&#34;math inline&#34;&gt;\(\beta_{m+1}\)&lt;/span&gt; equal to a value of &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt; that maximizes the current approximation &lt;span class=&#34;math inline&#34;&gt;\(Q(\beta|\beta_m)\)&lt;/span&gt; of &lt;span class=&#34;math inline&#34;&gt;\(\log(p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\}))\)&lt;/span&gt;.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;Step 5:&lt;/strong&gt; Return to step 2 and repeat until some stopping criteria is met.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;These formulas may seem difficult at the moment because they are in such a general form. As we specify things for our particular problem things will become more concrete. Now because &lt;span class=&#34;math inline&#34;&gt;\(Y^*|\vec{X}\sim \mathcal{N}(\ \langle \vec{X} , \beta\rangle \ ,\ 1)\)&lt;/span&gt; is a normal linear regression relationship we have
+&lt;span class=&#34;math display&#34;&gt;\[
+p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\}) = \frac{1}{(2\pi)^{N/2}}e^{\sum_{i=1}^N-\frac{1}{2}\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2}
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;Hence
+&lt;span class=&#34;math display&#34;&gt;\[
+\log(p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\})) = const -\frac{1}{2} \sum_{i=1}^N\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;and so the &lt;span class=&#34;math inline&#34;&gt;\(Q\)&lt;/span&gt;-function is
+&lt;span class=&#34;math display&#34;&gt;\[
+Q(\beta | \beta_m) \ = \ \text{E}_{\{Y^*_i\}\ \ |\ \ \{(Y_i=y_i,\ \vec{X}_i=\vec{x}_i)\},\ \beta_m}  \bigg[ -\frac{1}{2} \sum_{i=1}^N\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2 \bigg] + const
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;Since the data samples are assumed IID we can apply the &lt;a href=&#34;https://edsterjo.netlify.app/post/003_em1/main/&#34;&gt;representation we derived in the first post in the series&lt;/a&gt; where instead of taking the expectation over all samples, we sum over the expectations of each individual sample:&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+Q(\beta | \beta_m) \ = \ const - \frac{1}{2}\sum_{i = 1}^N\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \bigg[\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2 \bigg]
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;Note that in the EM algorithm we do not actually need to evaluate this function. Instead in step 4 we simply want to find the value of &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt; that maximizes it. In addition, as we discussed in the first post, if we wanted to incorporate a prior distribution &lt;span class=&#34;math inline&#34;&gt;\(p(\beta)\)&lt;/span&gt; on &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt; for the purpose of regularization we would replace the problem of maximizing &lt;span class=&#34;math inline&#34;&gt;\(Q(\beta|\beta_m)\)&lt;/span&gt; by maximizing &lt;span class=&#34;math inline&#34;&gt;\(Q(\beta|\beta_m) + \log(p(\beta))\)&lt;/span&gt; instead. For the purpose of &lt;span class=&#34;math inline&#34;&gt;\(L^2\)&lt;/span&gt;-regularization we could simply take &lt;span class=&#34;math inline&#34;&gt;\(\beta \sim \mathcal{N}(\vec{0}, \frac{1}{\lambda})\)&lt;/span&gt;. In that case
+&lt;span class=&#34;math display&#34;&gt;\[
+Q(\beta|\beta_m) + \log(p(\beta)) = \ const - \frac{1}{2}\sum_{i = 1}^N\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \bigg[\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2 \bigg] - \frac{\lambda}{2}\langle \beta, \beta\rangle
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;(the &lt;span class=&#34;math inline&#34;&gt;\(const\)&lt;/span&gt; may now depend on &lt;span class=&#34;math inline&#34;&gt;\(\lambda\)&lt;/span&gt; which we always treat as a constant). We will focus on maximizing this regularized function, knowing that we can simply let &lt;span class=&#34;math inline&#34;&gt;\(\lambda = 0\)&lt;/span&gt; to remove the regularization. At the maximizing point we need the gradient with respect to &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt; to equal 0:
+&lt;span class=&#34;math display&#34;&gt;\[
+\nabla_{\beta} \ \big(Q(\beta|\beta_m) + \log(p(\beta))\big) = 0
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;(where the &lt;span class=&#34;math inline&#34;&gt;\(0\)&lt;/span&gt; represents the zero vector in &lt;span class=&#34;math inline&#34;&gt;\(\mathbb{R}^p\)&lt;/span&gt;). Interchanging gradients first with the summation, then with the expectation (since all random variables have nice distributions) gives
+&lt;span class=&#34;math display&#34;&gt;\[
+0 = \sum_{i = 1}^N\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \bigg[\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)\vec{x}_i \bigg] - \lambda \beta
+\]&lt;/span&gt;
+&lt;span class=&#34;math display&#34;&gt;\[
+= \sum_{i = 1}^N\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \big[Y^*_i\big]\vec{x}_i - \sum_{i = 1}^N\langle \vec{x}_i  , \beta\rangle\vec{x}_i  - \lambda \beta
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;Let &lt;span class=&#34;math inline&#34;&gt;\(X\in\mathbb{R}^{N\times p}\)&lt;/span&gt; be an &lt;span class=&#34;math inline&#34;&gt;\(N\times p\)&lt;/span&gt; matrix whose &lt;span class=&#34;math inline&#34;&gt;\(i\)&lt;/span&gt;-th row is &lt;span class=&#34;math inline&#34;&gt;\(\vec{x}_i\)&lt;/span&gt;, and let &lt;span class=&#34;math inline&#34;&gt;\(Z\in \mathbb{R}^{N\times 1}\)&lt;/span&gt; be a vector with &lt;span class=&#34;math inline&#34;&gt;\(i\)&lt;/span&gt;-th component &lt;span class=&#34;math inline&#34;&gt;\(z_i = \text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m} \big[Y^*_i\big]\)&lt;/span&gt;. Then in matrix notation the above becomes
+&lt;span class=&#34;math display&#34;&gt;\[
+0 = X^TZ - X^TX\beta - \lambda\beta \\= X^TZ - (X^TX\beta + \lambda I)\beta
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;This looks very familiar! It looks exactly like the normal equations of OLS if the target variable had been &lt;span class=&#34;math inline&#34;&gt;\(Z\)&lt;/span&gt;. The value of &lt;span class=&#34;math inline&#34;&gt;\(Z = \big(\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m} \big[Y^*_i\big]\big)_{i=1}^N\)&lt;/span&gt; is just the value of &lt;span class=&#34;math inline&#34;&gt;\(Y^*\)&lt;/span&gt; we would guess given the values &lt;span class=&#34;math inline&#34;&gt;\(y_i\)&lt;/span&gt; of the censored variable and &lt;span class=&#34;math inline&#34;&gt;\(\vec{x}_i\)&lt;/span&gt; of the covariates. Basically EM is telling us to impute a conditional average for the missing data &lt;span class=&#34;math inline&#34;&gt;\(Y^*\)&lt;/span&gt;, fit OLS, and repeat. Solving for &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt; gives
+&lt;span class=&#34;math display&#34;&gt;\[
+\beta_{m+1} = (X^TX + \lambda I)^{-1}X^TZ
+\]&lt;/span&gt;
+This can be implemented once we know the value of &lt;span class=&#34;math inline&#34;&gt;\(Z\)&lt;/span&gt;. Since &lt;span class=&#34;math inline&#34;&gt;\(Z_i = \text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m} \big[Y^*_i\big]\)&lt;/span&gt; then this is just the mean of a truncated normal distribution:
+&lt;span class=&#34;math display&#34;&gt;\[
+\text{E}_{Y^*_i\ \ |\ \ Y_i=1,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \big[Y^*_i\big] = \langle \vec{x}_i  , \beta_m\rangle + \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{1 - \Phi(-\langle \vec{x}_i  , \beta_m\rangle)}
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\text{E}_{Y^*_i\ \ |\ \ Y_i=0,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \big[Y^*_i\big] = \langle \vec{x}_i  , \beta_m\rangle - \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{\Phi(-\langle \vec{x}_i  , \beta_m\rangle)}
+\]&lt;/span&gt;
+where &lt;span class=&#34;math inline&#34;&gt;\(\phi\)&lt;/span&gt; and &lt;span class=&#34;math inline&#34;&gt;\(\Phi\)&lt;/span&gt; are the standard normal PDF and CDF respectively. Therefore, we can summarize the EM algorithm for Probit Regression as:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Step 1:&lt;/strong&gt; Let &lt;span class=&#34;math inline&#34;&gt;\(m = 0\)&lt;/span&gt;. Make an initial estimate &lt;span class=&#34;math inline&#34;&gt;\(\beta_m\)&lt;/span&gt; for &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Step 2:&lt;/strong&gt; Impute the censored data according to&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+z_i =
+\begin{cases}
+\langle \vec{x}_i  , \beta_m\rangle + \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{1 - \Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, &amp;amp; \text{if} \ \ y_i = 1 \\
+\langle \vec{x}_i  , \beta_m\rangle - \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{\Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, &amp;amp; \text{if} \ \ y_i = 0
+\end{cases}
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Step 3:&lt;/strong&gt; Solve the regularized OLS problem to update &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt;:&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\beta_{m+1} = (X^TX + \lambda I)^{-1}X^TZ
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Step 4:&lt;/strong&gt; Return to step 2 and repeat until some stopping criteria is met.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div id=&#34;implementing-in-c-using-eigen&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Implementing in C++ using Eigen&lt;/h2&gt;
+&lt;p&gt;The algorithm above is easily implementable in R, Numpy, Matlab, etc., but for fun we’ll implement it in C++ using the Eigen linear algebra library. We do this in Rmarkdown using the &lt;a href=&#34;https://cran.r-project.org/web/packages/RcppEigen/index.html&#34;&gt;RcppEigen&lt;/a&gt; package in R.&lt;/p&gt;
+&lt;p&gt;First we include the necessary header files. Here &lt;code&gt;RcppEigen.h&lt;/code&gt; includes the Eigen library itself, as well as all the necessary boilerplate code of Rcpp to integrate Eigen (and C++) with R.&lt;/p&gt;
+&lt;pre class=&#34;cpp&#34;&gt;&lt;code&gt;#include &amp;lt;RcppEigen.h&amp;gt;
+#include &amp;lt;algorithm&amp;gt;
+#include &amp;lt;limits&amp;gt;
+
+// [[Rcpp::depends(RcppEigen)]]
+
+using namespace Eigen;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Next we define two functions that will be needed in computing the vector &lt;span class=&#34;math inline&#34;&gt;\(Z\)&lt;/span&gt;, whose computation requires the normal distribution’s PDF and CDF. We’ll use R’s own built-in functions &lt;code&gt;dnorm&lt;/code&gt; and &lt;code&gt;pnorm&lt;/code&gt;. These functions are written in C or Fortran (and hence can be called from any language with a C interface) and are very well tested. So instead of rolling our own versions we may as well use R’s.&lt;/p&gt;
+&lt;pre class=&#34;cpp&#34;&gt;&lt;code&gt;// [[Rcpp::export]]
+double positive(const double mu) 
+{
+    double num = R::dnorm(mu, 0, 1, false);
+    double den = 1 - R::pnorm(-mu, 0, 1, true, false);
+    
+    return mu + num/den;
+}
+
+// [[Rcpp::export]]
+double negative(double mu)
+{
+    double num = R::dnorm(mu, 0, 1, false);
+    double den = R::pnorm(-mu, 0, 1, true, false);
+    
+    return mu - num/den;
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Next we want a function that actually computes the &lt;span class=&#34;math inline&#34;&gt;\(Z\)&lt;/span&gt; vector, given &lt;span class=&#34;math inline&#34;&gt;\(X\)&lt;/span&gt; and &lt;span class=&#34;math inline&#34;&gt;\(\beta_m\)&lt;/span&gt;. We could use some of Eigen’s nifty &lt;a href=&#34;https://eigen.tuxfamily.org/dox/TopicCustomizing_NullaryExpr.html&#34;&gt;nullary expressions&lt;/a&gt;, but a simple for-loop with a ternay conditional will do. We also create a wrapper function so that we can test from R:&lt;/p&gt;
+&lt;pre class=&#34;cpp&#34;&gt;&lt;code&gt;VectorXd impute(const MatrixXd&amp;amp; X,
+                const VectorXd&amp;amp; beta,
+                const VectorXi&amp;amp; Y)
+{
+    VectorXd Z = X * beta;
+    
+    // If Y(i) is non-zero use the function 
+    // positive, else use negative
+    for(int i = 0; i != Z.size(); ++i)
+        Z(i) = (Y(i) == (int)1) ? (positive(Z(i))) : (negative(Z(i)));
+    
+    return Z;
+}
+
+// A wrapper function to test from R
+// [[Rcpp::export]]
+VectorXd impute_test(const Map&amp;lt;MatrixXd&amp;gt; X,
+                     const Map&amp;lt;VectorXd&amp;gt; beta,
+                     const Map&amp;lt;VectorXi&amp;gt; Y)
+{
+    return impute(X, beta, Y);
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Comparing to an R implementation is trivial:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;X = matrix(rnorm(100*10), ncol = 10)
+beta = matrix(rnorm(10), ncol = 1)
+Y = matrix(sample(c(0L,1L), size = 100, replace = T), ncol = 1)
+
+# Using the C++ implementation
+Z.cpp = impute_test(X, beta, Y)
+
+# Building one in in R
+imputeR = function(X, beta, Y)
+{
+    positiveR = function(Z){Z + dnorm(Z)/(1-pnorm(-Z))}
+    negativeR = function(Z){Z - dnorm(Z)/pnorm(-Z)}
+    
+    Z = X %*% beta
+    return(ifelse((Y == 1L), positiveR(Z), negativeR(Z)))
+}
+
+Z.r = imputeR(X, beta, Y)
+
+# Checking range of values
+print(summary(Z.cpp - Z.r))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##        V1            
+##  Min.   :-2.665e-14  
+##  1st Qu.: 0.000e+00  
+##  Median : 0.000e+00  
+##  Mean   :-6.728e-16  
+##  3rd Qu.: 0.000e+00  
+##  Max.   : 1.554e-14&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Not bad. Next we need a function to compute (regularized) least squares. For the solution we use the normal equations. According to the &lt;a href=&#34;https://eigen.tuxfamily.org/dox-devel/group__LeastSquares.html&#34;&gt;Eigen tutorial on th matter&lt;/a&gt; the normal equations are the fastest but least numerically stable option. For us this is good enough. Again we create a small wrapper to test from R:&lt;/p&gt;
+&lt;pre class=&#34;cpp&#34;&gt;&lt;code&gt;VectorXd RLS(const VectorXd&amp;amp; Z, 
+             const MatrixXd&amp;amp; X, 
+             const double lambda = 0.0)
+{
+    // Creating an identity matrix
+    MatrixXd lambda_eye = lambda * MatrixXd::Identity(X.cols(), X.cols());
+    
+    // Using (regularized) normal equations
+    if(lambda &amp;gt;= std::numeric_limits&amp;lt;double&amp;gt;::min())
+        return (X.transpose() * X + lambda_eye).ldlt().solve(X.transpose() * Z);
+    
+    return (X.transpose() * X).ldlt().solve(X.transpose() * Z);
+}
+
+// [[Rcpp::export]]
+VectorXd RLS_test(const Map&amp;lt;VectorXd&amp;gt; Z, 
+                  const Map&amp;lt;MatrixXd&amp;gt; X,
+                  double lambda = 0.0)
+{
+    return RLS(Z, X, lambda);
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Testing in R:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;set.seed(1234)
+X = matrix(rnorm(100*10), ncol = 10)
+beta = matrix(rnorm(10), ncol = 1)
+Z = X %*% beta + matrix(rnorm(100), ncol = 1)
+
+beta_hat.r = lm.fit(X, Z, method = &amp;quot;qr&amp;quot;)$coefficients
+beta_hat.cpp = RLS_test(Z, X, 0)
+
+print(data.frame(beta = beta, 
+                 beta_hat.r = beta_hat.r, 
+                 beta_hat.cpp = beta_hat.cpp))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##           beta beta_hat.r beta_hat.cpp
+## x1  -1.2053334 -1.2721727   -1.2721727
+## x2   0.3014667  0.2774444    0.2774444
+## x3  -1.5391452 -1.5961346   -1.5961346
+## x4   0.6353707  0.5781086    0.5781086
+## x5   0.7029518  0.8563414    0.8563414
+## x6  -1.9058829 -2.0154512   -2.0154512
+## x7   0.9389214  0.8108957    0.8108957
+## x8  -0.2244921 -0.3825277   -0.3825277
+## x9  -0.6738168 -0.7562696   -0.7562696
+## x10  0.4457874  0.4209543    0.4209543&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;print(summary(beta_hat.cpp - beta_hat.r))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
+## -8.882e-16 -6.800e-16 -5.551e-17  4.996e-17  3.053e-16  2.220e-15&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Not bad at all. Note that R’s very powerful &lt;code&gt;lm.fit&lt;/code&gt; function uses QR decomposition to solve the least squares problem. This method is a bit slower in principle than the &lt;span class=&#34;math inline&#34;&gt;\(LDL^T\)&lt;/span&gt; decomposition we used for the normal equations above, but it’s also higher quality numerically.&lt;/p&gt;
+&lt;p&gt;As for a test with a non-trivial regularization constant:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;lambda = 15
+beta_hat_reg.r = solve(t(X) %*% X + lambda*diag(10), t(X) %*% Z)
+beta_hat_reg.cpp = RLS_test(Z, X, lambda)
+
+print(data.frame(beta = beta, 
+                 beta_hat_reg.r = beta_hat_reg.r, 
+                 beta_hat_reg.cpp = beta_hat_reg.cpp))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##          beta beta_hat_reg.r beta_hat_reg.cpp
+## 1  -1.2053334     -1.1372786       -1.1372786
+## 2   0.3014667      0.2299293        0.2299293
+## 3  -1.5391452     -1.3128364       -1.3128364
+## 4   0.6353707      0.4366746        0.4366746
+## 5   0.7029518      0.7691213        0.7691213
+## 6  -1.9058829     -1.7122424       -1.7122424
+## 7   0.9389214      0.7415632        0.7415632
+## 8  -0.2244921     -0.2756274       -0.2756274
+## 9  -0.6738168     -0.5224541       -0.5224541
+## 10  0.4457874      0.4061769        0.4061769&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;print(summary(beta_hat_reg.cpp - beta_hat_reg.r))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##        V1            
+##  Min.   :-7.772e-16  
+##  1st Qu.:-1.110e-16  
+##  Median : 0.000e+00  
+##  Mean   :-2.776e-17  
+##  3rd Qu.: 2.082e-16  
+##  Max.   : 3.331e-16&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Very good. Again, we see that the regularized least squares estimates are biased away from the true values, and towards the 0 vector.&lt;/p&gt;
+&lt;p&gt;Now we bring it all together into one algorithm:&lt;/p&gt;
+&lt;pre class=&#34;cpp&#34;&gt;&lt;code&gt;// [[Rcpp::export]]
+VectorXd Probit(const Map&amp;lt;VectorXi&amp;gt; Y, 
+                const Map&amp;lt;MatrixXd&amp;gt; X, 
+                double lambda = 0.0,
+                int num_iter = 100)
+{
+
+    // Making sure Lambda is non-negative;
+    lambda = std::max(lambda, 0.0);
+    
+    // Making sure the number of rows of X is the 
+    // same as the number of rows of Y
+    assert(Y.size() == X.rows());
+    
+    // Initialize beta to 0 values
+    VectorXd beta = VectorXd::Zero(X.cols());
+    
+    // Iteration
+    for(int i = 0; i &amp;lt; num_iter; ++i)
+    {
+        // Impute the Z vector
+        VectorXd Z = impute(X, beta, Y);
+        
+        // Solve (regularized) Least Squares 
+        beta = RLS(Z, X, lambda);
+    }
+    
+    return beta;
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Below we carry out a comparison of the base R implementation of (unregularized) probit regression against our implementation.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(MASS)
+
+N = 10000
+p = 4
+
+set.seed(1234)
+S = matrix(rnorm(p*p), ncol = p)
+S = t(S) %*% S
+
+X = MASS::mvrnorm(n = N, mu = rep(0.0, times = p), Sigma = S)
+
+beta = matrix((1:p)/2, ncol = 1)
+
+Z = X %*% beta + matrix(rnorm(N))
+Y = as.integer(Z &amp;gt; 0)
+
+system.time(probit.cpp100 &amp;lt;- Probit(Y, X, 0.0, 100))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##    user  system elapsed 
+##    0.21    0.00    0.20&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;system.time(probit.cpp10000 &amp;lt;- Probit(Y, X, 0.0, 10000))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##    user  system elapsed 
+##   21.33    0.00   21.33&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;system.time(probit.glm &amp;lt;- glm(Y ~ X - 1, family = binomial(link = &amp;quot;probit&amp;quot;))$coefficients)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##    user  system elapsed 
+##    0.07    0.00    0.06&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;print(data.frame(beta = beta, 
+                 Cpp_100_iter = probit.cpp100,
+                 Cpp_10000_iter = probit.cpp10000,
+                 R = probit.glm))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##    beta Cpp_100_iter Cpp_10000_iter         R
+## X1  0.5    0.4128896      0.5002905 0.5002889
+## X2  1.0    0.8632397      0.9845270 0.9845285
+## X3  1.5    1.2932036      1.5056988 1.5056998
+## X4  2.0    1.7173029      1.9814520 1.9814547&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We see the base R version is much faster, and converges much more quickly. Note this is not due to weak compiler flags on the part of Eigen. A local Makevars file in &lt;code&gt;Documents/.R&lt;/code&gt; overrides the defaults to use the optimization flags &lt;code&gt;-O3 -march=native&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;No, instead &lt;a href=&#34;https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/glm&#34;&gt;&lt;code&gt;glm.fit&lt;/code&gt;&lt;/a&gt; uses &lt;a href=&#34;https://en.wikipedia.org/wiki/Iteratively_reweighted_least_squares&#34;&gt;iteratively reweighted least squares (IRLS)&lt;/a&gt; to fit the model, not EM as can be seen in the &lt;a href=&#34;https://github.com/SurajGupta/r-source/blob/master/src/library/stats/R/glm.R&#34;&gt;source code&lt;/a&gt;. So EM is not a very fast algorithm to fit probit models. In the future we’ll implement IRLS in Eigen (or Fortran, or Julia).&lt;/p&gt;
+&lt;/div&gt;
+</description>
+      <content:encoded>
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>In the <a href="https://edsterjo.netlify.app/post/003_em1/main/">first post</a> in this series we discussed Expectation Maximization (EM) type algorithms. In the post <a href="https://edsterjo.netlify.app/post/004_regularization/main/">prior to this one</a> we discussed regularization and showed how it leads to a bias-variance trade off in OLS models. Here we implement fitting for <span class="math inline">\(L^2\)</span>-regularized <a href="https://en.wikipedia.org/wiki/Probit_model">probit regression</a> using EM. To make it more interesting we will code everything from scratch using the <a href="http://eigen.tuxfamily.org/index.php?title=Main_Page">Eigen</a> linear algebra library, via <a href="https://cran.r-project.org/web/packages/RcppEigen/index.html">RcppEigen</a>.</p>
+</div>
+<div id="probit-regression-as-a-censored-ols-model" class="section level2">
+<h2>Probit Regression as a censored OLS model</h2>
+<p>In our first post on EM algorithms we emphasized that EM is particularly useful for models that have censored data. Suppose we have the following censored model. Suppose <span class="math inline">\(Y^*\)</span> is a real valued random variable and <span class="math inline">\(\vec{X}\)</span> is a random vector with values in <span class="math inline">\(\mathbb{R}^p\)</span>. Suppose that we have the conditional relationship</p>
+<p><span class="math display">\[
+Y^* \ \ | \ \ \vec{X} \sim \mathcal{N}(\ \langle \vec{X}  , \beta\rangle \ ,\ 1)
+\]</span></p>
+<p>where <span class="math inline">\(\mathcal{N}(\mu, \sigma^2)\)</span> denotes the univariate normal distribution with mean <span class="math inline">\(\mu\)</span> and variance <span class="math inline">\(\sigma^2\)</span>. Here (and everywhere else) the symbol <span class="math inline">\(\langle v,w\rangle\)</span> represents the Euclidean inner product (aka, <a href="https://en.wikipedia.org/wiki/Dot_product">dot product</a>) of two vectors <span class="math inline">\(v\)</span> and <span class="math inline">\(w\)</span>.</p>
+<p>In this case we may write <span class="math inline">\(Y^* = \langle \vec{X} , \beta\rangle - \epsilon\)</span>, where <span class="math inline">\(\epsilon \sim \mathcal{N}(0,1)\)</span> is standard normal, which can be taken independent of <span class="math inline">\(\vec{X}\)</span> or this distribution can be simply assumed conditional on <span class="math inline">\(\vec{X}\)</span>.</p>
+<p>Instead of observing <span class="math inline">\(Y^*\)</span> in the data however, we observe the censored variable
+<span class="math display">\[
+Y := 
+\begin{cases}
+1, &amp; \text{if} \ \ Y^* &gt; 0 \\
+0, &amp; \text{otherwise}
+\end{cases}
+\]</span>
+Hence we have that <span class="math inline">\(Y \ |\vec{X} \sim \text{Bernoulli}(p)\)</span> where
+<span class="math display">\[
+p = P(Y = 1 | \vec{X}) = P(Y^* &gt; 0 | \vec{X}) = P\bigg(Y^* - \langle \vec{X},\beta\rangle &gt; - \langle \vec{X},\beta\rangle\ \ \bigg|\ \ \vec{X}\bigg) = P(\epsilon &lt; \langle \vec{X},\beta\rangle\ | \vec{X})
+\]</span>
+Since <span class="math inline">\(\epsilon \sim \mathcal{N}(0,1)\)</span> this last probability is equal to <span class="math inline">\(\Phi(\langle \vec{X},\beta\rangle)\)</span> where <span class="math inline">\(\Phi\)</span> denotes the standard normal CDF. This derives the probit model.</p>
+<p>Before we proceed, notice 2 points which we won’t dwell on:</p>
+<ul>
+<li>If the variance of <span class="math inline">\(Y^*\)</span> had been <span class="math inline">\(\sigma^2 \ne 1\)</span> then the value of <span class="math inline">\(\sigma\)</span> would not be able to be estimated from data without knowing <span class="math inline">\(\beta\)</span> since <span class="math inline">\(P(Y^* &gt; 0 |\vec{X}) = P(Y^*/\sigma &gt; 0 | \vec{X})\)</span>.</li>
+<li>If the distributional relationship between <span class="math inline">\(Y\)</span> and <span class="math inline">\(\vec{X}\)</span> had been such that the error term <span class="math inline">\(\epsilon\)</span> where a logistic random variable, instead of a normal one, then the censored problem would have become logistic regression.</li>
+</ul>
+<p>For the regression itself we assume that we have a data set <span class="math inline">\(\{ (y_i, \vec{x}_i)\}_{i = 1}^N\)</span> consisting of samples generated independently of one another from a fixed multivariate distribution for <span class="math inline">\((Y, \vec{X})\)</span> (i.e. we assume our data was sampled IID).</p>
+</div>
+<div id="fitting-probit-regression-via-em" class="section level2">
+<h2>Fitting Probit Regression via EM</h2>
+<p>Since probit regression arises from a censored normal OLS model, and since OLS is relatively easy to fit, probit regression is an excellent candidate for applying Expectation Maximization for fitting. A small difference will be that all of the probability densities involved will be conditional on the observed covariates <span class="math inline">\(\{\vec{x}_i\}_{i = 1}^N\)</span> since regression is a conditional relationship.</p>
+<p>Let’s recall the standard EM algorithm for the case of the regression problem above:</p>
+<ul>
+<li><p><strong>Step 1:</strong> Let <span class="math inline">\(m = 0\)</span>. Make an initial estimate <span class="math inline">\(\beta_m\)</span> for <span class="math inline">\(\beta\)</span>.</p></li>
+<li><p><strong>Step 2:</strong> Given the observed data <span class="math inline">\(\{(y_i, \vec{x}_i)\}_{i = 1}^N\)</span> and pretending for the moment that our current guess <span class="math inline">\(\beta_m\)</span> is correct, construct the conditional probability distribution <span class="math inline">\(p(\{y^*_i\}\ \ |\ \ \{(y_i, \vec{x}_i)\},\ \beta_m)\)</span> of the hidden data <span class="math inline">\(\{Y^*_i\}\)</span> given all known information.</p></li>
+<li><p><strong>Step 3:</strong> Using the distribution <span class="math inline">\(p(\{y^*_i\}\ \ |\ \ \{(y_i, \vec{x}_i)\},\ \beta_m)\)</span> construct the following estimator/approximation of the desired log-likelihood <span class="math inline">\(\log(p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\}))\)</span> for arbitrary values of <span class="math inline">\(\beta\)</span>:</p></li>
+</ul>
+<p><span class="math display">\[
+Q(\beta | \beta_m) \ := \ \text{E}_{\{Y^*_i\}\ \ |\ \ \{(Y_i=y_i,\ \vec{X}_i=\vec{x}_i)\},\ \beta_m}  \big[ \log(p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\})) \big] 
+\]</span>
+<span class="math display">\[
+= \int_{\mathcal{Y^*}} \log(p(\{y^*_i\} \ | \ \beta, \{\vec{x}_i\})) \ p(\{y^*_i\}\  |\  \{(y_i, \vec{x}_i)\}, \beta_m) \ dy_1^*...dy^*_N 
+\]</span></p>
+<ul>
+<li><p><strong>Step 4:</strong> Set <span class="math inline">\(\beta_{m+1}\)</span> equal to a value of <span class="math inline">\(\beta\)</span> that maximizes the current approximation <span class="math inline">\(Q(\beta|\beta_m)\)</span> of <span class="math inline">\(\log(p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\}))\)</span>.</p></li>
+<li><p><strong>Step 5:</strong> Return to step 2 and repeat until some stopping criteria is met.</p></li>
+</ul>
+<p>These formulas may seem difficult at the moment because they are in such a general form. As we specify things for our particular problem things will become more concrete. Now because <span class="math inline">\(Y^*|\vec{X}\sim \mathcal{N}(\ \langle \vec{X} , \beta\rangle \ ,\ 1)\)</span> is a normal linear regression relationship we have
+<span class="math display">\[
+p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\}) = \frac{1}{(2\pi)^{N/2}}e^{\sum_{i=1}^N-\frac{1}{2}\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2}
+\]</span></p>
+<p>Hence
+<span class="math display">\[
+\log(p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\})) = const -\frac{1}{2} \sum_{i=1}^N\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2
+\]</span></p>
+<p>and so the <span class="math inline">\(Q\)</span>-function is
+<span class="math display">\[
+Q(\beta | \beta_m) \ = \ \text{E}_{\{Y^*_i\}\ \ |\ \ \{(Y_i=y_i,\ \vec{X}_i=\vec{x}_i)\},\ \beta_m}  \bigg[ -\frac{1}{2} \sum_{i=1}^N\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2 \bigg] + const
+\]</span></p>
+<p>Since the data samples are assumed IID we can apply the <a href="https://edsterjo.netlify.app/post/003_em1/main/">representation we derived in the first post in the series</a> where instead of taking the expectation over all samples, we sum over the expectations of each individual sample:</p>
+<p><span class="math display">\[
+Q(\beta | \beta_m) \ = \ const - \frac{1}{2}\sum_{i = 1}^N\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \bigg[\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2 \bigg]
+\]</span></p>
+<p>Note that in the EM algorithm we do not actually need to evaluate this function. Instead in step 4 we simply want to find the value of <span class="math inline">\(\beta\)</span> that maximizes it. In addition, as we discussed in the first post, if we wanted to incorporate a prior distribution <span class="math inline">\(p(\beta)\)</span> on <span class="math inline">\(\beta\)</span> for the purpose of regularization we would replace the problem of maximizing <span class="math inline">\(Q(\beta|\beta_m)\)</span> by maximizing <span class="math inline">\(Q(\beta|\beta_m) + \log(p(\beta))\)</span> instead. For the purpose of <span class="math inline">\(L^2\)</span>-regularization we could simply take <span class="math inline">\(\beta \sim \mathcal{N}(\vec{0}, \frac{1}{\lambda})\)</span>. In that case
+<span class="math display">\[
+Q(\beta|\beta_m) + \log(p(\beta)) = \ const - \frac{1}{2}\sum_{i = 1}^N\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \bigg[\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2 \bigg] - \frac{\lambda}{2}\langle \beta, \beta\rangle
+\]</span></p>
+<p>(the <span class="math inline">\(const\)</span> may now depend on <span class="math inline">\(\lambda\)</span> which we always treat as a constant). We will focus on maximizing this regularized function, knowing that we can simply let <span class="math inline">\(\lambda = 0\)</span> to remove the regularization. At the maximizing point we need the gradient with respect to <span class="math inline">\(\beta\)</span> to equal 0:
+<span class="math display">\[
+\nabla_{\beta} \ \big(Q(\beta|\beta_m) + \log(p(\beta))\big) = 0
+\]</span></p>
+<p>(where the <span class="math inline">\(0\)</span> represents the zero vector in <span class="math inline">\(\mathbb{R}^p\)</span>). Interchanging gradients first with the summation, then with the expectation (since all random variables have nice distributions) gives
+<span class="math display">\[
+0 = \sum_{i = 1}^N\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \bigg[\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)\vec{x}_i \bigg] - \lambda \beta
+\]</span>
+<span class="math display">\[
+= \sum_{i = 1}^N\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \big[Y^*_i\big]\vec{x}_i - \sum_{i = 1}^N\langle \vec{x}_i  , \beta\rangle\vec{x}_i  - \lambda \beta
+\]</span></p>
+<p>Let <span class="math inline">\(X\in\mathbb{R}^{N\times p}\)</span> be an <span class="math inline">\(N\times p\)</span> matrix whose <span class="math inline">\(i\)</span>-th row is <span class="math inline">\(\vec{x}_i\)</span>, and let <span class="math inline">\(Z\in \mathbb{R}^{N\times 1}\)</span> be a vector with <span class="math inline">\(i\)</span>-th component <span class="math inline">\(z_i = \text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m} \big[Y^*_i\big]\)</span>. Then in matrix notation the above becomes
+<span class="math display">\[
+0 = X^TZ - X^TX\beta - \lambda\beta \\= X^TZ - (X^TX\beta + \lambda I)\beta
+\]</span></p>
+<p>This looks very familiar! It looks exactly like the normal equations of OLS if the target variable had been <span class="math inline">\(Z\)</span>. The value of <span class="math inline">\(Z = \big(\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m} \big[Y^*_i\big]\big)_{i=1}^N\)</span> is just the value of <span class="math inline">\(Y^*\)</span> we would guess given the values <span class="math inline">\(y_i\)</span> of the censored variable and <span class="math inline">\(\vec{x}_i\)</span> of the covariates. Basically EM is telling us to impute a conditional average for the missing data <span class="math inline">\(Y^*\)</span>, fit OLS, and repeat. Solving for <span class="math inline">\(\beta\)</span> gives
+<span class="math display">\[
+\beta_{m+1} = (X^TX + \lambda I)^{-1}X^TZ
+\]</span>
+This can be implemented once we know the value of <span class="math inline">\(Z\)</span>. Since <span class="math inline">\(Z_i = \text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m} \big[Y^*_i\big]\)</span> then this is just the mean of a truncated normal distribution:
+<span class="math display">\[
+\text{E}_{Y^*_i\ \ |\ \ Y_i=1,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \big[Y^*_i\big] = \langle \vec{x}_i  , \beta_m\rangle + \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{1 - \Phi(-\langle \vec{x}_i  , \beta_m\rangle)}
+\]</span></p>
+<p><span class="math display">\[
+\text{E}_{Y^*_i\ \ |\ \ Y_i=0,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \big[Y^*_i\big] = \langle \vec{x}_i  , \beta_m\rangle - \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{\Phi(-\langle \vec{x}_i  , \beta_m\rangle)}
+\]</span>
+where <span class="math inline">\(\phi\)</span> and <span class="math inline">\(\Phi\)</span> are the standard normal PDF and CDF respectively. Therefore, we can summarize the EM algorithm for Probit Regression as:</p>
+<ul>
+<li><strong>Step 1:</strong> Let <span class="math inline">\(m = 0\)</span>. Make an initial estimate <span class="math inline">\(\beta_m\)</span> for <span class="math inline">\(\beta\)</span>.</li>
+<li><strong>Step 2:</strong> Impute the censored data according to</li>
+</ul>
+<p><span class="math display">\[
+z_i =
+\begin{cases}
+\langle \vec{x}_i  , \beta_m\rangle + \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{1 - \Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, &amp; \text{if} \ \ y_i = 1 \\
+\langle \vec{x}_i  , \beta_m\rangle - \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{\Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, &amp; \text{if} \ \ y_i = 0
+\end{cases}
+\]</span></p>
+<ul>
+<li><strong>Step 3:</strong> Solve the regularized OLS problem to update <span class="math inline">\(\beta\)</span>:</li>
+</ul>
+<p><span class="math display">\[
+\beta_{m+1} = (X^TX + \lambda I)^{-1}X^TZ
+\]</span></p>
+<ul>
+<li><strong>Step 4:</strong> Return to step 2 and repeat until some stopping criteria is met.</li>
+</ul>
+</div>
+<div id="implementing-in-c-using-eigen" class="section level2">
+<h2>Implementing in C++ using Eigen</h2>
+<p>The algorithm above is easily implementable in R, Numpy, Matlab, etc., but for fun we’ll implement it in C++ using the Eigen linear algebra library. We do this in Rmarkdown using the <a href="https://cran.r-project.org/web/packages/RcppEigen/index.html">RcppEigen</a> package in R.</p>
+<p>First we include the necessary header files. Here <code>RcppEigen.h</code> includes the Eigen library itself, as well as all the necessary boilerplate code of Rcpp to integrate Eigen (and C++) with R.</p>
+<pre class="cpp"><code>#include &lt;RcppEigen.h&gt;
+#include &lt;algorithm&gt;
+#include &lt;limits&gt;
+
+// [[Rcpp::depends(RcppEigen)]]
+
+using namespace Eigen;</code></pre>
+<p>Next we define two functions that will be needed in computing the vector <span class="math inline">\(Z\)</span>, whose computation requires the normal distribution’s PDF and CDF. We’ll use R’s own built-in functions <code>dnorm</code> and <code>pnorm</code>. These functions are written in C or Fortran (and hence can be called from any language with a C interface) and are very well tested. So instead of rolling our own versions we may as well use R’s.</p>
+<pre class="cpp"><code>// [[Rcpp::export]]
+double positive(const double mu) 
+{
+    double num = R::dnorm(mu, 0, 1, false);
+    double den = 1 - R::pnorm(-mu, 0, 1, true, false);
+    
+    return mu + num/den;
+}
+
+// [[Rcpp::export]]
+double negative(double mu)
+{
+    double num = R::dnorm(mu, 0, 1, false);
+    double den = R::pnorm(-mu, 0, 1, true, false);
+    
+    return mu - num/den;
+}</code></pre>
+<p>Next we want a function that actually computes the <span class="math inline">\(Z\)</span> vector, given <span class="math inline">\(X\)</span> and <span class="math inline">\(\beta_m\)</span>. We could use some of Eigen’s nifty <a href="https://eigen.tuxfamily.org/dox/TopicCustomizing_NullaryExpr.html">nullary expressions</a>, but a simple for-loop with a ternay conditional will do. We also create a wrapper function so that we can test from R:</p>
+<pre class="cpp"><code>VectorXd impute(const MatrixXd&amp; X,
+                const VectorXd&amp; beta,
+                const VectorXi&amp; Y)
+{
+    VectorXd Z = X * beta;
+    
+    // If Y(i) is non-zero use the function 
+    // positive, else use negative
+    for(int i = 0; i != Z.size(); ++i)
+        Z(i) = (Y(i) == (int)1) ? (positive(Z(i))) : (negative(Z(i)));
+    
+    return Z;
+}
+
+// A wrapper function to test from R
+// [[Rcpp::export]]
+VectorXd impute_test(const Map&lt;MatrixXd&gt; X,
+                     const Map&lt;VectorXd&gt; beta,
+                     const Map&lt;VectorXi&gt; Y)
+{
+    return impute(X, beta, Y);
+}</code></pre>
+<p>Comparing to an R implementation is trivial:</p>
+<pre class="r"><code>X = matrix(rnorm(100*10), ncol = 10)
+beta = matrix(rnorm(10), ncol = 1)
+Y = matrix(sample(c(0L,1L), size = 100, replace = T), ncol = 1)
+
+# Using the C++ implementation
+Z.cpp = impute_test(X, beta, Y)
+
+# Building one in in R
+imputeR = function(X, beta, Y)
+{
+    positiveR = function(Z){Z + dnorm(Z)/(1-pnorm(-Z))}
+    negativeR = function(Z){Z - dnorm(Z)/pnorm(-Z)}
+    
+    Z = X %*% beta
+    return(ifelse((Y == 1L), positiveR(Z), negativeR(Z)))
+}
+
+Z.r = imputeR(X, beta, Y)
+
+# Checking range of values
+print(summary(Z.cpp - Z.r))</code></pre>
+<pre><code>##        V1            
+##  Min.   :-2.665e-14  
+##  1st Qu.: 0.000e+00  
+##  Median : 0.000e+00  
+##  Mean   :-6.728e-16  
+##  3rd Qu.: 0.000e+00  
+##  Max.   : 1.554e-14</code></pre>
+<p>Not bad. Next we need a function to compute (regularized) least squares. For the solution we use the normal equations. According to the <a href="https://eigen.tuxfamily.org/dox-devel/group__LeastSquares.html">Eigen tutorial on th matter</a> the normal equations are the fastest but least numerically stable option. For us this is good enough. Again we create a small wrapper to test from R:</p>
+<pre class="cpp"><code>VectorXd RLS(const VectorXd&amp; Z, 
+             const MatrixXd&amp; X, 
+             const double lambda = 0.0)
+{
+    // Creating an identity matrix
+    MatrixXd lambda_eye = lambda * MatrixXd::Identity(X.cols(), X.cols());
+    
+    // Using (regularized) normal equations
+    if(lambda &gt;= std::numeric_limits&lt;double&gt;::min())
+        return (X.transpose() * X + lambda_eye).ldlt().solve(X.transpose() * Z);
+    
+    return (X.transpose() * X).ldlt().solve(X.transpose() * Z);
+}
+
+// [[Rcpp::export]]
+VectorXd RLS_test(const Map&lt;VectorXd&gt; Z, 
+                  const Map&lt;MatrixXd&gt; X,
+                  double lambda = 0.0)
+{
+    return RLS(Z, X, lambda);
+}</code></pre>
+<p>Testing in R:</p>
+<pre class="r"><code>set.seed(1234)
+X = matrix(rnorm(100*10), ncol = 10)
+beta = matrix(rnorm(10), ncol = 1)
+Z = X %*% beta + matrix(rnorm(100), ncol = 1)
+
+beta_hat.r = lm.fit(X, Z, method = &quot;qr&quot;)$coefficients
+beta_hat.cpp = RLS_test(Z, X, 0)
+
+print(data.frame(beta = beta, 
+                 beta_hat.r = beta_hat.r, 
+                 beta_hat.cpp = beta_hat.cpp))</code></pre>
+<pre><code>##           beta beta_hat.r beta_hat.cpp
+## x1  -1.2053334 -1.2721727   -1.2721727
+## x2   0.3014667  0.2774444    0.2774444
+## x3  -1.5391452 -1.5961346   -1.5961346
+## x4   0.6353707  0.5781086    0.5781086
+## x5   0.7029518  0.8563414    0.8563414
+## x6  -1.9058829 -2.0154512   -2.0154512
+## x7   0.9389214  0.8108957    0.8108957
+## x8  -0.2244921 -0.3825277   -0.3825277
+## x9  -0.6738168 -0.7562696   -0.7562696
+## x10  0.4457874  0.4209543    0.4209543</code></pre>
+<pre class="r"><code>print(summary(beta_hat.cpp - beta_hat.r))</code></pre>
+<pre><code>##       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
+## -8.882e-16 -6.800e-16 -5.551e-17  4.996e-17  3.053e-16  2.220e-15</code></pre>
+<p>Not bad at all. Note that R’s very powerful <code>lm.fit</code> function uses QR decomposition to solve the least squares problem. This method is a bit slower in principle than the <span class="math inline">\(LDL^T\)</span> decomposition we used for the normal equations above, but it’s also higher quality numerically.</p>
+<p>As for a test with a non-trivial regularization constant:</p>
+<pre class="r"><code>lambda = 15
+beta_hat_reg.r = solve(t(X) %*% X + lambda*diag(10), t(X) %*% Z)
+beta_hat_reg.cpp = RLS_test(Z, X, lambda)
+
+print(data.frame(beta = beta, 
+                 beta_hat_reg.r = beta_hat_reg.r, 
+                 beta_hat_reg.cpp = beta_hat_reg.cpp))</code></pre>
+<pre><code>##          beta beta_hat_reg.r beta_hat_reg.cpp
+## 1  -1.2053334     -1.1372786       -1.1372786
+## 2   0.3014667      0.2299293        0.2299293
+## 3  -1.5391452     -1.3128364       -1.3128364
+## 4   0.6353707      0.4366746        0.4366746
+## 5   0.7029518      0.7691213        0.7691213
+## 6  -1.9058829     -1.7122424       -1.7122424
+## 7   0.9389214      0.7415632        0.7415632
+## 8  -0.2244921     -0.2756274       -0.2756274
+## 9  -0.6738168     -0.5224541       -0.5224541
+## 10  0.4457874      0.4061769        0.4061769</code></pre>
+<pre class="r"><code>print(summary(beta_hat_reg.cpp - beta_hat_reg.r))</code></pre>
+<pre><code>##        V1            
+##  Min.   :-7.772e-16  
+##  1st Qu.:-1.110e-16  
+##  Median : 0.000e+00  
+##  Mean   :-2.776e-17  
+##  3rd Qu.: 2.082e-16  
+##  Max.   : 3.331e-16</code></pre>
+<p>Very good. Again, we see that the regularized least squares estimates are biased away from the true values, and towards the 0 vector.</p>
+<p>Now we bring it all together into one algorithm:</p>
+<pre class="cpp"><code>// [[Rcpp::export]]
+VectorXd Probit(const Map&lt;VectorXi&gt; Y, 
+                const Map&lt;MatrixXd&gt; X, 
+                double lambda = 0.0,
+                int num_iter = 100)
+{
+
+    // Making sure Lambda is non-negative;
+    lambda = std::max(lambda, 0.0);
+    
+    // Making sure the number of rows of X is the 
+    // same as the number of rows of Y
+    assert(Y.size() == X.rows());
+    
+    // Initialize beta to 0 values
+    VectorXd beta = VectorXd::Zero(X.cols());
+    
+    // Iteration
+    for(int i = 0; i &lt; num_iter; ++i)
+    {
+        // Impute the Z vector
+        VectorXd Z = impute(X, beta, Y);
+        
+        // Solve (regularized) Least Squares 
+        beta = RLS(Z, X, lambda);
+    }
+    
+    return beta;
+}</code></pre>
+<p>Below we carry out a comparison of the base R implementation of (unregularized) probit regression against our implementation.</p>
+<pre class="r"><code>library(MASS)
+
+N = 10000
+p = 4
+
+set.seed(1234)
+S = matrix(rnorm(p*p), ncol = p)
+S = t(S) %*% S
+
+X = MASS::mvrnorm(n = N, mu = rep(0.0, times = p), Sigma = S)
+
+beta = matrix((1:p)/2, ncol = 1)
+
+Z = X %*% beta + matrix(rnorm(N))
+Y = as.integer(Z &gt; 0)
+
+system.time(probit.cpp100 &lt;- Probit(Y, X, 0.0, 100))</code></pre>
+<pre><code>##    user  system elapsed 
+##    0.21    0.00    0.20</code></pre>
+<pre class="r"><code>system.time(probit.cpp10000 &lt;- Probit(Y, X, 0.0, 10000))</code></pre>
+<pre><code>##    user  system elapsed 
+##   21.33    0.00   21.33</code></pre>
+<pre class="r"><code>system.time(probit.glm &lt;- glm(Y ~ X - 1, family = binomial(link = &quot;probit&quot;))$coefficients)</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>##    user  system elapsed 
+##    0.07    0.00    0.06</code></pre>
+<pre class="r"><code>print(data.frame(beta = beta, 
+                 Cpp_100_iter = probit.cpp100,
+                 Cpp_10000_iter = probit.cpp10000,
+                 R = probit.glm))</code></pre>
+<pre><code>##    beta Cpp_100_iter Cpp_10000_iter         R
+## X1  0.5    0.4128896      0.5002905 0.5002889
+## X2  1.0    0.8632397      0.9845270 0.9845285
+## X3  1.5    1.2932036      1.5056988 1.5056998
+## X4  2.0    1.7173029      1.9814520 1.9814547</code></pre>
+<p>We see the base R version is much faster, and converges much more quickly. Note this is not due to weak compiler flags on the part of Eigen. A local Makevars file in <code>Documents/.R</code> overrides the defaults to use the optimization flags <code>-O3 -march=native</code>.</p>
+<p>No, instead <a href="https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/glm"><code>glm.fit</code></a> uses <a href="https://en.wikipedia.org/wiki/Iteratively_reweighted_least_squares">iteratively reweighted least squares (IRLS)</a> to fit the model, not EM as can be seen in the <a href="https://github.com/SurajGupta/r-source/blob/master/src/library/stats/R/glm.R">source code</a>. So EM is not a very fast algorithm to fit probit models. In the future we’ll implement IRLS in Eigen (or Fortran, or Julia).</p>
+</div>
+</content:encoded>	
+    </item>
     
     <item>
       <title>Deriving Principal Component Analysis and implementing in C&#43;&#43; using Eigen</title>

@@ -250,12 +250,14 @@ VectorXd RLS(const VectorXd& Z,
              const MatrixXd& X, 
              const double lambda = 0.0)
 {
-	// Creating an identity matrix
-	MatrixXd lambda_eye = lambda * MatrixXd::Identity(X.cols(), X.cols());
-	
-	// Using (regularized) normal equations
 	if(lambda >= std::numeric_limits<double>::min())
+	{
+		// Creating an identity matrix
+		MatrixXd lambda_eye = lambda * MatrixXd::Identity(X.cols(), X.cols());
+		
+		// Using (regularized) normal equations
 		return (X.transpose() * X + lambda_eye).ldlt().solve(X.transpose() * Z);
+	}
 	
 	return (X.transpose() * X).ldlt().solve(X.transpose() * Z);
 }

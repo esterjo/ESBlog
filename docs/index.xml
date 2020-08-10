@@ -306,7 +306,9 @@ Y = matrix(sample(c(0L,1L), size = 100, replace = T), ncol = 1)
 # Using the C++ implementation
 Z.cpp = impute_test(X, beta, Y)
 
-# Building one in in R
+print(anyNA(Z.cpp))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] FALSE&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Building one in in R
 imputeR = function(X, beta, Y)
 {
     positiveR = function(Z){Z + dnorm(Z)/(1-pnorm(-Z))}
@@ -320,14 +322,13 @@ Z.r = imputeR(X, beta, Y)
 
 # Checking range of values
 print(summary(Z.cpp - Z.r))&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;##        V1   
-##  Min.   :0  
-##  1st Qu.:0  
-##  Median :0  
-##  Mean   :0  
-##  3rd Qu.:0  
-##  Max.   :0  
-##  NA&amp;#39;s   :2&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##        V1            
+##  Min.   :-1.865e-14  
+##  1st Qu.: 0.000e+00  
+##  Median : 0.000e+00  
+##  Mean   : 2.081e-14  
+##  3rd Qu.: 0.000e+00  
+##  Max.   : 2.105e-12&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Not bad. Next we need a function to compute (regularized) least squares. For the solution we use the normal equations. According to the &lt;a href=&#34;https://eigen.tuxfamily.org/dox-devel/group__LeastSquares.html&#34;&gt;Eigen tutorial on the matter&lt;/a&gt; the normal equations are the fastest but least numerically stable option. For us this is good enough. Again we create a small wrapper to test from R:&lt;/p&gt;
 &lt;pre class=&#34;cpp&#34;&gt;&lt;code&gt;VectorXd RLS(const VectorXd&amp;amp; Z, 
              const MatrixXd&amp;amp; X, 
@@ -659,7 +660,9 @@ Y = matrix(sample(c(0L,1L), size = 100, replace = T), ncol = 1)
 # Using the C++ implementation
 Z.cpp = impute_test(X, beta, Y)
 
-# Building one in in R
+print(anyNA(Z.cpp))</code></pre>
+<pre><code>## [1] FALSE</code></pre>
+<pre class="r"><code># Building one in in R
 imputeR = function(X, beta, Y)
 {
     positiveR = function(Z){Z + dnorm(Z)/(1-pnorm(-Z))}
@@ -673,14 +676,13 @@ Z.r = imputeR(X, beta, Y)
 
 # Checking range of values
 print(summary(Z.cpp - Z.r))</code></pre>
-<pre><code>##        V1   
-##  Min.   :0  
-##  1st Qu.:0  
-##  Median :0  
-##  Mean   :0  
-##  3rd Qu.:0  
-##  Max.   :0  
-##  NA&#39;s   :2</code></pre>
+<pre><code>##        V1            
+##  Min.   :-1.865e-14  
+##  1st Qu.: 0.000e+00  
+##  Median : 0.000e+00  
+##  Mean   : 2.081e-14  
+##  3rd Qu.: 0.000e+00  
+##  Max.   : 2.105e-12</code></pre>
 <p>Not bad. Next we need a function to compute (regularized) least squares. For the solution we use the normal equations. According to the <a href="https://eigen.tuxfamily.org/dox-devel/group__LeastSquares.html">Eigen tutorial on the matter</a> the normal equations are the fastest but least numerically stable option. For us this is good enough. Again we create a small wrapper to test from R:</p>
 <pre class="cpp"><code>VectorXd RLS(const VectorXd&amp; Z, 
              const MatrixXd&amp; X, 

@@ -226,6 +226,8 @@ Y = matrix(sample(c(0L,1L), size = 100, replace = T), ncol = 1)
 # Using the C++ implementation
 Z.cpp = impute_test(X, beta, Y)
 
+print(anyNA(Z.cpp))
+
 # Building one in in R
 imputeR = function(X, beta, Y)
 {

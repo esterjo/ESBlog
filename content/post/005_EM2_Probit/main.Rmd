@@ -228,7 +228,7 @@ Z.cpp = impute_test(X, beta, Y)
 
 print(anyNA(Z.cpp))
 
-# Building one in in R
+# Building one in R
 imputeR = function(X, beta, Y)
 {
 	positiveR = function(Z){Z + dnorm(Z)/(1-pnorm(-Z))}
@@ -369,6 +369,6 @@ print(data.frame(beta = beta,
 				 R = probit.glm))
 ```
 
-We see the base R version is much faster, and converges much more quickly. Note, this is not due to weak compiler flags on our part. A local Makevars file in `Documents/.R` overrides the default R build flags to use the optimizations `-O3 -march=native`.
+We see the base R converges much more quickly than our implementation of EM. Note, this is not due to weak compiler flags on our part. A local Makevars file in `Documents/.R` overrides the default R build flags to use the optimizations `-O3 -march=native`.
 
-No, instead [`glm.fit`](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/glm) uses [iteratively reweighted least squares (IRLS)](https://en.wikipedia.org/wiki/Iteratively_reweighted_least_squares) to fit the model, not EM as can be seen in the [source code](https://github.com/SurajGupta/r-source/blob/master/src/library/stats/R/glm.R). So EM is not a very fast algorithm to fit probit models. In the future we'll implement IRLS in Eigen (or Fortran, or Julia).
+No, instead [`glm.fit`](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/glm) uses [iteratively reweighted least squares (IRLS)](https://en.wikipedia.org/wiki/Iteratively_reweighted_least_squares) to fit the model, not EM. This can be seen in the [source code](https://github.com/SurajGupta/r-source/blob/master/src/library/stats/R/glm.R). So EM is not a very fast algorithm to fit probit models. At some point in the future we'll probably implement IRLS in Eigen (or Fortran, or Julia).

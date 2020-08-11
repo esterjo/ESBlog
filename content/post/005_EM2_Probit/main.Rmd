@@ -172,7 +172,7 @@ Next we define two functions that will be needed in computing the vector $Z$, wh
 
 ```{Rcpp, eval = FALSE}
 // [[Rcpp::export]]
-double positive(const double mu) 
+double positive(double mu) 
 {
 	double num = R::dnorm(mu, 0, 1, false);
 	double den = 1 - R::pnorm(-mu, 0, 1, true, false);

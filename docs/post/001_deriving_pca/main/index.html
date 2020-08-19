@@ -613,33 +613,28 @@ where <span class="math inline">\(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\)</
 \vec{\omega}_1 := \text{argmax} \ \ \text{Var}( \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle ) 
 \]</span>
 where the argmax is taken over all <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(||\vec{\omega}|| = 1\)</span><a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>. We begin:</p>
-<p>$$
-<span class="math display">\[\begin{equation}
-  \begin{aligned}
-
-\text{Var}( \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle )  &amp;= 
-\text{E}\bigg[\bigg(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle - \text{E}[\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle]\bigg)^2\bigg] \\
-
-
-    &amp;= \text{E}[\langle\ \vec{\omega}\ , \ \vec{X} - \text{E}[\vec{X}] \ \rangle^2] \\
-    
-    
-    &amp;= \text{E}\bigg[\ \bigg(\sum_i\omega_i(X^i - \text{E}[X^i])\bigg)^2\bigg] \\
-    
-    
-    &amp;= \text{E}\bigg[ \sum_{i,j}\omega_i\omega_j(X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \bigg] \\
-    
-    
-    &amp;= \sum_{i,j}\omega_i\omega_j \ \text{E}\bigg[ \ (X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \ \bigg] \\
-    
-    
-    &amp;= \sum_{i,j}\omega_i\omega_j \ \text{Cov}(X^i, X^j) \\
-    
-    
-    &amp;= \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle
-  \end{aligned}
-\end{equation}\]</span>
-$$</p>
+<p><span class="math display">\[
+\text{Var}( \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle )  = 
+\text{E}\bigg[\bigg(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle - \text{E}[\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle]\bigg)^2\bigg]
+\]</span></p>
+<p><span class="math display">\[
+    = \text{E}[\langle\ \vec{\omega}\ , \ \vec{X} - \text{E}[\vec{X}] \ \rangle^2]
+\]</span></p>
+<p><span class="math display">\[
+    = \text{E}\bigg[\ \bigg(\sum_i\omega_i(X^i - \text{E}[X^i])\bigg)^2\bigg] 
+\]</span>
+<span class="math display">\[
+    = \text{E}\bigg[ \sum_{i,j}\omega_i\omega_j(X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \bigg]
+\]</span></p>
+<p><span class="math display">\[
+= \sum_{i,j}\omega_i\omega_j \ \text{E}\bigg[ \ (X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \ \bigg]
+\]</span></p>
+<p><span class="math display">\[
+    = \sum_{i,j}\omega_i\omega_j \ \text{Cov}(X^i, X^j)
+\]</span></p>
+<p><span class="math display">\[
+    = \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle
+\]</span></p>
 <p>where <span class="math inline">\(\text{Cov}(\vec{X})\)</span> is the covariance matrix of <span class="math inline">\(\vec{X}\)</span>. So</p>
 <p><span class="math display">\[
 \vec{\omega}_1 := \text{argmax} \ \ \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle 
@@ -647,19 +642,15 @@ $$</p>
 again the argmax is taken over all <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(||\vec{\omega}|| = 1\)</span>. This problem is called a “variational problem”, but why so is not important at the moment.</p>
 <p>This <span class="math inline">\(\vec{\omega}_1\)</span> must be the first eigenvector of the matrix <span class="math inline">\(\text{Cov}(\vec{X})\)</span>. Why? <strong>This is the hard part. If you can understand what follows you’re golden</strong>. There are multiple ways to see why this is the case:</p>
 <p>One is by Lagrange multipliers. If we write <span class="math inline">\(f(\vec{\omega}) := \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle\)</span> then</p>
-<p>$$
-<span class="math display">\[\begin{equation}
-\begin{aligned}
-
-f(\vec{\omega} + \vec{h}) - f(\vec{\omega}) &amp;=  \langle \ \vec{\omega} + \vec{h} \ , \ \text{Cov}(\vec{X})(\vec{\omega}+\vec{h}) \ \rangle - \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle \\
-
-    &amp;= \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{h}\rangle \ + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle \\
-    
-    &amp;= 2\langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle
-
-\end{aligned}
-\end{equation}\]</span>
-$$</p>
+<p><span class="math display">\[
+f(\vec{\omega} + \vec{h}) - f(\vec{\omega}) =  \langle \ \vec{\omega} + \vec{h} \ , \ \text{Cov}(\vec{X})(\vec{\omega}+\vec{h}) \ \rangle - \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle
+\]</span></p>
+<p><span class="math display">\[
+= \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{h}\rangle \ + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle
+\]</span>
+<span class="math display">\[
+= 2\langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle
+\]</span></p>
 <p>where we first expanded the first term using the bilinearity of the inner product, canceled like terms, and lastly used the symmetry of the covariance matrix to combine two terms. In the above expression the first order term in <span class="math inline">\(\vec{h}\)</span> is given by <span class="math inline">\(\langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle\)</span>. The other term is quadratic in <span class="math inline">\(\vec{h}\)</span>. By definition the differential of <span class="math inline">\(f\)</span> at <span class="math inline">\(\vec{\omega}\)</span> is this linear term:</p>
 <p><span class="math display">\[
 df_{\vec{\omega}} \ (\vec{h}) = \langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle
@@ -687,19 +678,14 @@ Thus we see that eigenvectors capture directions of maximal variance and eigenva
 <p>Just as before we want to capture the direction of maximal variance of <span class="math inline">\(\vec{X}_{new}\)</span>. I.e. we want a vector <span class="math inline">\(\vec{\omega}_2\)</span> with <span class="math inline">\(||\vec{\omega}_2||=1\)</span> such that <span class="math inline">\(\text{Var}(\langle \vec{\omega}_2, \vec{X}_{new}\rangle)\)</span> is maximal.</p>
 <p>Since <span class="math inline">\(\vec{X}_{new} \perp \vec{\omega}_1\)</span><a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> then <span class="math inline">\(\langle \vec{\omega}, \vec{X}_{new}\rangle = \langle \vec{\omega} - \alpha\vec{\omega}_1, \vec{X}_{new}\rangle\)</span> for any <span class="math inline">\(\alpha \in \mathbb{R}\)</span>. Therefore by replacing <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(\vec{\omega} - \langle\vec{\omega}_1,\vec{\omega}\rangle\vec{\omega}_1\)</span> we may restrict our maximization problem to maximizing <span class="math inline">\(\text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle)\)</span> over all <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(||\vec{\omega}|| = 1\)</span> and <span class="math inline">\(\vec{\omega} \perp \vec{\omega}_1\)</span>.</p>
 <p>We transform this expression as follows:</p>
-<p>$$
-<span class="math display">\[\begin{equation}
-\begin{aligned}
-
-\text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle) &amp;= \text{Var}(\langle \vec{\omega}, \vec{X} - \langle\vec{\omega}_1,\vec{X}\rangle\vec{\omega}_1\rangle) \\
-
-    &amp;= \text{Var}(\langle \vec{\omega}, \vec{X}\rangle) \qquad \text{Since }\vec{\omega}\perp\vec{\omega}_1 \\
-    
-    &amp;= \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle \qquad \text{By the earlier computation}
-
-\end{aligned}
-\end{equation}\]</span>
-$$</p>
+<p><span class="math display">\[
+\text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle) = \text{Var}(\langle \vec{\omega}, \vec{X} - \langle\vec{\omega}_1,\vec{X}\rangle\vec{\omega}_1\rangle)
+\]</span></p>
+<p><span class="math display">\[
+= \text{Var}(\langle \vec{\omega}, \vec{X}\rangle) \qquad \text{Since }\vec{\omega}\perp\vec{\omega}_1 \]</span></p>
+<p><span class="math display">\[
+= \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle \qquad \text{By the earlier computation}
+\]</span></p>
 <p>So the vector <span class="math inline">\(\vec{\omega}_2\)</span> is given by the new variational problem</p>
 <p><span class="math display">\[
 \vec{\omega}_2 = \text{argmax} \ \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle

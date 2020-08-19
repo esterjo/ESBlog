@@ -129,63 +129,76 @@ $$
 To prove this we start by applying the multiplication theorem for probability densities:
 
 $$
-\begin{equation}
-  \begin{aligned}
+p(\vec{x},\vec{y}|\theta) = p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_N|\vec{x},\theta)p(\vec{x}|\theta) \qquad \text{(by the multiplication theorem)}
+$$
 
-p(\vec{x},\vec{y}|\theta) &= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_N|\vec{x},\theta)p(\vec{x}|\theta) \qquad \text{by the multiplication theorem}\\
+$$
+= p(y_1|x_1,\theta)...p(y_N|x_N,\theta)p(\vec{x}|\theta) \qquad \text{(by conditional independence but keeping theta)}
+$$
 
-	&= p(y_1|x_1,\theta)...p(y_N|x_N,\theta)p(\vec{x}|\theta) \qquad \text{by conditional independence but keeping theta} \\
-	&= p(\vec{x}|\theta)\prod_{i=1}^Np(y_i|x_i,\theta) \\
-	&=\prod_{i=1}^Np(y_i|x_i,\theta)p(x_i|\theta) \qquad \text{by independence of the x's} \\
-	&= \prod_{i=1}^Np(y_i,x_i|\theta).
-  \end{aligned}
-\end{equation}
+$$
+= p(\vec{x}|\theta)\prod_{i=1}^Np(y_i|x_i,\theta) 
+$$
+
+$$
+=\prod_{i=1}^Np(y_i|x_i,\theta)p(x_i|\theta) \qquad \text{(by independence of the x's)}
+$$
+
+$$
+= \prod_{i=1}^Np(y_i,x_i|\theta).
 $$
 
 Next we have that for each $i$
 
 $$
-\begin{equation}
-  \begin{aligned}
-  
-  p(x_i|\vec{y},\theta) &= \frac{p(x_i,\vec{y}|\theta)}{p(\vec{y}|\theta)} \qquad \text{by Bayes} \\
-  
-  &= \frac{\int p(\vec{x},\vec{y}|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int p(\vec{x},\vec{y}|\theta)d\vec{x}} \\
-  
-  &= \frac{\int \prod_{j=1}^Np(y_j,x_j|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int \prod_{j=1}^Np(y_j,x_j|\theta)d\vec{x}} \\
-  
-  &= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N \int p(y_j,x_j|\theta)dx_j}{\prod_{j=1}^N\int p(y_j,x_j|\theta) dx_j} \\
-  
-  &= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N p(y_j|\theta)}{\prod_{j=1}^N p(y_j|\theta)}\\
-  
-  &= \frac{p(x_i,y_i|\theta)}{p(y_i|\theta)}\\
-  
-  &= p(x_i|y_i,\theta)
+  p(x_i|\vec{y},\theta) = \frac{p(x_i,\vec{y}|\theta)}{p(\vec{y}|\theta)} \qquad \text{(by Bayes)}
+$$
 
-  \end{aligned}
-\end{equation}
+$$
+= \frac{\int p(\vec{x},\vec{y}|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int p(\vec{x},\vec{y}|\theta)d\vec{x}}
+$$
+
+$$
+= \frac{\int \prod_{j=1}^Np(y_j,x_j|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int \prod_{j=1}^Np(y_j,x_j|\theta)d\vec{x}}
+$$
+
+$$
+= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N \int p(y_j,x_j|\theta)dx_j}{\prod_{j=1}^N\int p(y_j,x_j|\theta) dx_j}
+$$
+
+$$
+= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N p(y_j|\theta)}{\prod_{j=1}^N p(y_j|\theta)}
+$$
+
+$$
+= \frac{p(x_i,y_i|\theta)}{p(y_i|\theta)}
+$$
+$$
+= p(x_i|y_i,\theta)
 $$
 
 Hence $p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)$. Therefore we have
 
 $$
-\begin{equation}
-  \begin{aligned}
-  
-  Q(\theta, \theta_m) &= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(\vec{X} \ | \ \theta)) \big] \\
-  
-  &= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(\prod_{i = 1}^N p(X_i \ | \ \theta)) \big] \\
-  
-  &= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \sum_{i = 1}^N \log(p(X_i \ | \ \theta)) \big]\\
-  
-  &= \sum_{i = 1}^N \text{E}_{X_i \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big] \\
-  
-  &= \sum_{i = 1}^N \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big]
+Q(\theta, \theta_m) = \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(\vec{X} \ | \ \theta)) \big]
+$$
+
+$$
+= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(\prod_{i = 1}^N p(X_i \ | \ \theta)) \big]
+$$
+
+$$
+= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \sum_{i = 1}^N \log(p(X_i \ | \ \theta)) \big]
+$$
+
+$$
+= \sum_{i = 1}^N \text{E}_{X_i \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big]
+$$
+
+$$
+= \sum_{i = 1}^N \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big]
   
   = \sum_{i=1}^N Q_i(\theta|\theta_m)
-
-  \end{aligned}
-\end{equation}
 $$
 
 Where we used $p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)$ in the 2nd to last equality. **QED**
@@ -197,6 +210,7 @@ The EM algorithm is easily extendable to regularized MLE. This is usually referr
 $$
 p(\theta|\vec{y}) \propto p(\vec{y}|\theta)p(\theta)
 $$
+
 where the proportionality constant is independent of $\theta$. Thus the MAP estimator is 
 $$
 \hat{\theta}_{MAP} := \text{argmax}_{\theta} \ \log(p(\theta|\vec{y})) \ = \text{argmax}_{\theta} \ \log(p(\vec{y}|\theta)) + \log(p(\theta))

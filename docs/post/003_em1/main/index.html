@@ -692,60 +692,59 @@ Q_i(\theta|\theta_m) := \ \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ 
 p(\vec{x},\vec{y}|\theta) = \prod_{i = 1}^N p(x_i, y_i|\theta). 
 \]</span>
 To prove this we start by applying the multiplication theorem for probability densities:</p>
-<p>$$
-<span class="math display">\[\begin{equation}
-  \begin{aligned}
-
-p(\vec{x},\vec{y}|\theta) &amp;= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_N|\vec{x},\theta)p(\vec{x}|\theta) \qquad \text{by the multiplication theorem}\\
-
-    &amp;= p(y_1|x_1,\theta)...p(y_N|x_N,\theta)p(\vec{x}|\theta) \qquad \text{by conditional independence but keeping theta} \\
-    &amp;= p(\vec{x}|\theta)\prod_{i=1}^Np(y_i|x_i,\theta) \\
-    &amp;=\prod_{i=1}^Np(y_i|x_i,\theta)p(x_i|\theta) \qquad \text{by independence of the x&#39;s} \\
-    &amp;= \prod_{i=1}^Np(y_i,x_i|\theta).
-  \end{aligned}
-\end{equation}\]</span>
-$$</p>
+<p><span class="math display">\[
+p(\vec{x},\vec{y}|\theta) = p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_N|\vec{x},\theta)p(\vec{x}|\theta) \qquad \text{(by the multiplication theorem)}
+\]</span></p>
+<p><span class="math display">\[
+= p(y_1|x_1,\theta)...p(y_N|x_N,\theta)p(\vec{x}|\theta) \qquad \text{(by conditional independence but keeping theta)}
+\]</span></p>
+<p><span class="math display">\[
+= p(\vec{x}|\theta)\prod_{i=1}^Np(y_i|x_i,\theta) 
+\]</span></p>
+<p><span class="math display">\[
+=\prod_{i=1}^Np(y_i|x_i,\theta)p(x_i|\theta) \qquad \text{(by independence of the x&#39;s)}
+\]</span></p>
+<p><span class="math display">\[
+= \prod_{i=1}^Np(y_i,x_i|\theta).
+\]</span></p>
 <p>Next we have that for each <span class="math inline">\(i\)</span></p>
-<p>$$
-<span class="math display">\[\begin{equation}
-  \begin{aligned}
-  
-  p(x_i|\vec{y},\theta) &amp;= \frac{p(x_i,\vec{y}|\theta)}{p(\vec{y}|\theta)} \qquad \text{by Bayes} \\
-  
-  &amp;= \frac{\int p(\vec{x},\vec{y}|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int p(\vec{x},\vec{y}|\theta)d\vec{x}} \\
-  
-  &amp;= \frac{\int \prod_{j=1}^Np(y_j,x_j|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int \prod_{j=1}^Np(y_j,x_j|\theta)d\vec{x}} \\
-  
-  &amp;= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N \int p(y_j,x_j|\theta)dx_j}{\prod_{j=1}^N\int p(y_j,x_j|\theta) dx_j} \\
-  
-  &amp;= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N p(y_j|\theta)}{\prod_{j=1}^N p(y_j|\theta)}\\
-  
-  &amp;= \frac{p(x_i,y_i|\theta)}{p(y_i|\theta)}\\
-  
-  &amp;= p(x_i|y_i,\theta)
-
-  \end{aligned}
-\end{equation}\]</span>
-$$</p>
+<p><span class="math display">\[
+  p(x_i|\vec{y},\theta) = \frac{p(x_i,\vec{y}|\theta)}{p(\vec{y}|\theta)} \qquad \text{(by Bayes)}
+\]</span></p>
+<p><span class="math display">\[
+= \frac{\int p(\vec{x},\vec{y}|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int p(\vec{x},\vec{y}|\theta)d\vec{x}}
+\]</span></p>
+<p><span class="math display">\[
+= \frac{\int \prod_{j=1}^Np(y_j,x_j|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int \prod_{j=1}^Np(y_j,x_j|\theta)d\vec{x}}
+\]</span></p>
+<p><span class="math display">\[
+= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N \int p(y_j,x_j|\theta)dx_j}{\prod_{j=1}^N\int p(y_j,x_j|\theta) dx_j}
+\]</span></p>
+<p><span class="math display">\[
+= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N p(y_j|\theta)}{\prod_{j=1}^N p(y_j|\theta)}
+\]</span></p>
+<p><span class="math display">\[
+= \frac{p(x_i,y_i|\theta)}{p(y_i|\theta)}
+\]</span>
+<span class="math display">\[
+= p(x_i|y_i,\theta)
+\]</span></p>
 <p>Hence <span class="math inline">\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)</span>. Therefore we have</p>
+<p><span class="math display">\[
+Q(\theta, \theta_m) = \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(\vec{X} \ | \ \theta)) \big]
+\]</span></p>
+<p><span class="math display">\[
+= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(\prod_{i = 1}^N p(X_i \ | \ \theta)) \big]
+\]</span></p>
+<p><span class="math display">\[
+= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \sum_{i = 1}^N \log(p(X_i \ | \ \theta)) \big]
+\]</span></p>
+<p><span class="math display">\[
+= \sum_{i = 1}^N \text{E}_{X_i \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big]
+\]</span></p>
 <p>$$
-<span class="math display">\[\begin{equation}
-  \begin{aligned}
-  
-  Q(\theta, \theta_m) &amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(\vec{X} \ | \ \theta)) \big] \\
-  
-  &amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(\prod_{i = 1}^N p(X_i \ | \ \theta)) \big] \\
-  
-  &amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \sum_{i = 1}^N \log(p(X_i \ | \ \theta)) \big]\\
-  
-  &amp;= \sum_{i = 1}^N \text{E}_{X_i \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big] \\
-  
-  &amp;= \sum_{i = 1}^N \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big]
-  
-  = \sum_{i=1}^N Q_i(\theta|\theta_m)
-
-  \end{aligned}
-\end{equation}\]</span>
+= <em>{i = 1}^N </em>{X_i  |  Y_i  =  y_i,  _m} </p>
+<p>= _{i=1}^N Q_i(|_m)
 $$</p>
 <p>Where we used <span class="math inline">\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)</span> in the 2nd to last equality. <strong>QED</strong></p>
 </div>
@@ -754,8 +753,8 @@ $$</p>
 <p>The EM algorithm is easily extendable to regularized MLE. This is usually referred to as Maximum A Posteriori (MAP) in the Bayesian setting, which we adopt. Here the penalty term is interpreted as the log of the prior density on <span class="math inline">\(\theta\)</span>, and the function to be maximized is the posterior density of <span class="math inline">\(\theta\)</span> given the data. By Bayes’ Theorem
 <span class="math display">\[
 p(\theta|\vec{y}) \propto p(\vec{y}|\theta)p(\theta)
-\]</span>
-where the proportionality constant is independent of <span class="math inline">\(\theta\)</span>. Thus the MAP estimator is
+\]</span></p>
+<p>where the proportionality constant is independent of <span class="math inline">\(\theta\)</span>. Thus the MAP estimator is
 <span class="math display">\[
 \hat{\theta}_{MAP} := \text{argmax}_{\theta} \ \log(p(\theta|\vec{y})) \ = \text{argmax}_{\theta} \ \log(p(\vec{y}|\theta)) + \log(p(\theta))
 \]</span>

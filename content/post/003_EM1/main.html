@@ -108,7 +108,8 @@ Q_i(\theta|\theta_m) := \ \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ 
 <span class="math display">\[
 p(\vec{x},\vec{y}|\theta) = \prod_{i = 1}^N p(x_i, y_i|\theta). 
 \]</span>
-To prove this we start by applying the multiplication theorem for probability densities:
+To prove this we start by applying the multiplication theorem for probability densities:</p>
+<p>$$
 <span class="math display">\[\begin{equation}
   \begin{aligned}
 
@@ -119,9 +120,11 @@ p(\vec{x},\vec{y}|\theta) &amp;= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_
     &amp;=\prod_{i=1}^Np(y_i|x_i,\theta)p(x_i|\theta) \qquad \text{by independence of the x&#39;s} \\
     &amp;= \prod_{i=1}^Np(y_i,x_i|\theta).
   \end{aligned}
-\end{equation}\]</span></p>
+\end{equation}\]</span>
+$$</p>
 <p>Next we have that for each <span class="math inline">\(i\)</span></p>
-<p><span class="math display">\[\begin{equation}
+<p>$$
+<span class="math display">\[\begin{equation}
   \begin{aligned}
   
   p(x_i|\vec{y},\theta) &amp;= \frac{p(x_i,\vec{y}|\theta)}{p(\vec{y}|\theta)} \qquad \text{by Bayes} \\
@@ -139,9 +142,11 @@ p(\vec{x},\vec{y}|\theta) &amp;= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_
   &amp;= p(x_i|y_i,\theta)
 
   \end{aligned}
-\end{equation}\]</span></p>
+\end{equation}\]</span>
+$$</p>
 <p>Hence <span class="math inline">\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)</span>. Therefore we have</p>
-<p><span class="math display">\[\begin{equation}
+<p>$$
+<span class="math display">\[\begin{equation}
   \begin{aligned}
   
   Q(\theta, \theta_m) &amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(\vec{X} \ | \ \theta)) \big] \\
@@ -158,7 +163,8 @@ p(\vec{x},\vec{y}|\theta) &amp;= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_
 
   \end{aligned}
 \end{equation}\]</span>
-Where we used <span class="math inline">\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)</span> in the 2nd to last equality. <strong>QED</strong></p>
+$$</p>
+<p>Where we used <span class="math inline">\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)</span> in the 2nd to last equality. <strong>QED</strong></p>
 </div>
 <div id="maximum-a-posteriori-em-and-regularizing-priors" class="section level2">
 <h2>Maximum A Posteriori EM and regularizing priors</h2>

@@ -127,6 +127,8 @@ $$
 p(\vec{x},\vec{y}|\theta) = \prod_{i = 1}^N p(x_i, y_i|\theta). 
 $$
 To prove this we start by applying the multiplication theorem for probability densities:
+
+$$
 \begin{equation}
   \begin{aligned}
 
@@ -138,9 +140,11 @@ p(\vec{x},\vec{y}|\theta) &= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_N|\v
 	&= \prod_{i=1}^Np(y_i,x_i|\theta).
   \end{aligned}
 \end{equation}
+$$
 
 Next we have that for each $i$
 
+$$
 \begin{equation}
   \begin{aligned}
   
@@ -160,9 +164,11 @@ Next we have that for each $i$
 
   \end{aligned}
 \end{equation}
+$$
 
 Hence $p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)$. Therefore we have
 
+$$
 \begin{equation}
   \begin{aligned}
   
@@ -180,6 +186,8 @@ Hence $p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)$. Therefore we have
 
   \end{aligned}
 \end{equation}
+$$
+
 Where we used $p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)$ in the 2nd to last equality. **QED**
 
 

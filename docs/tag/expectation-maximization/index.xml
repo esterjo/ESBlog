@@ -835,7 +835,8 @@ Q_i(\theta|\theta_m) := \ \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ 
 &lt;span class=&#34;math display&#34;&gt;\[
 p(\vec{x},\vec{y}|\theta) = \prod_{i = 1}^N p(x_i, y_i|\theta). 
 \]&lt;/span&gt;
-To prove this we start by applying the multiplication theorem for probability densities:
+To prove this we start by applying the multiplication theorem for probability densities:&lt;/p&gt;
+&lt;p&gt;$$
 &lt;span class=&#34;math display&#34;&gt;\[\begin{equation}
   \begin{aligned}
 
@@ -846,9 +847,11 @@ p(\vec{x},\vec{y}|\theta) &amp;amp;= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...
     &amp;amp;=\prod_{i=1}^Np(y_i|x_i,\theta)p(x_i|\theta) \qquad \text{by independence of the x&amp;#39;s} \\
     &amp;amp;= \prod_{i=1}^Np(y_i,x_i|\theta).
   \end{aligned}
-\end{equation}\]&lt;/span&gt;&lt;/p&gt;
+\end{equation}\]&lt;/span&gt;
+$$&lt;/p&gt;
 &lt;p&gt;Next we have that for each &lt;span class=&#34;math inline&#34;&gt;\(i\)&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{equation}
+&lt;p&gt;$$
+&lt;span class=&#34;math display&#34;&gt;\[\begin{equation}
   \begin{aligned}
   
   p(x_i|\vec{y},\theta) &amp;amp;= \frac{p(x_i,\vec{y}|\theta)}{p(\vec{y}|\theta)} \qquad \text{by Bayes} \\
@@ -866,9 +869,11 @@ p(\vec{x},\vec{y}|\theta) &amp;amp;= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...
   &amp;amp;= p(x_i|y_i,\theta)
 
   \end{aligned}
-\end{equation}\]&lt;/span&gt;&lt;/p&gt;
+\end{equation}\]&lt;/span&gt;
+$$&lt;/p&gt;
 &lt;p&gt;Hence &lt;span class=&#34;math inline&#34;&gt;\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)&lt;/span&gt;. Therefore we have&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{equation}
+&lt;p&gt;$$
+&lt;span class=&#34;math display&#34;&gt;\[\begin{equation}
   \begin{aligned}
   
   Q(\theta, \theta_m) &amp;amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(\vec{X} \ | \ \theta)) \big] \\
@@ -885,7 +890,8 @@ p(\vec{x},\vec{y}|\theta) &amp;amp;= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...
 
   \end{aligned}
 \end{equation}\]&lt;/span&gt;
-Where we used &lt;span class=&#34;math inline&#34;&gt;\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)&lt;/span&gt; in the 2nd to last equality. &lt;strong&gt;QED&lt;/strong&gt;&lt;/p&gt;
+$$&lt;/p&gt;
+&lt;p&gt;Where we used &lt;span class=&#34;math inline&#34;&gt;\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)&lt;/span&gt; in the 2nd to last equality. &lt;strong&gt;QED&lt;/strong&gt;&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;maximum-a-posteriori-em-and-regularizing-priors&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Maximum A Posteriori EM and regularizing priors&lt;/h2&gt;
@@ -1020,7 +1026,8 @@ Q_i(\theta|\theta_m) := \ \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ 
 <span class="math display">\[
 p(\vec{x},\vec{y}|\theta) = \prod_{i = 1}^N p(x_i, y_i|\theta). 
 \]</span>
-To prove this we start by applying the multiplication theorem for probability densities:
+To prove this we start by applying the multiplication theorem for probability densities:</p>
+<p>$$
 <span class="math display">\[\begin{equation}
   \begin{aligned}
 
@@ -1031,9 +1038,11 @@ p(\vec{x},\vec{y}|\theta) &amp;= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_
     &amp;=\prod_{i=1}^Np(y_i|x_i,\theta)p(x_i|\theta) \qquad \text{by independence of the x&#39;s} \\
     &amp;= \prod_{i=1}^Np(y_i,x_i|\theta).
   \end{aligned}
-\end{equation}\]</span></p>
+\end{equation}\]</span>
+$$</p>
 <p>Next we have that for each <span class="math inline">\(i\)</span></p>
-<p><span class="math display">\[\begin{equation}
+<p>$$
+<span class="math display">\[\begin{equation}
   \begin{aligned}
   
   p(x_i|\vec{y},\theta) &amp;= \frac{p(x_i,\vec{y}|\theta)}{p(\vec{y}|\theta)} \qquad \text{by Bayes} \\
@@ -1051,9 +1060,11 @@ p(\vec{x},\vec{y}|\theta) &amp;= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_
   &amp;= p(x_i|y_i,\theta)
 
   \end{aligned}
-\end{equation}\]</span></p>
+\end{equation}\]</span>
+$$</p>
 <p>Hence <span class="math inline">\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)</span>. Therefore we have</p>
-<p><span class="math display">\[\begin{equation}
+<p>$$
+<span class="math display">\[\begin{equation}
   \begin{aligned}
   
   Q(\theta, \theta_m) &amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(\vec{X} \ | \ \theta)) \big] \\
@@ -1070,7 +1081,8 @@ p(\vec{x},\vec{y}|\theta) &amp;= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_
 
   \end{aligned}
 \end{equation}\]</span>
-Where we used <span class="math inline">\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)</span> in the 2nd to last equality. <strong>QED</strong></p>
+$$</p>
+<p>Where we used <span class="math inline">\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)</span> in the 2nd to last equality. <strong>QED</strong></p>
 </div>
 <div id="maximum-a-posteriori-em-and-regularizing-priors" class="section level2">
 <h2>Maximum A Posteriori EM and regularizing priors</h2>

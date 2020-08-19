@@ -1531,10 +1531,9 @@ Q(\theta, \theta_m) = \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}
 &lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
 = \sum_{i = 1}^N \text{E}_{X_i \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big]
 \]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;$$
-= &lt;em&gt;{i = 1}^N &lt;/em&gt;{X_i  |  Y_i  =  y_i,  _m} &lt;/p&gt;
-&lt;p&gt;= _{i=1}^N Q_i(|_m)
-$$&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+= \sum_{i = 1}^N \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big] = \sum_{i=1}^N Q_i(\theta|\theta_m)
+\]&lt;/span&gt;&lt;/p&gt;
 &lt;p&gt;Where we used &lt;span class=&#34;math inline&#34;&gt;\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)&lt;/span&gt; in the 2nd to last equality. &lt;strong&gt;QED&lt;/strong&gt;&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;maximum-a-posteriori-em-and-regularizing-priors&#34; class=&#34;section level2&#34;&gt;
@@ -1721,10 +1720,9 @@ Q(\theta, \theta_m) = \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}
 <p><span class="math display">\[
 = \sum_{i = 1}^N \text{E}_{X_i \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big]
 \]</span></p>
-<p>$$
-= <em>{i = 1}^N </em>{X_i  |  Y_i  =  y_i,  _m} </p>
-<p>= _{i=1}^N Q_i(|_m)
-$$</p>
+<p><span class="math display">\[
+= \sum_{i = 1}^N \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big] = \sum_{i=1}^N Q_i(\theta|\theta_m)
+\]</span></p>
 <p>Where we used <span class="math inline">\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)</span> in the 2nd to last equality. <strong>QED</strong></p>
 </div>
 <div id="maximum-a-posteriori-em-and-regularizing-priors" class="section level2">

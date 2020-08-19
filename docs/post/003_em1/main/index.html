@@ -742,10 +742,9 @@ Q(\theta, \theta_m) = \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}
 <p><span class="math display">\[
 = \sum_{i = 1}^N \text{E}_{X_i \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big]
 \]</span></p>
-<p>$$
-= <em>{i = 1}^N </em>{X_i  |  Y_i  =  y_i,  _m} </p>
-<p>= _{i=1}^N Q_i(|_m)
-$$</p>
+<p><span class="math display">\[
+= \sum_{i = 1}^N \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big] = \sum_{i=1}^N Q_i(\theta|\theta_m)
+\]</span></p>
 <p>Where we used <span class="math inline">\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)</span> in the 2nd to last equality. <strong>QED</strong></p>
 </div>
 <div id="maximum-a-posteriori-em-and-regularizing-priors" class="section level2">

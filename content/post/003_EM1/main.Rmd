@@ -196,9 +196,7 @@ $$
 $$
 
 $$
-= \sum_{i = 1}^N \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big]
-  
-  = \sum_{i=1}^N Q_i(\theta|\theta_m)
+= \sum_{i = 1}^N \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big] = \sum_{i=1}^N Q_i(\theta|\theta_m)
 $$
 
 Where we used $p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)$ in the 2nd to last equality. **QED**

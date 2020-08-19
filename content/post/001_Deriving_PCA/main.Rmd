@@ -38,33 +38,32 @@ $$
 where the argmax is taken over all $\vec{\omega}$ with $||\vec{\omega}|| = 1$[^2]. We begin:
 
 
-$$
-\text{Var}( \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle )  = 
-\text{E}\bigg[\bigg(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle - \text{E}[\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle]\bigg)^2\bigg]
-$$
 
-$$
-    = \text{E}[\langle\ \vec{\omega}\ , \ \vec{X} - \text{E}[\vec{X}] \ \rangle^2]
-$$
+\begin{equation}
+  \begin{aligned}
 
-$$
-    = \text{E}\bigg[\ \bigg(\sum_i\omega_i(X^i - \text{E}[X^i])\bigg)^2\bigg] 
-$$
-$$
-    = \text{E}\bigg[ \sum_{i,j}\omega_i\omega_j(X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \bigg]
-$$
+\text{Var}( \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle )  &= 
+\text{E}\bigg[\bigg(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle - \text{E}[\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle]\bigg)^2\bigg] \\
 
-$$
-= \sum_{i,j}\omega_i\omega_j \ \text{E}\bigg[ \ (X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \ \bigg]
-$$
 
-$$
-    = \sum_{i,j}\omega_i\omega_j \ \text{Cov}(X^i, X^j)
-$$
-
-$$
-    = \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle
-$$
+    &= \text{E}[\langle\ \vec{\omega}\ , \ \vec{X} - \text{E}[\vec{X}] \ \rangle^2] \\
+    
+    
+    &= \text{E}\bigg[\ \bigg(\sum_i\omega_i(X^i - \text{E}[X^i])\bigg)^2\bigg] \\
+    
+    
+    &= \text{E}\bigg[ \sum_{i,j}\omega_i\omega_j(X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \bigg] \\
+    
+    
+    &= \sum_{i,j}\omega_i\omega_j \ \text{E}\bigg[ \ (X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \ \bigg] \\
+    
+    
+    &= \sum_{i,j}\omega_i\omega_j \ \text{Cov}(X^i, X^j) \\
+    
+    
+    &= \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle
+  \end{aligned}
+\end{equation}
 
 where $\text{Cov}(\vec{X})$ is the covariance matrix of $\vec{X}$. So
 
@@ -77,16 +76,18 @@ This $\vec{\omega}_1$ must be the first eigenvector of the matrix $\text{Cov}(\v
 
 One is by Lagrange multipliers. If we write $f(\vec{\omega}) := \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle$ then 
 
-$$
-f(\vec{\omega} + \vec{h}) - f(\vec{\omega}) =  \langle \ \vec{\omega} + \vec{h} \ , \ \text{Cov}(\vec{X})(\vec{\omega}+\vec{h}) \ \rangle - \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle
-$$
 
-$$
-= \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{h}\rangle \ + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle
-$$
-$$
-= 2\langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle
-$$
+\begin{equation}
+\begin{aligned}
+
+f(\vec{\omega} + \vec{h}) - f(\vec{\omega}) &=  \langle \ \vec{\omega} + \vec{h} \ , \ \text{Cov}(\vec{X})(\vec{\omega}+\vec{h}) \ \rangle - \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle \\
+
+	&= \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{h}\rangle \ + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle \\
+	
+	&= 2\langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle
+
+\end{aligned}
+\end{equation}
 
 where we first expanded the first term using the bilinearity of the inner product, canceled like terms, and lastly used the symmetry of the covariance matrix to combine two terms. In the above expression the first order term in $\vec{h}$ is given by $\langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle$. The other term is quadratic in $\vec{h}$. By definition the differential of $f$ at $\vec{\omega}$ is this linear term:
 
@@ -129,16 +130,17 @@ Since $\vec{X}_{new} \perp \vec{\omega}_1$[^5] then $\langle \vec{\omega}, \vec{
 
 We transform this expression as follows:
 
-$$
-\text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle) = \text{Var}(\langle \vec{\omega}, \vec{X} - \langle\vec{\omega}_1,\vec{X}\rangle\vec{\omega}_1\rangle)
-$$
+\begin{equation}
+\begin{aligned}
 
-$$
-= \text{Var}(\langle \vec{\omega}, \vec{X}\rangle) \qquad \text{Since }\vec{\omega}\perp\vec{\omega}_1 $$
+\text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle) &= \text{Var}(\langle \vec{\omega}, \vec{X} - \langle\vec{\omega}_1,\vec{X}\rangle\vec{\omega}_1\rangle) \\
 
-$$
-= \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle \qquad \text{By the earlier computation}
-$$
+	&= \text{Var}(\langle \vec{\omega}, \vec{X}\rangle) \qquad \text{Since }\vec{\omega}\perp\vec{\omega}_1 \\
+	
+	&= \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle \qquad \text{By the earlier computation}
+
+\end{aligned}
+\end{equation}
 
 So the vector $\vec{\omega}_2$ is given by the new variational problem
 

@@ -27,8 +27,8 @@ Instead of observing $Y^*$ in the data however, we observe the censored variable
 $$
 Y := 
 \begin{cases}
-1, \qquad \text{if} \ \ Y^* > 0 \\
-0, \qquad \text{otherwise}
+1, & \text{if} \ \ Y^* > 0 \\
+0, & \text{otherwise}
 \end{cases}
 $$
 Hence we have that $Y \ |\vec{X} \sim \text{Bernoulli}(p)$ where
@@ -134,8 +134,8 @@ where $\phi$ and $\Phi$ are the standard normal PDF and CDF respectively. Theref
 $$
 z_i =
 \begin{cases}
-\langle \vec{x}_i  , \beta_m\rangle + \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{1 - \Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, \qquad \text{if} \ \ y_i = 1 \\
-\langle \vec{x}_i  , \beta_m\rangle - \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{\Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, \qquad\ \ \ \ \text{if} \ \ y_i = 0
+\langle \vec{x}_i  , \beta_m\rangle + \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{1 - \Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, & \text{if} \ \ y_i = 1 \\
+\langle \vec{x}_i  , \beta_m\rangle - \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{\Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, & \text{if} \ \ y_i = 0
 \end{cases}
 $$
 

@@ -36,8 +36,8 @@ Y^* \ \ | \ \ \vec{X} \sim \mathcal{N}(\ \langle \vec{X}  , \beta\rangle \ ,\ 1)
 &lt;span class=&#34;math display&#34;&gt;\[
 Y := 
 \begin{cases}
-1, \qquad \text{if} \ \ Y^* &amp;gt; 0 \\
-0, \qquad \text{otherwise}
+1, &amp;amp; \text{if} \ \ Y^* &amp;gt; 0 \\
+0, &amp;amp; \text{otherwise}
 \end{cases}
 \]&lt;/span&gt;
 Hence we have that &lt;span class=&#34;math inline&#34;&gt;\(Y \ |\vec{X} \sim \text{Bernoulli}(p)\)&lt;/span&gt; where
@@ -125,8 +125,8 @@ where &lt;span class=&#34;math inline&#34;&gt;\(\phi\)&lt;/span&gt; and &lt;span
 &lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
 z_i =
 \begin{cases}
-\langle \vec{x}_i  , \beta_m\rangle + \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{1 - \Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, \qquad \text{if} \ \ y_i = 1 \\
-\langle \vec{x}_i  , \beta_m\rangle - \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{\Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, \qquad\ \ \ \ \text{if} \ \ y_i = 0
+\langle \vec{x}_i  , \beta_m\rangle + \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{1 - \Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, &amp;amp; \text{if} \ \ y_i = 1 \\
+\langle \vec{x}_i  , \beta_m\rangle - \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{\Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, &amp;amp; \text{if} \ \ y_i = 0
 \end{cases}
 \]&lt;/span&gt;&lt;/p&gt;
 &lt;ul&gt;
@@ -216,12 +216,12 @@ Z.r = imputeR(X, beta, Y)
 # Checking range of values
 print(summary(Z.cpp - Z.r))&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##        V1            
-##  Min.   :-3.109e-14  
-##  1st Qu.: 0.000e+00  
+##  Min.   :-7.105e-15  
+##  1st Qu.:-1.110e-16  
 ##  Median : 0.000e+00  
-##  Mean   : 6.550e-17  
-##  3rd Qu.: 0.000e+00  
-##  Max.   : 3.109e-14&lt;/code&gt;&lt;/pre&gt;
+##  Mean   : 1.577e-16  
+##  3rd Qu.: 2.776e-17  
+##  Max.   : 2.931e-14&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Not bad. Next we need a function to compute (regularized) least squares. For the solution we use the normal equations. According to the &lt;a href=&#34;https://eigen.tuxfamily.org/dox-devel/group__LeastSquares.html&#34;&gt;Eigen tutorial on the matter&lt;/a&gt; the normal equations are the fastest but least numerically stable option. For us this is good enough. Again we create a small wrapper to test from R:&lt;/p&gt;
 &lt;pre class=&#34;cpp&#34;&gt;&lt;code&gt;VectorXd RLS(const VectorXd&amp;amp; Z, 
              const MatrixXd&amp;amp; X, 
@@ -390,8 +390,8 @@ Y^* \ \ | \ \ \vec{X} \sim \mathcal{N}(\ \langle \vec{X}  , \beta\rangle \ ,\ 1)
 <span class="math display">\[
 Y := 
 \begin{cases}
-1, \qquad \text{if} \ \ Y^* &gt; 0 \\
-0, \qquad \text{otherwise}
+1, &amp; \text{if} \ \ Y^* &gt; 0 \\
+0, &amp; \text{otherwise}
 \end{cases}
 \]</span>
 Hence we have that <span class="math inline">\(Y \ |\vec{X} \sim \text{Bernoulli}(p)\)</span> where
@@ -479,8 +479,8 @@ where <span class="math inline">\(\phi\)</span> and <span class="math inline">\(
 <p><span class="math display">\[
 z_i =
 \begin{cases}
-\langle \vec{x}_i  , \beta_m\rangle + \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{1 - \Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, \qquad \text{if} \ \ y_i = 1 \\
-\langle \vec{x}_i  , \beta_m\rangle - \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{\Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, \qquad\ \ \ \ \text{if} \ \ y_i = 0
+\langle \vec{x}_i  , \beta_m\rangle + \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{1 - \Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, &amp; \text{if} \ \ y_i = 1 \\
+\langle \vec{x}_i  , \beta_m\rangle - \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{\Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, &amp; \text{if} \ \ y_i = 0
 \end{cases}
 \]</span></p>
 <ul>
@@ -570,12 +570,12 @@ Z.r = imputeR(X, beta, Y)
 # Checking range of values
 print(summary(Z.cpp - Z.r))</code></pre>
 <pre><code>##        V1            
-##  Min.   :-3.109e-14  
-##  1st Qu.: 0.000e+00  
+##  Min.   :-7.105e-15  
+##  1st Qu.:-1.110e-16  
 ##  Median : 0.000e+00  
-##  Mean   : 6.550e-17  
-##  3rd Qu.: 0.000e+00  
-##  Max.   : 3.109e-14</code></pre>
+##  Mean   : 1.577e-16  
+##  3rd Qu.: 2.776e-17  
+##  Max.   : 2.931e-14</code></pre>
 <p>Not bad. Next we need a function to compute (regularized) least squares. For the solution we use the normal equations. According to the <a href="https://eigen.tuxfamily.org/dox-devel/group__LeastSquares.html">Eigen tutorial on the matter</a> the normal equations are the fastest but least numerically stable option. For us this is good enough. Again we create a small wrapper to test from R:</p>
 <pre class="cpp"><code>VectorXd RLS(const VectorXd&amp; Z, 
              const MatrixXd&amp; X, 
@@ -1480,69 +1480,65 @@ Q_i(\theta|\theta_m) := \ \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ 
 &lt;span class=&#34;math display&#34;&gt;\[
 p(\vec{x},\vec{y}|\theta) = \prod_{i = 1}^N p(x_i, y_i|\theta). 
 \]&lt;/span&gt;
-To prove this we start by applying the multiplication theorem for probability densities:&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-p(\vec{x},\vec{y}|\theta) = p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_N|\vec{x},\theta)p(\vec{x}|\theta) \qquad \text{(by the multiplication theorem)}
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= p(y_1|x_1,\theta)...p(y_N|x_N,\theta)p(\vec{x}|\theta) \qquad \text{(by conditional independence but keeping theta)}
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= p(\vec{x}|\theta)\prod_{i=1}^Np(y_i|x_i,\theta) 
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-=\prod_{i=1}^Np(y_i|x_i,\theta)p(x_i|\theta) \qquad \text{(by independence of the x&amp;#39;s)}
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \prod_{i=1}^Np(y_i,x_i|\theta).
-\]&lt;/span&gt;&lt;/p&gt;
+To prove this we start by applying the multiplication theorem for probability densities:
+&lt;span class=&#34;math display&#34;&gt;\[\begin{equation}
+  \begin{aligned}
+
+p(\vec{x},\vec{y}|\theta) &amp;amp;= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_N|\vec{x},\theta)p(\vec{x}|\theta) \qquad \text{by the multiplication theorem}\\
+
+    &amp;amp;= p(y_1|x_1,\theta)...p(y_N|x_N,\theta)p(\vec{x}|\theta) \qquad \text{by conditional independence but keeping theta} \\
+    &amp;amp;= p(\vec{x}|\theta)\prod_{i=1}^Np(y_i|x_i,\theta) \\
+    &amp;amp;=\prod_{i=1}^Np(y_i|x_i,\theta)p(x_i|\theta) \qquad \text{by independence of the x&amp;#39;s} \\
+    &amp;amp;= \prod_{i=1}^Np(y_i,x_i|\theta).
+  \end{aligned}
+\end{equation}\]&lt;/span&gt;&lt;/p&gt;
 &lt;p&gt;Next we have that for each &lt;span class=&#34;math inline&#34;&gt;\(i\)&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-  p(x_i|\vec{y},\theta) = \frac{p(x_i,\vec{y}|\theta)}{p(\vec{y}|\theta)} \qquad \text{(by Bayes)}
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \frac{\int p(\vec{x},\vec{y}|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int p(\vec{x},\vec{y}|\theta)d\vec{x}}
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \frac{\int \prod_{j=1}^Np(y_j,x_j|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int \prod_{j=1}^Np(y_j,x_j|\theta)d\vec{x}}
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N \int p(y_j,x_j|\theta)dx_j}{\prod_{j=1}^N\int p(y_j,x_j|\theta) dx_j}
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N p(y_j|\theta)}{\prod_{j=1}^N p(y_j|\theta)}
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \frac{p(x_i,y_i|\theta)}{p(y_i|\theta)}
-\]&lt;/span&gt;
-&lt;span class=&#34;math display&#34;&gt;\[
-= p(x_i|y_i,\theta)
-\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{equation}
+  \begin{aligned}
+  
+  p(x_i|\vec{y},\theta) &amp;amp;= \frac{p(x_i,\vec{y}|\theta)}{p(\vec{y}|\theta)} \qquad \text{by Bayes} \\
+  
+  &amp;amp;= \frac{\int p(\vec{x},\vec{y}|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int p(\vec{x},\vec{y}|\theta)d\vec{x}} \\
+  
+  &amp;amp;= \frac{\int \prod_{j=1}^Np(y_j,x_j|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int \prod_{j=1}^Np(y_j,x_j|\theta)d\vec{x}} \\
+  
+  &amp;amp;= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N \int p(y_j,x_j|\theta)dx_j}{\prod_{j=1}^N\int p(y_j,x_j|\theta) dx_j} \\
+  
+  &amp;amp;= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N p(y_j|\theta)}{\prod_{j=1}^N p(y_j|\theta)}\\
+  
+  &amp;amp;= \frac{p(x_i,y_i|\theta)}{p(y_i|\theta)}\\
+  
+  &amp;amp;= p(x_i|y_i,\theta)
+
+  \end{aligned}
+\end{equation}\]&lt;/span&gt;&lt;/p&gt;
 &lt;p&gt;Hence &lt;span class=&#34;math inline&#34;&gt;\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)&lt;/span&gt;. Therefore we have&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-Q(\theta, \theta_m) = \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(\vec{X} \ | \ \theta)) \big]
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(\prod_{i = 1}^N p(X_i \ | \ \theta)) \big]
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \sum_{i = 1}^N \log(p(X_i \ | \ \theta)) \big]
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \sum_{i = 1}^N \text{E}_{X_i \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big]
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \sum_{i = 1}^N \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big] = \sum_{i=1}^N Q_i(\theta|\theta_m)
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;Where we used &lt;span class=&#34;math inline&#34;&gt;\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)&lt;/span&gt; in the 2nd to last equality. &lt;strong&gt;QED&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{equation}
+  \begin{aligned}
+  
+  Q(\theta, \theta_m) &amp;amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(\vec{X} \ | \ \theta)) \big] \\
+  
+  &amp;amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(\prod_{i = 1}^N p(X_i \ | \ \theta)) \big] \\
+  
+  &amp;amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \sum_{i = 1}^N \log(p(X_i \ | \ \theta)) \big]\\
+  
+  &amp;amp;= \sum_{i = 1}^N \text{E}_{X_i \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big] \\
+  
+  &amp;amp;= \sum_{i = 1}^N \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big]
+  
+  = \sum_{i=1}^N Q_i(\theta|\theta_m)
+
+  \end{aligned}
+\end{equation}\]&lt;/span&gt;
+Where we used &lt;span class=&#34;math inline&#34;&gt;\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)&lt;/span&gt; in the 2nd to last equality. &lt;strong&gt;QED&lt;/strong&gt;&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;maximum-a-posteriori-em-and-regularizing-priors&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Maximum A Posteriori EM and regularizing priors&lt;/h2&gt;
 &lt;p&gt;The EM algorithm is easily extendable to regularized MLE. This is usually referred to as Maximum A Posteriori (MAP) in the Bayesian setting, which we adopt. Here the penalty term is interpreted as the log of the prior density on &lt;span class=&#34;math inline&#34;&gt;\(\theta\)&lt;/span&gt;, and the function to be maximized is the posterior density of &lt;span class=&#34;math inline&#34;&gt;\(\theta\)&lt;/span&gt; given the data. By Bayes’ Theorem
 &lt;span class=&#34;math display&#34;&gt;\[
 p(\theta|\vec{y}) \propto p(\vec{y}|\theta)p(\theta)
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;where the proportionality constant is independent of &lt;span class=&#34;math inline&#34;&gt;\(\theta\)&lt;/span&gt;. Thus the MAP estimator is
+\]&lt;/span&gt;
+where the proportionality constant is independent of &lt;span class=&#34;math inline&#34;&gt;\(\theta\)&lt;/span&gt;. Thus the MAP estimator is
 &lt;span class=&#34;math display&#34;&gt;\[
 \hat{\theta}_{MAP} := \text{argmax}_{\theta} \ \log(p(\theta|\vec{y})) \ = \text{argmax}_{\theta} \ \log(p(\vec{y}|\theta)) + \log(p(\theta))
 \]&lt;/span&gt;
@@ -1669,69 +1665,65 @@ Q_i(\theta|\theta_m) := \ \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ 
 <span class="math display">\[
 p(\vec{x},\vec{y}|\theta) = \prod_{i = 1}^N p(x_i, y_i|\theta). 
 \]</span>
-To prove this we start by applying the multiplication theorem for probability densities:</p>
-<p><span class="math display">\[
-p(\vec{x},\vec{y}|\theta) = p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_N|\vec{x},\theta)p(\vec{x}|\theta) \qquad \text{(by the multiplication theorem)}
-\]</span></p>
-<p><span class="math display">\[
-= p(y_1|x_1,\theta)...p(y_N|x_N,\theta)p(\vec{x}|\theta) \qquad \text{(by conditional independence but keeping theta)}
-\]</span></p>
-<p><span class="math display">\[
-= p(\vec{x}|\theta)\prod_{i=1}^Np(y_i|x_i,\theta) 
-\]</span></p>
-<p><span class="math display">\[
-=\prod_{i=1}^Np(y_i|x_i,\theta)p(x_i|\theta) \qquad \text{(by independence of the x&#39;s)}
-\]</span></p>
-<p><span class="math display">\[
-= \prod_{i=1}^Np(y_i,x_i|\theta).
-\]</span></p>
+To prove this we start by applying the multiplication theorem for probability densities:
+<span class="math display">\[\begin{equation}
+  \begin{aligned}
+
+p(\vec{x},\vec{y}|\theta) &amp;= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_N|\vec{x},\theta)p(\vec{x}|\theta) \qquad \text{by the multiplication theorem}\\
+
+    &amp;= p(y_1|x_1,\theta)...p(y_N|x_N,\theta)p(\vec{x}|\theta) \qquad \text{by conditional independence but keeping theta} \\
+    &amp;= p(\vec{x}|\theta)\prod_{i=1}^Np(y_i|x_i,\theta) \\
+    &amp;=\prod_{i=1}^Np(y_i|x_i,\theta)p(x_i|\theta) \qquad \text{by independence of the x&#39;s} \\
+    &amp;= \prod_{i=1}^Np(y_i,x_i|\theta).
+  \end{aligned}
+\end{equation}\]</span></p>
 <p>Next we have that for each <span class="math inline">\(i\)</span></p>
-<p><span class="math display">\[
-  p(x_i|\vec{y},\theta) = \frac{p(x_i,\vec{y}|\theta)}{p(\vec{y}|\theta)} \qquad \text{(by Bayes)}
-\]</span></p>
-<p><span class="math display">\[
-= \frac{\int p(\vec{x},\vec{y}|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int p(\vec{x},\vec{y}|\theta)d\vec{x}}
-\]</span></p>
-<p><span class="math display">\[
-= \frac{\int \prod_{j=1}^Np(y_j,x_j|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int \prod_{j=1}^Np(y_j,x_j|\theta)d\vec{x}}
-\]</span></p>
-<p><span class="math display">\[
-= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N \int p(y_j,x_j|\theta)dx_j}{\prod_{j=1}^N\int p(y_j,x_j|\theta) dx_j}
-\]</span></p>
-<p><span class="math display">\[
-= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N p(y_j|\theta)}{\prod_{j=1}^N p(y_j|\theta)}
-\]</span></p>
-<p><span class="math display">\[
-= \frac{p(x_i,y_i|\theta)}{p(y_i|\theta)}
-\]</span>
-<span class="math display">\[
-= p(x_i|y_i,\theta)
-\]</span></p>
+<p><span class="math display">\[\begin{equation}
+  \begin{aligned}
+  
+  p(x_i|\vec{y},\theta) &amp;= \frac{p(x_i,\vec{y}|\theta)}{p(\vec{y}|\theta)} \qquad \text{by Bayes} \\
+  
+  &amp;= \frac{\int p(\vec{x},\vec{y}|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int p(\vec{x},\vec{y}|\theta)d\vec{x}} \\
+  
+  &amp;= \frac{\int \prod_{j=1}^Np(y_j,x_j|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int \prod_{j=1}^Np(y_j,x_j|\theta)d\vec{x}} \\
+  
+  &amp;= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N \int p(y_j,x_j|\theta)dx_j}{\prod_{j=1}^N\int p(y_j,x_j|\theta) dx_j} \\
+  
+  &amp;= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N p(y_j|\theta)}{\prod_{j=1}^N p(y_j|\theta)}\\
+  
+  &amp;= \frac{p(x_i,y_i|\theta)}{p(y_i|\theta)}\\
+  
+  &amp;= p(x_i|y_i,\theta)
+
+  \end{aligned}
+\end{equation}\]</span></p>
 <p>Hence <span class="math inline">\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)</span>. Therefore we have</p>
-<p><span class="math display">\[
-Q(\theta, \theta_m) = \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(\vec{X} \ | \ \theta)) \big]
-\]</span></p>
-<p><span class="math display">\[
-= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(\prod_{i = 1}^N p(X_i \ | \ \theta)) \big]
-\]</span></p>
-<p><span class="math display">\[
-= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \sum_{i = 1}^N \log(p(X_i \ | \ \theta)) \big]
-\]</span></p>
-<p><span class="math display">\[
-= \sum_{i = 1}^N \text{E}_{X_i \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big]
-\]</span></p>
-<p><span class="math display">\[
-= \sum_{i = 1}^N \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big] = \sum_{i=1}^N Q_i(\theta|\theta_m)
-\]</span></p>
-<p>Where we used <span class="math inline">\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)</span> in the 2nd to last equality. <strong>QED</strong></p>
+<p><span class="math display">\[\begin{equation}
+  \begin{aligned}
+  
+  Q(\theta, \theta_m) &amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(\vec{X} \ | \ \theta)) \big] \\
+  
+  &amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(\prod_{i = 1}^N p(X_i \ | \ \theta)) \big] \\
+  
+  &amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \sum_{i = 1}^N \log(p(X_i \ | \ \theta)) \big]\\
+  
+  &amp;= \sum_{i = 1}^N \text{E}_{X_i \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big] \\
+  
+  &amp;= \sum_{i = 1}^N \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big]
+  
+  = \sum_{i=1}^N Q_i(\theta|\theta_m)
+
+  \end{aligned}
+\end{equation}\]</span>
+Where we used <span class="math inline">\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)</span> in the 2nd to last equality. <strong>QED</strong></p>
 </div>
 <div id="maximum-a-posteriori-em-and-regularizing-priors" class="section level2">
 <h2>Maximum A Posteriori EM and regularizing priors</h2>
 <p>The EM algorithm is easily extendable to regularized MLE. This is usually referred to as Maximum A Posteriori (MAP) in the Bayesian setting, which we adopt. Here the penalty term is interpreted as the log of the prior density on <span class="math inline">\(\theta\)</span>, and the function to be maximized is the posterior density of <span class="math inline">\(\theta\)</span> given the data. By Bayes’ Theorem
 <span class="math display">\[
 p(\theta|\vec{y}) \propto p(\vec{y}|\theta)p(\theta)
-\]</span></p>
-<p>where the proportionality constant is independent of <span class="math inline">\(\theta\)</span>. Thus the MAP estimator is
+\]</span>
+where the proportionality constant is independent of <span class="math inline">\(\theta\)</span>. Thus the MAP estimator is
 <span class="math display">\[
 \hat{\theta}_{MAP} := \text{argmax}_{\theta} \ \log(p(\theta|\vec{y})) \ = \text{argmax}_{\theta} \ \log(p(\vec{y}|\theta)) + \log(p(\theta))
 \]</span>
@@ -2052,28 +2044,31 @@ where &lt;span class=&#34;math inline&#34;&gt;\(\langle\ \vec{\omega}\ ,\ \vec{X
 \vec{\omega}_1 := \text{argmax} \ \ \text{Var}( \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle ) 
 \]&lt;/span&gt;
 where the argmax is taken over all &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}\)&lt;/span&gt; with &lt;span class=&#34;math inline&#34;&gt;\(||\vec{\omega}|| = 1\)&lt;/span&gt;&lt;a href=&#34;#fn2&#34; class=&#34;footnote-ref&#34; id=&#34;fnref2&#34;&gt;&lt;sup&gt;2&lt;/sup&gt;&lt;/a&gt;. We begin:&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-\text{Var}( \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle )  = 
-\text{E}\bigg[\bigg(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle - \text{E}[\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle]\bigg)^2\bigg]
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-    = \text{E}[\langle\ \vec{\omega}\ , \ \vec{X} - \text{E}[\vec{X}] \ \rangle^2]
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-    = \text{E}\bigg[\ \bigg(\sum_i\omega_i(X^i - \text{E}[X^i])\bigg)^2\bigg] 
-\]&lt;/span&gt;
-&lt;span class=&#34;math display&#34;&gt;\[
-    = \text{E}\bigg[ \sum_{i,j}\omega_i\omega_j(X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \bigg]
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \sum_{i,j}\omega_i\omega_j \ \text{E}\bigg[ \ (X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \ \bigg]
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-    = \sum_{i,j}\omega_i\omega_j \ \text{Cov}(X^i, X^j)
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-    = \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle
-\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{equation}
+  \begin{aligned}
+
+\text{Var}( \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle )  &amp;amp;= 
+\text{E}\bigg[\bigg(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle - \text{E}[\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle]\bigg)^2\bigg] \\
+
+
+    &amp;amp;= \text{E}[\langle\ \vec{\omega}\ , \ \vec{X} - \text{E}[\vec{X}] \ \rangle^2] \\
+    
+    
+    &amp;amp;= \text{E}\bigg[\ \bigg(\sum_i\omega_i(X^i - \text{E}[X^i])\bigg)^2\bigg] \\
+    
+    
+    &amp;amp;= \text{E}\bigg[ \sum_{i,j}\omega_i\omega_j(X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \bigg] \\
+    
+    
+    &amp;amp;= \sum_{i,j}\omega_i\omega_j \ \text{E}\bigg[ \ (X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \ \bigg] \\
+    
+    
+    &amp;amp;= \sum_{i,j}\omega_i\omega_j \ \text{Cov}(X^i, X^j) \\
+    
+    
+    &amp;amp;= \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle
+  \end{aligned}
+\end{equation}\]&lt;/span&gt;&lt;/p&gt;
 &lt;p&gt;where &lt;span class=&#34;math inline&#34;&gt;\(\text{Cov}(\vec{X})\)&lt;/span&gt; is the covariance matrix of &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}\)&lt;/span&gt;. So&lt;/p&gt;
 &lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
 \vec{\omega}_1 := \text{argmax} \ \ \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle 
@@ -2081,15 +2076,17 @@ where the argmax is taken over all &lt;span class=&#34;math inline&#34;&gt;\(\ve
 again the argmax is taken over all &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}\)&lt;/span&gt; with &lt;span class=&#34;math inline&#34;&gt;\(||\vec{\omega}|| = 1\)&lt;/span&gt;. This problem is called a “variational problem”, but why so is not important at the moment.&lt;/p&gt;
 &lt;p&gt;This &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}_1\)&lt;/span&gt; must be the first eigenvector of the matrix &lt;span class=&#34;math inline&#34;&gt;\(\text{Cov}(\vec{X})\)&lt;/span&gt;. Why? &lt;strong&gt;This is the hard part. If you can understand what follows you’re golden&lt;/strong&gt;. There are multiple ways to see why this is the case:&lt;/p&gt;
 &lt;p&gt;One is by Lagrange multipliers. If we write &lt;span class=&#34;math inline&#34;&gt;\(f(\vec{\omega}) := \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle\)&lt;/span&gt; then&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-f(\vec{\omega} + \vec{h}) - f(\vec{\omega}) =  \langle \ \vec{\omega} + \vec{h} \ , \ \text{Cov}(\vec{X})(\vec{\omega}+\vec{h}) \ \rangle - \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{h}\rangle \ + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle
-\]&lt;/span&gt;
-&lt;span class=&#34;math display&#34;&gt;\[
-= 2\langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle
-\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{equation}
+\begin{aligned}
+
+f(\vec{\omega} + \vec{h}) - f(\vec{\omega}) &amp;amp;=  \langle \ \vec{\omega} + \vec{h} \ , \ \text{Cov}(\vec{X})(\vec{\omega}+\vec{h}) \ \rangle - \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle \\
+
+    &amp;amp;= \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{h}\rangle \ + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle \\
+    
+    &amp;amp;= 2\langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle
+
+\end{aligned}
+\end{equation}\]&lt;/span&gt;&lt;/p&gt;
 &lt;p&gt;where we first expanded the first term using the bilinearity of the inner product, canceled like terms, and lastly used the symmetry of the covariance matrix to combine two terms. In the above expression the first order term in &lt;span class=&#34;math inline&#34;&gt;\(\vec{h}\)&lt;/span&gt; is given by &lt;span class=&#34;math inline&#34;&gt;\(\langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle\)&lt;/span&gt;. The other term is quadratic in &lt;span class=&#34;math inline&#34;&gt;\(\vec{h}\)&lt;/span&gt;. By definition the differential of &lt;span class=&#34;math inline&#34;&gt;\(f\)&lt;/span&gt; at &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}\)&lt;/span&gt; is this linear term:&lt;/p&gt;
 &lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
 df_{\vec{\omega}} \ (\vec{h}) = \langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle
@@ -2117,14 +2114,17 @@ Thus we see that eigenvectors capture directions of maximal variance and eigenva
 &lt;p&gt;Just as before we want to capture the direction of maximal variance of &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}_{new}\)&lt;/span&gt;. I.e. we want a vector &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}_2\)&lt;/span&gt; with &lt;span class=&#34;math inline&#34;&gt;\(||\vec{\omega}_2||=1\)&lt;/span&gt; such that &lt;span class=&#34;math inline&#34;&gt;\(\text{Var}(\langle \vec{\omega}_2, \vec{X}_{new}\rangle)\)&lt;/span&gt; is maximal.&lt;/p&gt;
 &lt;p&gt;Since &lt;span class=&#34;math inline&#34;&gt;\(\vec{X}_{new} \perp \vec{\omega}_1\)&lt;/span&gt;&lt;a href=&#34;#fn5&#34; class=&#34;footnote-ref&#34; id=&#34;fnref5&#34;&gt;&lt;sup&gt;5&lt;/sup&gt;&lt;/a&gt; then &lt;span class=&#34;math inline&#34;&gt;\(\langle \vec{\omega}, \vec{X}_{new}\rangle = \langle \vec{\omega} - \alpha\vec{\omega}_1, \vec{X}_{new}\rangle\)&lt;/span&gt; for any &lt;span class=&#34;math inline&#34;&gt;\(\alpha \in \mathbb{R}\)&lt;/span&gt;. Therefore by replacing &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}\)&lt;/span&gt; with &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega} - \langle\vec{\omega}_1,\vec{\omega}\rangle\vec{\omega}_1\)&lt;/span&gt; we may restrict our maximization problem to maximizing &lt;span class=&#34;math inline&#34;&gt;\(\text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle)\)&lt;/span&gt; over all &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}\)&lt;/span&gt; with &lt;span class=&#34;math inline&#34;&gt;\(||\vec{\omega}|| = 1\)&lt;/span&gt; and &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega} \perp \vec{\omega}_1\)&lt;/span&gt;.&lt;/p&gt;
 &lt;p&gt;We transform this expression as follows:&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-\text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle) = \text{Var}(\langle \vec{\omega}, \vec{X} - \langle\vec{\omega}_1,\vec{X}\rangle\vec{\omega}_1\rangle)
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \text{Var}(\langle \vec{\omega}, \vec{X}\rangle) \qquad \text{Since }\vec{\omega}\perp\vec{\omega}_1 \]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle \qquad \text{By the earlier computation}
-\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{equation}
+\begin{aligned}
+
+\text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle) &amp;amp;= \text{Var}(\langle \vec{\omega}, \vec{X} - \langle\vec{\omega}_1,\vec{X}\rangle\vec{\omega}_1\rangle) \\
+
+    &amp;amp;= \text{Var}(\langle \vec{\omega}, \vec{X}\rangle) \qquad \text{Since }\vec{\omega}\perp\vec{\omega}_1 \\
+    
+    &amp;amp;= \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle \qquad \text{By the earlier computation}
+
+\end{aligned}
+\end{equation}\]&lt;/span&gt;&lt;/p&gt;
 &lt;p&gt;So the vector &lt;span class=&#34;math inline&#34;&gt;\(\vec{\omega}_2\)&lt;/span&gt; is given by the new variational problem&lt;/p&gt;
 &lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
 \vec{\omega}_2 = \text{argmax} \ \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle
@@ -2225,28 +2225,31 @@ where <span class="math inline">\(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\)</
 \vec{\omega}_1 := \text{argmax} \ \ \text{Var}( \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle ) 
 \]</span>
 where the argmax is taken over all <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(||\vec{\omega}|| = 1\)</span><a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>. We begin:</p>
-<p><span class="math display">\[
-\text{Var}( \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle )  = 
-\text{E}\bigg[\bigg(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle - \text{E}[\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle]\bigg)^2\bigg]
-\]</span></p>
-<p><span class="math display">\[
-    = \text{E}[\langle\ \vec{\omega}\ , \ \vec{X} - \text{E}[\vec{X}] \ \rangle^2]
-\]</span></p>
-<p><span class="math display">\[
-    = \text{E}\bigg[\ \bigg(\sum_i\omega_i(X^i - \text{E}[X^i])\bigg)^2\bigg] 
-\]</span>
-<span class="math display">\[
-    = \text{E}\bigg[ \sum_{i,j}\omega_i\omega_j(X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \bigg]
-\]</span></p>
-<p><span class="math display">\[
-= \sum_{i,j}\omega_i\omega_j \ \text{E}\bigg[ \ (X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \ \bigg]
-\]</span></p>
-<p><span class="math display">\[
-    = \sum_{i,j}\omega_i\omega_j \ \text{Cov}(X^i, X^j)
-\]</span></p>
-<p><span class="math display">\[
-    = \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle
-\]</span></p>
+<p><span class="math display">\[\begin{equation}
+  \begin{aligned}
+
+\text{Var}( \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle )  &amp;= 
+\text{E}\bigg[\bigg(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle - \text{E}[\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle]\bigg)^2\bigg] \\
+
+
+    &amp;= \text{E}[\langle\ \vec{\omega}\ , \ \vec{X} - \text{E}[\vec{X}] \ \rangle^2] \\
+    
+    
+    &amp;= \text{E}\bigg[\ \bigg(\sum_i\omega_i(X^i - \text{E}[X^i])\bigg)^2\bigg] \\
+    
+    
+    &amp;= \text{E}\bigg[ \sum_{i,j}\omega_i\omega_j(X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \bigg] \\
+    
+    
+    &amp;= \sum_{i,j}\omega_i\omega_j \ \text{E}\bigg[ \ (X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \ \bigg] \\
+    
+    
+    &amp;= \sum_{i,j}\omega_i\omega_j \ \text{Cov}(X^i, X^j) \\
+    
+    
+    &amp;= \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle
+  \end{aligned}
+\end{equation}\]</span></p>
 <p>where <span class="math inline">\(\text{Cov}(\vec{X})\)</span> is the covariance matrix of <span class="math inline">\(\vec{X}\)</span>. So</p>
 <p><span class="math display">\[
 \vec{\omega}_1 := \text{argmax} \ \ \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle 
@@ -2254,15 +2257,17 @@ where the argmax is taken over all <span class="math inline">\(\vec{\omega}\)</s
 again the argmax is taken over all <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(||\vec{\omega}|| = 1\)</span>. This problem is called a “variational problem”, but why so is not important at the moment.</p>
 <p>This <span class="math inline">\(\vec{\omega}_1\)</span> must be the first eigenvector of the matrix <span class="math inline">\(\text{Cov}(\vec{X})\)</span>. Why? <strong>This is the hard part. If you can understand what follows you’re golden</strong>. There are multiple ways to see why this is the case:</p>
 <p>One is by Lagrange multipliers. If we write <span class="math inline">\(f(\vec{\omega}) := \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle\)</span> then</p>
-<p><span class="math display">\[
-f(\vec{\omega} + \vec{h}) - f(\vec{\omega}) =  \langle \ \vec{\omega} + \vec{h} \ , \ \text{Cov}(\vec{X})(\vec{\omega}+\vec{h}) \ \rangle - \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle
-\]</span></p>
-<p><span class="math display">\[
-= \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{h}\rangle \ + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle
-\]</span>
-<span class="math display">\[
-= 2\langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle
-\]</span></p>
+<p><span class="math display">\[\begin{equation}
+\begin{aligned}
+
+f(\vec{\omega} + \vec{h}) - f(\vec{\omega}) &amp;=  \langle \ \vec{\omega} + \vec{h} \ , \ \text{Cov}(\vec{X})(\vec{\omega}+\vec{h}) \ \rangle - \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle \\
+
+    &amp;= \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{h}\rangle \ + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle \\
+    
+    &amp;= 2\langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle
+
+\end{aligned}
+\end{equation}\]</span></p>
 <p>where we first expanded the first term using the bilinearity of the inner product, canceled like terms, and lastly used the symmetry of the covariance matrix to combine two terms. In the above expression the first order term in <span class="math inline">\(\vec{h}\)</span> is given by <span class="math inline">\(\langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle\)</span>. The other term is quadratic in <span class="math inline">\(\vec{h}\)</span>. By definition the differential of <span class="math inline">\(f\)</span> at <span class="math inline">\(\vec{\omega}\)</span> is this linear term:</p>
 <p><span class="math display">\[
 df_{\vec{\omega}} \ (\vec{h}) = \langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle
@@ -2290,14 +2295,17 @@ Thus we see that eigenvectors capture directions of maximal variance and eigenva
 <p>Just as before we want to capture the direction of maximal variance of <span class="math inline">\(\vec{X}_{new}\)</span>. I.e. we want a vector <span class="math inline">\(\vec{\omega}_2\)</span> with <span class="math inline">\(||\vec{\omega}_2||=1\)</span> such that <span class="math inline">\(\text{Var}(\langle \vec{\omega}_2, \vec{X}_{new}\rangle)\)</span> is maximal.</p>
 <p>Since <span class="math inline">\(\vec{X}_{new} \perp \vec{\omega}_1\)</span><a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> then <span class="math inline">\(\langle \vec{\omega}, \vec{X}_{new}\rangle = \langle \vec{\omega} - \alpha\vec{\omega}_1, \vec{X}_{new}\rangle\)</span> for any <span class="math inline">\(\alpha \in \mathbb{R}\)</span>. Therefore by replacing <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(\vec{\omega} - \langle\vec{\omega}_1,\vec{\omega}\rangle\vec{\omega}_1\)</span> we may restrict our maximization problem to maximizing <span class="math inline">\(\text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle)\)</span> over all <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(||\vec{\omega}|| = 1\)</span> and <span class="math inline">\(\vec{\omega} \perp \vec{\omega}_1\)</span>.</p>
 <p>We transform this expression as follows:</p>
-<p><span class="math display">\[
-\text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle) = \text{Var}(\langle \vec{\omega}, \vec{X} - \langle\vec{\omega}_1,\vec{X}\rangle\vec{\omega}_1\rangle)
-\]</span></p>
-<p><span class="math display">\[
-= \text{Var}(\langle \vec{\omega}, \vec{X}\rangle) \qquad \text{Since }\vec{\omega}\perp\vec{\omega}_1 \]</span></p>
-<p><span class="math display">\[
-= \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle \qquad \text{By the earlier computation}
-\]</span></p>
+<p><span class="math display">\[\begin{equation}
+\begin{aligned}
+
+\text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle) &amp;= \text{Var}(\langle \vec{\omega}, \vec{X} - \langle\vec{\omega}_1,\vec{X}\rangle\vec{\omega}_1\rangle) \\
+
+    &amp;= \text{Var}(\langle \vec{\omega}, \vec{X}\rangle) \qquad \text{Since }\vec{\omega}\perp\vec{\omega}_1 \\
+    
+    &amp;= \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle \qquad \text{By the earlier computation}
+
+\end{aligned}
+\end{equation}\]</span></p>
 <p>So the vector <span class="math inline">\(\vec{\omega}_2\)</span> is given by the new variational problem</p>
 <p><span class="math display">\[
 \vec{\omega}_2 = \text{argmax} \ \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle

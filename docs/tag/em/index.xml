@@ -36,8 +36,8 @@ Y^* \ \ | \ \ \vec{X} \sim \mathcal{N}(\ \langle \vec{X}  , \beta\rangle \ ,\ 1)
 &lt;span class=&#34;math display&#34;&gt;\[
 Y := 
 \begin{cases}
-1, \qquad \text{if} \ \ Y^* &amp;gt; 0 \\
-0, \qquad \text{otherwise}
+1, &amp;amp; \text{if} \ \ Y^* &amp;gt; 0 \\
+0, &amp;amp; \text{otherwise}
 \end{cases}
 \]&lt;/span&gt;
 Hence we have that &lt;span class=&#34;math inline&#34;&gt;\(Y \ |\vec{X} \sim \text{Bernoulli}(p)\)&lt;/span&gt; where
@@ -125,8 +125,8 @@ where &lt;span class=&#34;math inline&#34;&gt;\(\phi\)&lt;/span&gt; and &lt;span
 &lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
 z_i =
 \begin{cases}
-\langle \vec{x}_i  , \beta_m\rangle + \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{1 - \Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, \qquad \text{if} \ \ y_i = 1 \\
-\langle \vec{x}_i  , \beta_m\rangle - \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{\Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, \qquad\ \ \ \ \text{if} \ \ y_i = 0
+\langle \vec{x}_i  , \beta_m\rangle + \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{1 - \Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, &amp;amp; \text{if} \ \ y_i = 1 \\
+\langle \vec{x}_i  , \beta_m\rangle - \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{\Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, &amp;amp; \text{if} \ \ y_i = 0
 \end{cases}
 \]&lt;/span&gt;&lt;/p&gt;
 &lt;ul&gt;
@@ -216,12 +216,12 @@ Z.r = imputeR(X, beta, Y)
 # Checking range of values
 print(summary(Z.cpp - Z.r))&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##        V1            
-##  Min.   :-3.109e-14  
-##  1st Qu.: 0.000e+00  
+##  Min.   :-7.105e-15  
+##  1st Qu.:-1.110e-16  
 ##  Median : 0.000e+00  
-##  Mean   : 6.550e-17  
-##  3rd Qu.: 0.000e+00  
-##  Max.   : 3.109e-14&lt;/code&gt;&lt;/pre&gt;
+##  Mean   : 1.577e-16  
+##  3rd Qu.: 2.776e-17  
+##  Max.   : 2.931e-14&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Not bad. Next we need a function to compute (regularized) least squares. For the solution we use the normal equations. According to the &lt;a href=&#34;https://eigen.tuxfamily.org/dox-devel/group__LeastSquares.html&#34;&gt;Eigen tutorial on the matter&lt;/a&gt; the normal equations are the fastest but least numerically stable option. For us this is good enough. Again we create a small wrapper to test from R:&lt;/p&gt;
 &lt;pre class=&#34;cpp&#34;&gt;&lt;code&gt;VectorXd RLS(const VectorXd&amp;amp; Z, 
              const MatrixXd&amp;amp; X, 
@@ -390,8 +390,8 @@ Y^* \ \ | \ \ \vec{X} \sim \mathcal{N}(\ \langle \vec{X}  , \beta\rangle \ ,\ 1)
 <span class="math display">\[
 Y := 
 \begin{cases}
-1, \qquad \text{if} \ \ Y^* &gt; 0 \\
-0, \qquad \text{otherwise}
+1, &amp; \text{if} \ \ Y^* &gt; 0 \\
+0, &amp; \text{otherwise}
 \end{cases}
 \]</span>
 Hence we have that <span class="math inline">\(Y \ |\vec{X} \sim \text{Bernoulli}(p)\)</span> where
@@ -479,8 +479,8 @@ where <span class="math inline">\(\phi\)</span> and <span class="math inline">\(
 <p><span class="math display">\[
 z_i =
 \begin{cases}
-\langle \vec{x}_i  , \beta_m\rangle + \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{1 - \Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, \qquad \text{if} \ \ y_i = 1 \\
-\langle \vec{x}_i  , \beta_m\rangle - \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{\Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, \qquad\ \ \ \ \text{if} \ \ y_i = 0
+\langle \vec{x}_i  , \beta_m\rangle + \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{1 - \Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, &amp; \text{if} \ \ y_i = 1 \\
+\langle \vec{x}_i  , \beta_m\rangle - \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{\Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, &amp; \text{if} \ \ y_i = 0
 \end{cases}
 \]</span></p>
 <ul>
@@ -570,12 +570,12 @@ Z.r = imputeR(X, beta, Y)
 # Checking range of values
 print(summary(Z.cpp - Z.r))</code></pre>
 <pre><code>##        V1            
-##  Min.   :-3.109e-14  
-##  1st Qu.: 0.000e+00  
+##  Min.   :-7.105e-15  
+##  1st Qu.:-1.110e-16  
 ##  Median : 0.000e+00  
-##  Mean   : 6.550e-17  
-##  3rd Qu.: 0.000e+00  
-##  Max.   : 3.109e-14</code></pre>
+##  Mean   : 1.577e-16  
+##  3rd Qu.: 2.776e-17  
+##  Max.   : 2.931e-14</code></pre>
 <p>Not bad. Next we need a function to compute (regularized) least squares. For the solution we use the normal equations. According to the <a href="https://eigen.tuxfamily.org/dox-devel/group__LeastSquares.html">Eigen tutorial on the matter</a> the normal equations are the fastest but least numerically stable option. For us this is good enough. Again we create a small wrapper to test from R:</p>
 <pre class="cpp"><code>VectorXd RLS(const VectorXd&amp; Z, 
              const MatrixXd&amp; X, 
@@ -835,69 +835,65 @@ Q_i(\theta|\theta_m) := \ \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ 
 &lt;span class=&#34;math display&#34;&gt;\[
 p(\vec{x},\vec{y}|\theta) = \prod_{i = 1}^N p(x_i, y_i|\theta). 
 \]&lt;/span&gt;
-To prove this we start by applying the multiplication theorem for probability densities:&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-p(\vec{x},\vec{y}|\theta) = p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_N|\vec{x},\theta)p(\vec{x}|\theta) \qquad \text{(by the multiplication theorem)}
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= p(y_1|x_1,\theta)...p(y_N|x_N,\theta)p(\vec{x}|\theta) \qquad \text{(by conditional independence but keeping theta)}
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= p(\vec{x}|\theta)\prod_{i=1}^Np(y_i|x_i,\theta) 
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-=\prod_{i=1}^Np(y_i|x_i,\theta)p(x_i|\theta) \qquad \text{(by independence of the x&amp;#39;s)}
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \prod_{i=1}^Np(y_i,x_i|\theta).
-\]&lt;/span&gt;&lt;/p&gt;
+To prove this we start by applying the multiplication theorem for probability densities:
+&lt;span class=&#34;math display&#34;&gt;\[\begin{equation}
+  \begin{aligned}
+
+p(\vec{x},\vec{y}|\theta) &amp;amp;= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_N|\vec{x},\theta)p(\vec{x}|\theta) \qquad \text{by the multiplication theorem}\\
+
+    &amp;amp;= p(y_1|x_1,\theta)...p(y_N|x_N,\theta)p(\vec{x}|\theta) \qquad \text{by conditional independence but keeping theta} \\
+    &amp;amp;= p(\vec{x}|\theta)\prod_{i=1}^Np(y_i|x_i,\theta) \\
+    &amp;amp;=\prod_{i=1}^Np(y_i|x_i,\theta)p(x_i|\theta) \qquad \text{by independence of the x&amp;#39;s} \\
+    &amp;amp;= \prod_{i=1}^Np(y_i,x_i|\theta).
+  \end{aligned}
+\end{equation}\]&lt;/span&gt;&lt;/p&gt;
 &lt;p&gt;Next we have that for each &lt;span class=&#34;math inline&#34;&gt;\(i\)&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-  p(x_i|\vec{y},\theta) = \frac{p(x_i,\vec{y}|\theta)}{p(\vec{y}|\theta)} \qquad \text{(by Bayes)}
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \frac{\int p(\vec{x},\vec{y}|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int p(\vec{x},\vec{y}|\theta)d\vec{x}}
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \frac{\int \prod_{j=1}^Np(y_j,x_j|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int \prod_{j=1}^Np(y_j,x_j|\theta)d\vec{x}}
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N \int p(y_j,x_j|\theta)dx_j}{\prod_{j=1}^N\int p(y_j,x_j|\theta) dx_j}
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N p(y_j|\theta)}{\prod_{j=1}^N p(y_j|\theta)}
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \frac{p(x_i,y_i|\theta)}{p(y_i|\theta)}
-\]&lt;/span&gt;
-&lt;span class=&#34;math display&#34;&gt;\[
-= p(x_i|y_i,\theta)
-\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{equation}
+  \begin{aligned}
+  
+  p(x_i|\vec{y},\theta) &amp;amp;= \frac{p(x_i,\vec{y}|\theta)}{p(\vec{y}|\theta)} \qquad \text{by Bayes} \\
+  
+  &amp;amp;= \frac{\int p(\vec{x},\vec{y}|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int p(\vec{x},\vec{y}|\theta)d\vec{x}} \\
+  
+  &amp;amp;= \frac{\int \prod_{j=1}^Np(y_j,x_j|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int \prod_{j=1}^Np(y_j,x_j|\theta)d\vec{x}} \\
+  
+  &amp;amp;= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N \int p(y_j,x_j|\theta)dx_j}{\prod_{j=1}^N\int p(y_j,x_j|\theta) dx_j} \\
+  
+  &amp;amp;= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N p(y_j|\theta)}{\prod_{j=1}^N p(y_j|\theta)}\\
+  
+  &amp;amp;= \frac{p(x_i,y_i|\theta)}{p(y_i|\theta)}\\
+  
+  &amp;amp;= p(x_i|y_i,\theta)
+
+  \end{aligned}
+\end{equation}\]&lt;/span&gt;&lt;/p&gt;
 &lt;p&gt;Hence &lt;span class=&#34;math inline&#34;&gt;\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)&lt;/span&gt;. Therefore we have&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-Q(\theta, \theta_m) = \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(\vec{X} \ | \ \theta)) \big]
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(\prod_{i = 1}^N p(X_i \ | \ \theta)) \big]
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \sum_{i = 1}^N \log(p(X_i \ | \ \theta)) \big]
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \sum_{i = 1}^N \text{E}_{X_i \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big]
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-= \sum_{i = 1}^N \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big] = \sum_{i=1}^N Q_i(\theta|\theta_m)
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;Where we used &lt;span class=&#34;math inline&#34;&gt;\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)&lt;/span&gt; in the 2nd to last equality. &lt;strong&gt;QED&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{equation}
+  \begin{aligned}
+  
+  Q(\theta, \theta_m) &amp;amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(\vec{X} \ | \ \theta)) \big] \\
+  
+  &amp;amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(\prod_{i = 1}^N p(X_i \ | \ \theta)) \big] \\
+  
+  &amp;amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \sum_{i = 1}^N \log(p(X_i \ | \ \theta)) \big]\\
+  
+  &amp;amp;= \sum_{i = 1}^N \text{E}_{X_i \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big] \\
+  
+  &amp;amp;= \sum_{i = 1}^N \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big]
+  
+  = \sum_{i=1}^N Q_i(\theta|\theta_m)
+
+  \end{aligned}
+\end{equation}\]&lt;/span&gt;
+Where we used &lt;span class=&#34;math inline&#34;&gt;\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)&lt;/span&gt; in the 2nd to last equality. &lt;strong&gt;QED&lt;/strong&gt;&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;maximum-a-posteriori-em-and-regularizing-priors&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Maximum A Posteriori EM and regularizing priors&lt;/h2&gt;
 &lt;p&gt;The EM algorithm is easily extendable to regularized MLE. This is usually referred to as Maximum A Posteriori (MAP) in the Bayesian setting, which we adopt. Here the penalty term is interpreted as the log of the prior density on &lt;span class=&#34;math inline&#34;&gt;\(\theta\)&lt;/span&gt;, and the function to be maximized is the posterior density of &lt;span class=&#34;math inline&#34;&gt;\(\theta\)&lt;/span&gt; given the data. By Bayes’ Theorem
 &lt;span class=&#34;math display&#34;&gt;\[
 p(\theta|\vec{y}) \propto p(\vec{y}|\theta)p(\theta)
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;where the proportionality constant is independent of &lt;span class=&#34;math inline&#34;&gt;\(\theta\)&lt;/span&gt;. Thus the MAP estimator is
+\]&lt;/span&gt;
+where the proportionality constant is independent of &lt;span class=&#34;math inline&#34;&gt;\(\theta\)&lt;/span&gt;. Thus the MAP estimator is
 &lt;span class=&#34;math display&#34;&gt;\[
 \hat{\theta}_{MAP} := \text{argmax}_{\theta} \ \log(p(\theta|\vec{y})) \ = \text{argmax}_{\theta} \ \log(p(\vec{y}|\theta)) + \log(p(\theta))
 \]&lt;/span&gt;
@@ -1024,69 +1020,65 @@ Q_i(\theta|\theta_m) := \ \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ 
 <span class="math display">\[
 p(\vec{x},\vec{y}|\theta) = \prod_{i = 1}^N p(x_i, y_i|\theta). 
 \]</span>
-To prove this we start by applying the multiplication theorem for probability densities:</p>
-<p><span class="math display">\[
-p(\vec{x},\vec{y}|\theta) = p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_N|\vec{x},\theta)p(\vec{x}|\theta) \qquad \text{(by the multiplication theorem)}
-\]</span></p>
-<p><span class="math display">\[
-= p(y_1|x_1,\theta)...p(y_N|x_N,\theta)p(\vec{x}|\theta) \qquad \text{(by conditional independence but keeping theta)}
-\]</span></p>
-<p><span class="math display">\[
-= p(\vec{x}|\theta)\prod_{i=1}^Np(y_i|x_i,\theta) 
-\]</span></p>
-<p><span class="math display">\[
-=\prod_{i=1}^Np(y_i|x_i,\theta)p(x_i|\theta) \qquad \text{(by independence of the x&#39;s)}
-\]</span></p>
-<p><span class="math display">\[
-= \prod_{i=1}^Np(y_i,x_i|\theta).
-\]</span></p>
+To prove this we start by applying the multiplication theorem for probability densities:
+<span class="math display">\[\begin{equation}
+  \begin{aligned}
+
+p(\vec{x},\vec{y}|\theta) &amp;= p(y_1|y_2,y_3, ..., y_N, \vec{x},\theta)...p(y_N|\vec{x},\theta)p(\vec{x}|\theta) \qquad \text{by the multiplication theorem}\\
+
+    &amp;= p(y_1|x_1,\theta)...p(y_N|x_N,\theta)p(\vec{x}|\theta) \qquad \text{by conditional independence but keeping theta} \\
+    &amp;= p(\vec{x}|\theta)\prod_{i=1}^Np(y_i|x_i,\theta) \\
+    &amp;=\prod_{i=1}^Np(y_i|x_i,\theta)p(x_i|\theta) \qquad \text{by independence of the x&#39;s} \\
+    &amp;= \prod_{i=1}^Np(y_i,x_i|\theta).
+  \end{aligned}
+\end{equation}\]</span></p>
 <p>Next we have that for each <span class="math inline">\(i\)</span></p>
-<p><span class="math display">\[
-  p(x_i|\vec{y},\theta) = \frac{p(x_i,\vec{y}|\theta)}{p(\vec{y}|\theta)} \qquad \text{(by Bayes)}
-\]</span></p>
-<p><span class="math display">\[
-= \frac{\int p(\vec{x},\vec{y}|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int p(\vec{x},\vec{y}|\theta)d\vec{x}}
-\]</span></p>
-<p><span class="math display">\[
-= \frac{\int \prod_{j=1}^Np(y_j,x_j|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int \prod_{j=1}^Np(y_j,x_j|\theta)d\vec{x}}
-\]</span></p>
-<p><span class="math display">\[
-= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N \int p(y_j,x_j|\theta)dx_j}{\prod_{j=1}^N\int p(y_j,x_j|\theta) dx_j}
-\]</span></p>
-<p><span class="math display">\[
-= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N p(y_j|\theta)}{\prod_{j=1}^N p(y_j|\theta)}
-\]</span></p>
-<p><span class="math display">\[
-= \frac{p(x_i,y_i|\theta)}{p(y_i|\theta)}
-\]</span>
-<span class="math display">\[
-= p(x_i|y_i,\theta)
-\]</span></p>
+<p><span class="math display">\[\begin{equation}
+  \begin{aligned}
+  
+  p(x_i|\vec{y},\theta) &amp;= \frac{p(x_i,\vec{y}|\theta)}{p(\vec{y}|\theta)} \qquad \text{by Bayes} \\
+  
+  &amp;= \frac{\int p(\vec{x},\vec{y}|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int p(\vec{x},\vec{y}|\theta)d\vec{x}} \\
+  
+  &amp;= \frac{\int \prod_{j=1}^Np(y_j,x_j|\theta)dx_1...dx_{i-1}dx_{i+1}...dx_n}{\int \prod_{j=1}^Np(y_j,x_j|\theta)d\vec{x}} \\
+  
+  &amp;= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N \int p(y_j,x_j|\theta)dx_j}{\prod_{j=1}^N\int p(y_j,x_j|\theta) dx_j} \\
+  
+  &amp;= \frac{p(x_i,y_i|\theta) \prod_{j=1, j \ne i}^N p(y_j|\theta)}{\prod_{j=1}^N p(y_j|\theta)}\\
+  
+  &amp;= \frac{p(x_i,y_i|\theta)}{p(y_i|\theta)}\\
+  
+  &amp;= p(x_i|y_i,\theta)
+
+  \end{aligned}
+\end{equation}\]</span></p>
 <p>Hence <span class="math inline">\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)</span>. Therefore we have</p>
-<p><span class="math display">\[
-Q(\theta, \theta_m) = \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(\vec{X} \ | \ \theta)) \big]
-\]</span></p>
-<p><span class="math display">\[
-= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(\prod_{i = 1}^N p(X_i \ | \ \theta)) \big]
-\]</span></p>
-<p><span class="math display">\[
-= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \sum_{i = 1}^N \log(p(X_i \ | \ \theta)) \big]
-\]</span></p>
-<p><span class="math display">\[
-= \sum_{i = 1}^N \text{E}_{X_i \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big]
-\]</span></p>
-<p><span class="math display">\[
-= \sum_{i = 1}^N \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big] = \sum_{i=1}^N Q_i(\theta|\theta_m)
-\]</span></p>
-<p>Where we used <span class="math inline">\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)</span> in the 2nd to last equality. <strong>QED</strong></p>
+<p><span class="math display">\[\begin{equation}
+  \begin{aligned}
+  
+  Q(\theta, \theta_m) &amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(\vec{X} \ | \ \theta)) \big] \\
+  
+  &amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(\prod_{i = 1}^N p(X_i \ | \ \theta)) \big] \\
+  
+  &amp;= \text{E}_{\vec{X} \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \sum_{i = 1}^N \log(p(X_i \ | \ \theta)) \big]\\
+  
+  &amp;= \sum_{i = 1}^N \text{E}_{X_i \ | \ \vec{Y} \ = \ \vec{y}, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big] \\
+  
+  &amp;= \sum_{i = 1}^N \text{E}_{X_i \ | \ Y_i \ = \ y_i, \ \theta_m}  \big[ \log(p(X_i \ | \ \theta)) \big]
+  
+  = \sum_{i=1}^N Q_i(\theta|\theta_m)
+
+  \end{aligned}
+\end{equation}\]</span>
+Where we used <span class="math inline">\(p(x_i|\vec{y},\theta) = p(x_i|y_i,\theta)\)</span> in the 2nd to last equality. <strong>QED</strong></p>
 </div>
 <div id="maximum-a-posteriori-em-and-regularizing-priors" class="section level2">
 <h2>Maximum A Posteriori EM and regularizing priors</h2>
 <p>The EM algorithm is easily extendable to regularized MLE. This is usually referred to as Maximum A Posteriori (MAP) in the Bayesian setting, which we adopt. Here the penalty term is interpreted as the log of the prior density on <span class="math inline">\(\theta\)</span>, and the function to be maximized is the posterior density of <span class="math inline">\(\theta\)</span> given the data. By Bayes’ Theorem
 <span class="math display">\[
 p(\theta|\vec{y}) \propto p(\vec{y}|\theta)p(\theta)
-\]</span></p>
-<p>where the proportionality constant is independent of <span class="math inline">\(\theta\)</span>. Thus the MAP estimator is
+\]</span>
+where the proportionality constant is independent of <span class="math inline">\(\theta\)</span>. Thus the MAP estimator is
 <span class="math display">\[
 \hat{\theta}_{MAP} := \text{argmax}_{\theta} \ \log(p(\theta|\vec{y})) \ = \text{argmax}_{\theta} \ \log(p(\vec{y}|\theta)) + \log(p(\theta))
 \]</span>

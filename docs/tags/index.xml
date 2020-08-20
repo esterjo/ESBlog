@@ -1,16 +1,223 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Tags | Fundamenta Nova</title>
+    <title>Tags on Fundamenta Nova</title>
     <link>/tags/</link>
-      <atom:link href="/tags/index.xml" rel="self" type="application/rss+xml" />
-    <description>Tags</description>
-    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Sat, 01 Aug 2020 00:00:00 +0000</lastBuildDate>
-    <image>
-      <url>/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png</url>
-      <title>Tags</title>
-      <link>/tags/</link>
-    </image>
+    <description>Recent content in Tags on Fundamenta Nova</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 01 Aug 2020 00:00:00 +0000</lastBuildDate>
+    
+        <atom:link href="/tags/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>bias variance tradeoff</title>
+      <link>/tag/bias-variance-tradeoff/</link>
+      <pubDate>Sat, 01 Aug 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/bias-variance-tradeoff/</guid>
+      <description></description>
+      
+      
+    </item>
+    
+    <item>
+      <title>c&#43;&#43;</title>
+      <link>/tag/c-/</link>
+      <pubDate>Sat, 01 Aug 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/c-/</guid>
+      <description></description>
+      
+      
+    </item>
+    
+    <item>
+      <title>eigen</title>
+      <link>/tag/eigen/</link>
+      <pubDate>Sat, 01 Aug 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/eigen/</guid>
+      <description></description>
+      
+      
+    </item>
+    
+    <item>
+      <title>em</title>
+      <link>/tag/em/</link>
+      <pubDate>Sat, 01 Aug 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/em/</guid>
+      <description></description>
+      
+      
+    </item>
+    
+    <item>
+      <title>em algorithm</title>
+      <link>/tag/em-algorithm/</link>
+      <pubDate>Sat, 01 Aug 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/em-algorithm/</guid>
+      <description></description>
+      
+      
+    </item>
+    
+    <item>
+      <title>expectation maximization</title>
+      <link>/tag/expectation-maximization/</link>
+      <pubDate>Sat, 01 Aug 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/expectation-maximization/</guid>
+      <description></description>
+      
+      
+    </item>
+    
+    <item>
+      <title>machine learning</title>
+      <link>/tag/machine-learning/</link>
+      <pubDate>Sat, 01 Aug 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/machine-learning/</guid>
+      <description></description>
+      
+      
+    </item>
+    
+    <item>
+      <title>r</title>
+      <link>/tag/r/</link>
+      <pubDate>Sat, 01 Aug 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/r/</guid>
+      <description></description>
+      
+      
+    </item>
+    
+    <item>
+      <title>rcpp</title>
+      <link>/tag/rcpp/</link>
+      <pubDate>Sat, 01 Aug 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/rcpp/</guid>
+      <description></description>
+      
+      
+    </item>
+    
+    <item>
+      <title>regularization</title>
+      <link>/tag/regularization/</link>
+      <pubDate>Sat, 01 Aug 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/regularization/</guid>
+      <description></description>
+      
+      
+    </item>
+    
+    <item>
+      <title>statistical learning</title>
+      <link>/tag/statistical-learning/</link>
+      <pubDate>Sat, 01 Aug 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/statistical-learning/</guid>
+      <description></description>
+      
+      
+    </item>
+    
+    <item>
+      <title>Hessian</title>
+      <link>/tag/hessian/</link>
+      <pubDate>Thu, 02 Jul 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/hessian/</guid>
+      <description></description>
+      
+      
+    </item>
+    
+    <item>
+      <title>regular</title>
+      <link>/tag/regular/</link>
+      <pubDate>Thu, 02 Jul 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/regular/</guid>
+      <description></description>
+      
+      
+    </item>
+    
+    <item>
+      <title>singular</title>
+      <link>/tag/singular/</link>
+      <pubDate>Thu, 02 Jul 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/singular/</guid>
+      <description></description>
+      
+      
+    </item>
+    
+    <item>
+      <title>metaprogramming</title>
+      <link>/tag/metaprogramming/</link>
+      <pubDate>Sun, 21 Jun 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/metaprogramming/</guid>
+      <description></description>
+      
+      
+    </item>
+    
+    <item>
+      <title>rmarkdown</title>
+      <link>/tag/rmarkdown/</link>
+      <pubDate>Sun, 21 Jun 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/rmarkdown/</guid>
+      <description></description>
+      
+      
+    </item>
+    
+    <item>
+      <title>derivation</title>
+      <link>/tag/derivation/</link>
+      <pubDate>Sat, 20 Jun 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/derivation/</guid>
+      <description></description>
+      
+      
+    </item>
+    
+    <item>
+      <title>dimensionality reduction</title>
+      <link>/tag/dimensionality-reduction/</link>
+      <pubDate>Sat, 20 Jun 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/dimensionality-reduction/</guid>
+      <description></description>
+      
+      
+    </item>
+    
+    <item>
+      <title>pca</title>
+      <link>/tag/pca/</link>
+      <pubDate>Sat, 20 Jun 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/tag/pca/</guid>
+      <description></description>
+      
+      
+    </item>
     
   </channel>
 </rss>

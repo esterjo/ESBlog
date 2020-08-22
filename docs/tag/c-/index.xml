@@ -1,20 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>c&#43;&#43; on Fundamenta Nova</title>
+    <title>c&#43;&#43; | Fundamenta Nova</title>
     <link>/tag/c-/</link>
-    <description>Recent content in c&#43;&#43; on Fundamenta Nova</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    <lastBuildDate>Sat, 01 Aug 2020 00:00:00 +0000</lastBuildDate>
-    
-        <atom:link href="/tag/c-/index.xml" rel="self" type="application/rss+xml" />
-    
+      <atom:link href="/tag/c-/index.xml" rel="self" type="application/rss+xml" />
+    <description>c&#43;&#43;</description>
+    <generator>Source Themes Academic (https://sourcethemes.com/academic/)</generator><language>en-us</language><lastBuildDate>Sat, 01 Aug 2020 00:00:00 +0000</lastBuildDate>
+    <image>
+      <url>/images/icon_hu0b7a4cb9992c9ac0e91bd28ffd38dd00_9727_512x512_fill_lanczos_center_2.png</url>
+      <title>c&#43;&#43;</title>
+      <link>/tag/c-/</link>
+    </image>
     
     <item>
       <title>Expectation Maximization, Part 2: Fitting Regularized Probit Regression using EM in C&#43;&#43;</title>
       <link>/post/005_em2_probit/main/</link>
       <pubDate>Sat, 01 Aug 2020 00:00:00 +0000</pubDate>
-      
       <guid>/post/005_em2_probit/main/</guid>
       <description>
 
@@ -370,41 +371,366 @@ system.time(probit.cpp100 &amp;lt;- Probit(Y, X, 0.0, 100))&lt;/code&gt;&lt;/pre
 &lt;p&gt;No, instead &lt;a href=&#34;https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/glm&#34;&gt;&lt;code&gt;glm.fit&lt;/code&gt;&lt;/a&gt; uses &lt;a href=&#34;https://en.wikipedia.org/wiki/Iteratively_reweighted_least_squares&#34;&gt;iteratively reweighted least squares (IRLS)&lt;/a&gt; to fit the model, not EM. This can be seen in the &lt;a href=&#34;https://github.com/SurajGupta/r-source/blob/master/src/library/stats/R/glm.R&#34;&gt;source code&lt;/a&gt;. So EM is not a very fast algorithm to fit probit models. At some point in the future we’ll probably implement IRLS in Eigen (or Fortran, or Julia).&lt;/p&gt;
 &lt;/div&gt;
 </description>
-      
-            <category>r</category>
-      
-            <category>rcpp</category>
-      
-            <category>eigen</category>
-      
-            <category>c&#43;&#43;</category>
-      
-            <category>expectation maximization</category>
-      
-            <category>em algorithm</category>
-      
-            <category>em</category>
-      
-            <category>regularization</category>
-      
-            <category>machine learning</category>
-      
-            <category>statistical learning</category>
-      
-            <category>bias variance tradeoff</category>
-      
-      
-            <category>R</category>
-      
-            <category>C&#43;&#43;</category>
-      
+      <content:encoded>
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>In the <a href="https://edsterjo.netlify.app/post/003_em1/main/">first post</a> in this series we discussed Expectation Maximization (EM) type algorithms. In the post <a href="https://edsterjo.netlify.app/post/004_regularization/main/">prior to this one</a> we discussed regularization and showed how it leads to a bias-variance trade off in OLS models. Here we implement fitting for <span class="math inline">\(L^2\)</span>-regularized <a href="https://en.wikipedia.org/wiki/Probit_model">probit regression</a> using EM. To make it more interesting we will code everything from scratch using the <a href="http://eigen.tuxfamily.org/index.php?title=Main_Page">Eigen</a> linear algebra library, via <a href="https://cran.r-project.org/web/packages/RcppEigen/index.html">RcppEigen</a>.</p>
+</div>
+<div id="probit-regression-as-a-censored-ols-model" class="section level2">
+<h2>Probit Regression as a censored OLS model</h2>
+<p>In our first post on EM algorithms we emphasized that EM is particularly useful for models that have censored data. Suppose we have the following censored model. Suppose <span class="math inline">\(Y^*\)</span> is a real valued random variable and <span class="math inline">\(\vec{X}\)</span> is a random vector with values in <span class="math inline">\(\mathbb{R}^p\)</span>. Suppose that we have the conditional relationship</p>
+<p><span class="math display">\[
+Y^* \ \ | \ \ \vec{X} \sim \mathcal{N}(\ \langle \vec{X}  , \beta\rangle \ ,\ 1)
+\]</span></p>
+<p>where <span class="math inline">\(\mathcal{N}(\mu, \sigma^2)\)</span> denotes the univariate normal distribution with mean <span class="math inline">\(\mu\)</span> and variance <span class="math inline">\(\sigma^2\)</span>. Here (and everywhere else) the symbol <span class="math inline">\(\langle v,w\rangle\)</span> represents the Euclidean inner product (aka, <a href="https://en.wikipedia.org/wiki/Dot_product">dot product</a>) of two vectors <span class="math inline">\(v\)</span> and <span class="math inline">\(w\)</span>.</p>
+<p>In this case we may write <span class="math inline">\(Y^* = \langle \vec{X} , \beta\rangle - \epsilon\)</span>, where <span class="math inline">\(\epsilon \sim \mathcal{N}(0,1)\)</span> is standard normal, which can be taken independent of <span class="math inline">\(\vec{X}\)</span> or this distribution can be simply assumed conditional on <span class="math inline">\(\vec{X}\)</span>.</p>
+<p>Instead of observing <span class="math inline">\(Y^*\)</span> in the data however, we observe the censored variable
+<span class="math display">\[
+Y := 
+\begin{cases}
+1, &amp; \text{if} \ \ Y^* &gt; 0 \\
+0, &amp; \text{otherwise}
+\end{cases}
+\]</span>
+Hence we have that <span class="math inline">\(Y \ |\vec{X} \sim \text{Bernoulli}(p)\)</span> where
+<span class="math display">\[
+p = P(Y = 1 | \vec{X}) = P(Y^* &gt; 0 | \vec{X}) = P\bigg(Y^* - \langle \vec{X},\beta\rangle &gt; - \langle \vec{X},\beta\rangle\ \ \bigg|\ \ \vec{X}\bigg) = P(\epsilon &lt; \langle \vec{X},\beta\rangle\ | \vec{X})
+\]</span>
+Since <span class="math inline">\(\epsilon \sim \mathcal{N}(0,1)\)</span> this last probability is equal to <span class="math inline">\(\Phi(\langle \vec{X},\beta\rangle)\)</span> where <span class="math inline">\(\Phi\)</span> denotes the standard normal CDF. This derives the probit model.</p>
+<p>Before we proceed, notice 2 points which we won’t dwell on:</p>
+<ul>
+<li>If the variance of <span class="math inline">\(Y^*\)</span> had been <span class="math inline">\(\sigma^2 \ne 1\)</span> then the value of <span class="math inline">\(\sigma\)</span> would not be able to be estimated from data without knowing <span class="math inline">\(\beta\)</span> since <span class="math inline">\(P(Y^* &gt; 0 |\vec{X}) = P(Y^*/\sigma &gt; 0 | \vec{X})\)</span>.</li>
+<li>If the distributional relationship between <span class="math inline">\(Y\)</span> and <span class="math inline">\(\vec{X}\)</span> had been such that the error term <span class="math inline">\(\epsilon\)</span> where a logistic random variable, instead of a normal one, then the censored problem would have become logistic regression.</li>
+</ul>
+<p>For the regression itself we assume that we have a data set <span class="math inline">\(\{ (y_i, \vec{x}_i)\}_{i = 1}^N\)</span> consisting of samples generated independently of one another from a fixed multivariate distribution for <span class="math inline">\((Y, \vec{X})\)</span> (i.e. we assume our data was sampled IID).</p>
+</div>
+<div id="fitting-probit-regression-via-em" class="section level2">
+<h2>Fitting Probit Regression via EM</h2>
+<p>Since probit regression arises from a censored normal OLS model, and since OLS is relatively easy to fit, probit regression is an excellent candidate for applying Expectation Maximization for fitting. A small difference will be that all of the probability densities involved will be conditional on the observed covariates <span class="math inline">\(\{\vec{x}_i\}_{i = 1}^N\)</span> since regression is a conditional relationship.</p>
+<p>Let’s recall the standard EM algorithm for the case of the regression problem above:</p>
+<ul>
+<li><p><strong>Step 1:</strong> Let <span class="math inline">\(m = 0\)</span>. Make an initial estimate <span class="math inline">\(\beta_m\)</span> for <span class="math inline">\(\beta\)</span>.</p></li>
+<li><p><strong>Step 2:</strong> Given the observed data <span class="math inline">\(\{(y_i, \vec{x}_i)\}_{i = 1}^N\)</span> and pretending for the moment that our current guess <span class="math inline">\(\beta_m\)</span> is correct, construct the conditional probability distribution <span class="math inline">\(p(\{y^*_i\}\ \ |\ \ \{(y_i, \vec{x}_i)\},\ \beta_m)\)</span> of the hidden data <span class="math inline">\(\{Y^*_i\}\)</span> given all known information.</p></li>
+<li><p><strong>Step 3:</strong> Using the distribution <span class="math inline">\(p(\{y^*_i\}\ \ |\ \ \{(y_i, \vec{x}_i)\},\ \beta_m)\)</span> construct the following estimator/approximation of the desired log-likelihood <span class="math inline">\(\log(p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\}))\)</span> for arbitrary values of <span class="math inline">\(\beta\)</span>:</p></li>
+</ul>
+<p><span class="math display">\[
+Q(\beta | \beta_m) \ := \ \text{E}_{\{Y^*_i\}\ \ |\ \ \{(Y_i=y_i,\ \vec{X}_i=\vec{x}_i)\},\ \beta_m}  \big[ \log(p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\})) \big] 
+\]</span>
+<span class="math display">\[
+= \int_{\mathcal{Y^*}} \log(p(\{y^*_i\} \ | \ \beta, \{\vec{x}_i\})) \ p(\{y^*_i\}\  |\  \{(y_i, \vec{x}_i)\}, \beta_m) \ dy_1^*...dy^*_N 
+\]</span></p>
+<ul>
+<li><p><strong>Step 4:</strong> Set <span class="math inline">\(\beta_{m+1}\)</span> equal to a value of <span class="math inline">\(\beta\)</span> that maximizes the current approximation <span class="math inline">\(Q(\beta|\beta_m)\)</span> of <span class="math inline">\(\log(p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\}))\)</span>.</p></li>
+<li><p><strong>Step 5:</strong> Return to step 2 and repeat until some stopping criteria is met.</p></li>
+</ul>
+<p>These formulas may seem difficult at the moment because they are in such a general form. As we specify things for our particular problem things will become more concrete. Now because <span class="math inline">\(Y^*|\vec{X}\sim \mathcal{N}(\ \langle \vec{X} , \beta\rangle \ ,\ 1)\)</span> is a normal linear regression relationship we have
+<span class="math display">\[
+p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\}) = \frac{1}{(2\pi)^{N/2}}e^{\sum_{i=1}^N-\frac{1}{2}\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2}
+\]</span></p>
+<p>Hence
+<span class="math display">\[
+\log(p(\{Y^*_i\} \ | \ \beta, \{\vec{x}_i\})) = const -\frac{1}{2} \sum_{i=1}^N\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2
+\]</span></p>
+<p>and so the <span class="math inline">\(Q\)</span>-function is
+<span class="math display">\[
+Q(\beta | \beta_m) \ = \ \text{E}_{\{Y^*_i\}\ \ |\ \ \{(Y_i=y_i,\ \vec{X}_i=\vec{x}_i)\},\ \beta_m}  \bigg[ -\frac{1}{2} \sum_{i=1}^N\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2 \bigg] + const
+\]</span></p>
+<p>Since the data samples are assumed IID we can apply the <a href="https://edsterjo.netlify.app/post/003_em1/main/">representation we derived in the first post in the series</a> where instead of taking the expectation over all samples, we sum over the expectations of each individual sample:</p>
+<p><span class="math display">\[
+Q(\beta | \beta_m) \ = \ const - \frac{1}{2}\sum_{i = 1}^N\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \bigg[\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2 \bigg]
+\]</span></p>
+<p>Note that in the EM algorithm we do not actually need to evaluate this function. Instead in step 4 we simply want to find the value of <span class="math inline">\(\beta\)</span> that maximizes it. In addition, as we discussed in the first post, if we wanted to incorporate a prior distribution <span class="math inline">\(p(\beta)\)</span> on <span class="math inline">\(\beta\)</span> for the purpose of regularization we would replace the problem of maximizing <span class="math inline">\(Q(\beta|\beta_m)\)</span> by maximizing <span class="math inline">\(Q(\beta|\beta_m) + \log(p(\beta))\)</span> instead. For the purpose of <span class="math inline">\(L^2\)</span>-regularization we could simply take <span class="math inline">\(\beta \sim \mathcal{N}(\vec{0}, \frac{1}{\lambda})\)</span>. In that case
+<span class="math display">\[
+Q(\beta|\beta_m) + \log(p(\beta)) = \ const - \frac{1}{2}\sum_{i = 1}^N\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \bigg[\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)^2 \bigg] - \frac{\lambda}{2}\langle \beta, \beta\rangle
+\]</span></p>
+<p>(the <span class="math inline">\(const\)</span> may now depend on <span class="math inline">\(\lambda\)</span> which we always treat as a constant). We will focus on maximizing this regularized function, knowing that we can simply let <span class="math inline">\(\lambda = 0\)</span> to remove the regularization. At the maximizing point we need the gradient with respect to <span class="math inline">\(\beta\)</span> to equal 0:
+<span class="math display">\[
+\nabla_{\beta} \ \big(Q(\beta|\beta_m) + \log(p(\beta))\big) = 0
+\]</span></p>
+<p>(where the <span class="math inline">\(0\)</span> represents the zero vector in <span class="math inline">\(\mathbb{R}^p\)</span>). Interchanging gradients first with the summation, then with the expectation (since all random variables have nice distributions) gives
+<span class="math display">\[
+0 = \sum_{i = 1}^N\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \bigg[\big(Y^*_i - \langle \vec{x}_i  , \beta\rangle\big)\vec{x}_i \bigg] - \lambda \beta
+\]</span>
+<span class="math display">\[
+= \sum_{i = 1}^N\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \big[Y^*_i\big]\vec{x}_i - \sum_{i = 1}^N\langle \vec{x}_i  , \beta\rangle\vec{x}_i  - \lambda \beta
+\]</span></p>
+<p>Let <span class="math inline">\(X\in\mathbb{R}^{N\times p}\)</span> be an <span class="math inline">\(N\times p\)</span> matrix whose <span class="math inline">\(i\)</span>-th row is <span class="math inline">\(\vec{x}_i\)</span>, and let <span class="math inline">\(Z\in \mathbb{R}^{N\times 1}\)</span> be a vector with <span class="math inline">\(i\)</span>-th component <span class="math inline">\(z_i = \text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m} \big[Y^*_i\big]\)</span>. Then in matrix notation the above becomes
+<span class="math display">\[
+0 = X^TZ - X^TX\beta - \lambda\beta \\= X^TZ - (X^TX\beta + \lambda I)\beta
+\]</span></p>
+<p>This looks very familiar! It looks exactly like the normal equations of OLS if the target variable had been <span class="math inline">\(Z\)</span>. The value of <span class="math inline">\(Z = \big(\text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m} \big[Y^*_i\big]\big)_{i=1}^N\)</span> is just the value of <span class="math inline">\(Y^*\)</span> we would guess given the values <span class="math inline">\(y_i\)</span> of the censored variable and <span class="math inline">\(\vec{x}_i\)</span> of the covariates. Basically EM is telling us to impute a conditional average for the missing data <span class="math inline">\(Y^*\)</span>, fit OLS, and repeat. Solving for <span class="math inline">\(\beta\)</span> gives
+<span class="math display">\[
+\beta_{m+1} = (X^TX + \lambda I)^{-1}X^TZ
+\]</span>
+This can be implemented once we know the value of <span class="math inline">\(Z\)</span>. Since <span class="math inline">\(Z_i = \text{E}_{Y^*_i\ \ |\ \ Y_i=y_i,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m} \big[Y^*_i\big]\)</span> then this is just the mean of a truncated normal distribution:
+<span class="math display">\[
+\text{E}_{Y^*_i\ \ |\ \ Y_i=1,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \big[Y^*_i\big] = \langle \vec{x}_i  , \beta_m\rangle + \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{1 - \Phi(-\langle \vec{x}_i  , \beta_m\rangle)}
+\]</span></p>
+<p><span class="math display">\[
+\text{E}_{Y^*_i\ \ |\ \ Y_i=0,\ \ \vec{X}_i=\vec{x}_i,\ \ \beta_m}  \big[Y^*_i\big] = \langle \vec{x}_i  , \beta_m\rangle - \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{\Phi(-\langle \vec{x}_i  , \beta_m\rangle)}
+\]</span>
+where <span class="math inline">\(\phi\)</span> and <span class="math inline">\(\Phi\)</span> are the standard normal PDF and CDF respectively. Therefore, we can summarize the EM algorithm for Probit Regression as:</p>
+<ul>
+<li><strong>Step 1:</strong> Let <span class="math inline">\(m = 0\)</span>. Make an initial estimate <span class="math inline">\(\beta_m\)</span> for <span class="math inline">\(\beta\)</span>.</li>
+<li><strong>Step 2:</strong> Impute the censored data according to</li>
+</ul>
+<p><span class="math display">\[
+z_i =
+\begin{cases}
+\langle \vec{x}_i  , \beta_m\rangle + \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{1 - \Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, &amp; \text{if} \ \ y_i = 1 \\
+\langle \vec{x}_i  , \beta_m\rangle - \frac{\phi(\langle \vec{x}_i  , \beta_m\rangle)}{\Phi(-\langle \vec{x}_i  , \beta_m\rangle)}, &amp; \text{if} \ \ y_i = 0
+\end{cases}
+\]</span></p>
+<ul>
+<li><strong>Step 3:</strong> Solve the regularized OLS problem to update <span class="math inline">\(\beta\)</span>:</li>
+</ul>
+<p><span class="math display">\[
+\beta_{m+1} = (X^TX + \lambda I)^{-1}X^TZ
+\]</span></p>
+<ul>
+<li><strong>Step 4:</strong> Return to step 2 and repeat until some stopping criteria is met.</li>
+</ul>
+</div>
+<div id="implementing-in-c-using-eigen" class="section level2">
+<h2>Implementing in C++ using Eigen</h2>
+<p>The algorithm above is easily implementable in R, Numpy, Matlab, etc., but for fun we’ll implement it in C++ using the Eigen linear algebra library. We do this in Rmarkdown using the <a href="https://cran.r-project.org/web/packages/RcppEigen/index.html">RcppEigen</a> package in R.</p>
+<p>First we include the necessary header files. Here <code>RcppEigen.h</code> includes the Eigen library itself, as well as all the necessary boilerplate code of Rcpp to integrate Eigen (and C++) with R.</p>
+<pre class="cpp"><code>#include &lt;RcppEigen.h&gt;
+#include &lt;algorithm&gt;
+#include &lt;limits&gt;
+
+// [[Rcpp::depends(RcppEigen)]]
+
+using namespace Eigen;</code></pre>
+<p>Next we define two functions that will be needed in computing the vector <span class="math inline">\(Z\)</span>, whose computation requires the normal distribution’s PDF and CDF. We’ll use R’s own built-in functions <code>dnorm</code> and <code>pnorm</code>. These functions are written in C or Fortran (and hence can be called from any language with a C interface) and are very well tested. So instead of rolling our own versions we may as well use R’s.</p>
+<pre class="cpp"><code>// [[Rcpp::export]]
+double positive(double mu) 
+{
+    double num = R::dnorm(mu, 0, 1, false);
+    double den = 1 - R::pnorm(-mu, 0, 1, true, false);
+    
+    return mu + num/den;
+}
+
+// [[Rcpp::export]]
+double negative(double mu)
+{
+    double num = R::dnorm(mu, 0, 1, false);
+    double den = R::pnorm(-mu, 0, 1, true, false);
+    
+    return mu - num/den;
+}</code></pre>
+<p>Next we want a function that actually computes the <span class="math inline">\(Z\)</span> vector, given <span class="math inline">\(X\)</span> and <span class="math inline">\(\beta_m\)</span>. We could use some of Eigen’s nifty <a href="https://eigen.tuxfamily.org/dox/TopicCustomizing_NullaryExpr.html">nullary expressions</a>, but a simple for-loop with a ternay conditional will do. We also create a wrapper function so that we can test from R:</p>
+<pre class="cpp"><code>VectorXd impute(const MatrixXd&amp; X,
+                const VectorXd&amp; beta,
+                const VectorXi&amp; Y)
+{
+    VectorXd Z = X * beta;
+    
+    // If Y(i) is non-zero use the function 
+    // positive, else use negative
+    for(int i = 0; i != Z.size(); ++i)
+        Z(i) = (Y(i) == (int)1) ? (positive(Z(i))) : (negative(Z(i)));
+    
+    return Z;
+}
+
+// A wrapper function to test from R
+// [[Rcpp::export]]
+VectorXd impute_test(const Map&lt;MatrixXd&gt; X,
+                     const Map&lt;VectorXd&gt; beta,
+                     const Map&lt;VectorXi&gt; Y)
+{
+    return impute(X, beta, Y);
+}</code></pre>
+<p>Comparing to an R implementation is trivial:</p>
+<pre class="r"><code>X = matrix(rnorm(100*10), ncol = 10)
+beta = matrix(rnorm(10), ncol = 1)
+Y = matrix(sample(c(0L,1L), size = 100, replace = T), ncol = 1)
+
+# Using the C++ implementation
+Z.cpp = impute_test(X, beta, Y)
+
+print(anyNA(Z.cpp))</code></pre>
+<pre><code>## [1] FALSE</code></pre>
+<pre class="r"><code># Building one in R
+imputeR = function(X, beta, Y)
+{
+    positiveR = function(Z){Z + dnorm(Z)/(1-pnorm(-Z))}
+    negativeR = function(Z){Z - dnorm(Z)/pnorm(-Z)}
+    
+    Z = X %*% beta
+    return(ifelse((Y == 1L), positiveR(Z), negativeR(Z)))
+}
+
+Z.r = imputeR(X, beta, Y)
+
+# Checking range of values
+print(summary(Z.cpp - Z.r))</code></pre>
+<pre><code>##        V1            
+##  Min.   :-7.105e-15  
+##  1st Qu.:-1.110e-16  
+##  Median : 0.000e+00  
+##  Mean   : 1.577e-16  
+##  3rd Qu.: 2.776e-17  
+##  Max.   : 2.931e-14</code></pre>
+<p>Not bad. Next we need a function to compute (regularized) least squares. For the solution we use the normal equations. According to the <a href="https://eigen.tuxfamily.org/dox-devel/group__LeastSquares.html">Eigen tutorial on the matter</a> the normal equations are the fastest but least numerically stable option. For us this is good enough. Again we create a small wrapper to test from R:</p>
+<pre class="cpp"><code>VectorXd RLS(const VectorXd&amp; Z, 
+             const MatrixXd&amp; X, 
+             const double lambda = 0.0)
+{
+    if(lambda &gt;= std::numeric_limits&lt;double&gt;::min())
+    {
+        // Creating an identity matrix
+        MatrixXd lambda_eye = lambda * MatrixXd::Identity(X.cols(), X.cols());
+        
+        // Using (regularized) normal equations
+        return (X.transpose() * X + lambda_eye).ldlt().solve(X.transpose() * Z);
+    }
+    
+    return (X.transpose() * X).ldlt().solve(X.transpose() * Z);
+}
+
+// [[Rcpp::export]]
+VectorXd RLS_test(const Map&lt;VectorXd&gt; Z, 
+                  const Map&lt;MatrixXd&gt; X,
+                  double lambda = 0.0)
+{
+    return RLS(Z, X, lambda);
+}</code></pre>
+<p>Testing in R:</p>
+<pre class="r"><code>set.seed(1234)
+X = matrix(rnorm(100*10), ncol = 10)
+beta = matrix(rnorm(10), ncol = 1)
+Z = X %*% beta + matrix(rnorm(100), ncol = 1)
+
+beta_hat.r = lm.fit(X, Z, method = &quot;qr&quot;)$coefficients
+beta_hat.cpp = RLS_test(Z, X, 0)
+
+print(data.frame(beta = beta, 
+                 beta_hat.r = beta_hat.r, 
+                 beta_hat.cpp = beta_hat.cpp))</code></pre>
+<pre><code>##           beta beta_hat.r beta_hat.cpp
+## x1  -1.2053334 -1.2721727   -1.2721727
+## x2   0.3014667  0.2774444    0.2774444
+## x3  -1.5391452 -1.5961346   -1.5961346
+## x4   0.6353707  0.5781086    0.5781086
+## x5   0.7029518  0.8563414    0.8563414
+## x6  -1.9058829 -2.0154512   -2.0154512
+## x7   0.9389214  0.8108957    0.8108957
+## x8  -0.2244921 -0.3825277   -0.3825277
+## x9  -0.6738168 -0.7562696   -0.7562696
+## x10  0.4457874  0.4209543    0.4209543</code></pre>
+<pre class="r"><code>print(summary(beta_hat.cpp - beta_hat.r))</code></pre>
+<pre><code>##       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
+## -8.882e-16 -6.800e-16 -5.551e-17  4.996e-17  3.053e-16  2.220e-15</code></pre>
+<p>Not bad at all. Note that R’s very powerful <code>lm.fit</code> function uses QR decomposition to solve the least squares problem. This method is a bit slower in principle than the <span class="math inline">\(LDL^T\)</span> decomposition we used for the normal equations above, but it’s also higher quality numerically.</p>
+<p>As for a test with a non-trivial regularization constant:</p>
+<pre class="r"><code>lambda = 15
+beta_hat_reg.r = solve(t(X) %*% X + lambda*diag(10), t(X) %*% Z)
+beta_hat_reg.cpp = RLS_test(Z, X, lambda)
+
+print(data.frame(beta = beta, 
+                 beta_hat_reg.r = beta_hat_reg.r, 
+                 beta_hat_reg.cpp = beta_hat_reg.cpp))</code></pre>
+<pre><code>##          beta beta_hat_reg.r beta_hat_reg.cpp
+## 1  -1.2053334     -1.1372786       -1.1372786
+## 2   0.3014667      0.2299293        0.2299293
+## 3  -1.5391452     -1.3128364       -1.3128364
+## 4   0.6353707      0.4366746        0.4366746
+## 5   0.7029518      0.7691213        0.7691213
+## 6  -1.9058829     -1.7122424       -1.7122424
+## 7   0.9389214      0.7415632        0.7415632
+## 8  -0.2244921     -0.2756274       -0.2756274
+## 9  -0.6738168     -0.5224541       -0.5224541
+## 10  0.4457874      0.4061769        0.4061769</code></pre>
+<pre class="r"><code>print(summary(beta_hat_reg.cpp - beta_hat_reg.r))</code></pre>
+<pre><code>##        V1            
+##  Min.   :-7.772e-16  
+##  1st Qu.:-1.110e-16  
+##  Median : 0.000e+00  
+##  Mean   :-2.776e-17  
+##  3rd Qu.: 2.082e-16  
+##  Max.   : 3.331e-16</code></pre>
+<p>Very good. Again, we see that the regularized least squares estimates are biased away from the true values, and towards the 0 vector.</p>
+<p>Now we bring it all together into one algorithm:</p>
+<pre class="cpp"><code>// [[Rcpp::export]]
+VectorXd Probit(const Map&lt;VectorXi&gt; Y, 
+                const Map&lt;MatrixXd&gt; X, 
+                double lambda = 0.0,
+                int num_iter = 100)
+{
+
+    // Making sure Lambda is non-negative;
+    lambda = std::max(lambda, 0.0);
+    
+    // Making sure the number of rows of X is the 
+    // same as the number of rows of Y
+    assert(Y.size() == X.rows());
+    
+    // Initialize beta to 0 values
+    VectorXd beta = VectorXd::Zero(X.cols());
+    
+    // Iteration
+    for(int i = 0; i &lt; num_iter; ++i)
+    {
+        // Impute the Z vector
+        VectorXd Z = impute(X, beta, Y);
+        
+        // Solve (regularized) Least Squares 
+        beta = RLS(Z, X, lambda);
+    }
+    
+    return beta;
+}</code></pre>
+<p>Below we carry out a comparison of the base R implementation of (unregularized) probit regression against our implementation.</p>
+<pre class="r"><code>library(MASS)
+
+N = 10000
+p = 4
+
+set.seed(1234)
+S = matrix(rnorm(p*p), ncol = p)
+S = t(S) %*% S
+
+X = MASS::mvrnorm(n = N, mu = rep(0.0, times = p), Sigma = S)
+
+beta = matrix((1:p)/2, ncol = 1)
+
+Z = X %*% beta + matrix(rnorm(N))
+Y = as.integer(Z &gt; 0)
+
+system.time(probit.cpp100 &lt;- Probit(Y, X, 0.0, 100))</code></pre>
+<pre><code>##    user  system elapsed 
+##    0.21    0.00    0.20</code></pre>
+<pre class="r"><code>system.time(probit.cpp10000 &lt;- Probit(Y, X, 0.0, 10000))</code></pre>
+<pre><code>##    user  system elapsed 
+##   21.33    0.00   21.33</code></pre>
+<pre class="r"><code>system.time(probit.glm &lt;- glm(Y ~ X - 1, family = binomial(link = &quot;probit&quot;))$coefficients)</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>##    user  system elapsed 
+##    0.07    0.00    0.06</code></pre>
+<pre class="r"><code>print(data.frame(beta = beta, 
+                 Cpp_100_iter = probit.cpp100,
+                 Cpp_10000_iter = probit.cpp10000,
+                 R = probit.glm))</code></pre>
+<pre><code>##    beta Cpp_100_iter Cpp_10000_iter         R
+## X1  0.5    0.4128896      0.5002905 0.5002889
+## X2  1.0    0.8632397      0.9845270 0.9845285
+## X3  1.5    1.2932036      1.5056988 1.5056998
+## X4  2.0    1.7173029      1.9814520 1.9814547</code></pre>
+<p>We see the base R converges much more quickly than our implementation of EM. Note, this is not due to weak compiler flags on our part. A local Makevars file in <code>Documents/.R</code> overrides the default R build flags to use the optimizations <code>-O3 -march=native</code>.</p>
+<p>No, instead <a href="https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/glm"><code>glm.fit</code></a> uses <a href="https://en.wikipedia.org/wiki/Iteratively_reweighted_least_squares">iteratively reweighted least squares (IRLS)</a> to fit the model, not EM. This can be seen in the <a href="https://github.com/SurajGupta/r-source/blob/master/src/library/stats/R/glm.R">source code</a>. So EM is not a very fast algorithm to fit probit models. At some point in the future we’ll probably implement IRLS in Eigen (or Fortran, or Julia).</p>
+</div>
+</content:encoded>	
     </item>
     
     <item>
       <title>Passing expressions and data from R to C&#43;&#43; before compile-time in Rmarkdown</title>
       <link>/post/002_compile_time_data_r_to_cpp/main/</link>
       <pubDate>Sun, 21 Jun 2020 00:00:00 +0000</pubDate>
-      
       <guid>/post/002_compile_time_data_r_to_cpp/main/</guid>
       <description>
 
@@ -535,29 +861,141 @@ print(y)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Anyway this was just a small example. There are many many directions one can choose to take with metaprogramming. Even creating new preprocessing directives such as unrolling loops, defining constexprs, etc.&lt;/p&gt;
 &lt;/div&gt;
 </description>
-      
-            <category>metaprogramming</category>
-      
-            <category>rmarkdown</category>
-      
-            <category>c&#43;&#43;</category>
-      
-            <category>rcpp</category>
-      
-            <category>r</category>
-      
-      
-            <category>C&#43;&#43;</category>
-      
-            <category>R</category>
-      
+      <content:encoded>
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>In this post we give a simple illustrative example of how data generated by R code can be used by compiled languages such as C++ at compile time, instead of run-time, inside Rmarkdown.</p>
+<p>This is an example of inter-language code generation. Metaprogramming/code generation is an extremely powerful technique but it’s also one that is very easy to overdo. This is just a fun example to learn from. Thorough testing is very important for any production code.</p>
+</div>
+<div id="using-other-languages-in-rmarkdown" class="section level2">
+<h2>Using other languages in Rmarkdown</h2>
+<p>Out of the box Rmarkdown can work with the following languages assuming a proper back-end is available:</p>
+<pre class="r"><code>names(knitr::knit_engines$get())</code></pre>
+<pre><code>##  [1] &quot;awk&quot;         &quot;bash&quot;        &quot;coffee&quot;      &quot;gawk&quot;        &quot;groovy&quot;     
+##  [6] &quot;haskell&quot;     &quot;lein&quot;        &quot;mysql&quot;       &quot;node&quot;        &quot;octave&quot;     
+## [11] &quot;perl&quot;        &quot;psql&quot;        &quot;Rscript&quot;     &quot;ruby&quot;        &quot;sas&quot;        
+## [16] &quot;scala&quot;       &quot;sed&quot;         &quot;sh&quot;          &quot;stata&quot;       &quot;zsh&quot;        
+## [21] &quot;highlight&quot;   &quot;Rcpp&quot;        &quot;tikz&quot;        &quot;dot&quot;         &quot;c&quot;          
+## [26] &quot;fortran&quot;     &quot;fortran95&quot;   &quot;asy&quot;         &quot;cat&quot;         &quot;asis&quot;       
+## [31] &quot;stan&quot;        &quot;block&quot;       &quot;block2&quot;      &quot;js&quot;          &quot;css&quot;        
+## [36] &quot;sql&quot;         &quot;go&quot;          &quot;python&quot;      &quot;julia&quot;       &quot;sass&quot;       
+## [41] &quot;scss&quot;        &quot;theorem&quot;     &quot;lemma&quot;       &quot;corollary&quot;   &quot;proposition&quot;
+## [46] &quot;conjecture&quot;  &quot;definition&quot;  &quot;example&quot;     &quot;exercise&quot;    &quot;proof&quot;      
+## [51] &quot;remark&quot;      &quot;solution&quot;</code></pre>
+<p>Although we can use R’s native foreign function interface to call compiled code, for C++ a higher level alternative is to use <a href="https://cran.r-project.org/web/packages/Rcpp/index.html">Rcpp</a>. In Rmarkdown we can <a href="https://bookdown.org/yihui/rmarkdown/language-engines.html#rcpp">compile C++ code chunks using Rcpp and export the compiled functions to be available for use in R</a>.</p>
+<p>As a common example, we can compile the following code</p>
+<pre class="cpp"><code>#include &lt;Rcpp.h&gt;
+using namespace Rcpp;
+
+// [[Rcpp::export]]
+NumericVector timesTwo(NumericVector x) 
+{
+    return x * 2;
+}</code></pre>
+<p>and use the exported function in R</p>
+<pre class="r"><code>timesTwo(1:10)</code></pre>
+<pre><code>##  [1]  2  4  6  8 10 12 14 16 18 20</code></pre>
+</div>
+<div id="registering-a-user-defined-language-engine-in-knitr" class="section level2">
+<h2>Registering a user-defined language engine in Knitr</h2>
+<p>We can create <a href="https://bookdown.org/yihui/rmarkdown-cookbook/custom-engine.html">user-defined engines</a> to control exactly how the code chunk is sourced, or even modify existing engines. To get an idea we can look at the default Rcpp engine used by knitr:</p>
+<pre class="r"><code>knitr::knit_engines$get()$Rcpp</code></pre>
+<pre><code>## function (options) 
+## {
+##     sourceCpp = getFromNamespace(&quot;sourceCpp&quot;, &quot;Rcpp&quot;)
+##     code = one_string(options$code)
+##     opts = options$engine.opts
+##     cache = options$cache &amp;&amp; (&quot;cacheDir&quot; %in% names(formals(sourceCpp)))
+##     if (cache) {
+##         opts$cacheDir = paste(valid_path(options$cache.path, 
+##             options$label), &quot;sourceCpp&quot;, sep = &quot;_&quot;)
+##         opts$cleanupCacheDir = TRUE
+##     }
+##     if (!is.environment(opts$env)) 
+##         opts$env = knit_global()
+##     if (options$eval) {
+##         message(&quot;Building shared library for Rcpp code chunk...&quot;)
+##         do.call(sourceCpp, c(list(code = code), opts))
+##     }
+##     options$engine = &quot;cpp&quot;
+##     engine_output(options, code, &quot;&quot;)
+## }
+## &lt;environment: namespace:knitr&gt;</code></pre>
+<p>Using the default engine above as a template we can define a new knitr engine for compiling C++. One that can read and make use of more dynamic R data in C++ before compilation (or even dynamically create <code>Makevars</code> files to control compilation flags). First let’s include the knitr package:</p>
+<pre class="r"><code>library(knitr)</code></pre>
+<p>Next let’s take a crack at defining a new engine to compile C++ code. In this example we will modify the current Rcpp engine to take in an <code>extra</code> field (but otherwise behave the same).</p>
+<pre class="r"><code>knit_engines$set(RcppFoo = function(options) {
+    
+    extra = options$extra
+    
+    sourceCpp = getFromNamespace(&quot;sourceCpp&quot;, &quot;Rcpp&quot;)
+    
+    ## Code is read as a list of strings, one list element per line
+    ## Here we append extra code that may be defined in R to the 
+    ## code written in the chunk
+    code = c(extra, options$code)
+    code = paste(code, collapse = &#39;\n&#39;)
+    opts = options$engine.opts
+    
+    if (!is.environment(opts$env)) 
+        opts$env = knit_global()
+
+    if (options$eval) {    
+        message(&quot;Building shared library for Rcpp code chunk...&quot;)
+        do.call(sourceCpp, c(list(code = code), opts))
+    }
+    options$engine = &quot;cpp&quot;
+    engine_output(options, 
+                  options$code, 
+                  paste(&quot;Added the lines:\n&quot;, 
+                      paste(extra, collapse = &#39;\n&#39;), 
+                      sep = &#39;\n&#39;))
+})</code></pre>
+<p>Next we test by creating some data in R and using that as a compile time constant in C++. Here we pass values of pi and e as static const doubles to C++ (a much cleaner API is possible of course).</p>
+<pre class="r"><code>constants = list(
+    paste(&#39;static const double Pi =&#39;, pi, &#39;;&#39;),
+    paste(&#39;static const double Euler =&#39;, exp(1),&#39;;&#39;)
+)</code></pre>
+<p>This already highlights a danger as we have not considered exactly how R might convert these double precision floating point numbers to strings. Regardless, we proceed. To use the new engine we run the engine as <code>{RcppFoo test_chunk, extra = constants}</code></p>
+<pre class="cpp"><code>#include &lt;Rcpp.h&gt;
+using namespace Rcpp;
+
+// [[Rcpp::export]]
+NumericVector timesFoo(NumericVector x) 
+{
+    return x * Pi + Euler;
+}</code></pre>
+<pre><code>## Added the lines:
+## 
+## static const double Pi = 3.14159265358979 ;
+## static const double Euler = 2.71828182845905 ;</code></pre>
+<pre class="r"><code>x = timesFoo(1:10)
+print(x)</code></pre>
+<pre><code>##  [1]  5.859874  9.001467 12.143060 15.284652 18.426245 21.567838 24.709430
+##  [8] 27.851023 30.992616 34.134208</code></pre>
+<p>We get <strong>almost</strong> the same result as in R</p>
+<pre class="r"><code>y = pi*(1:10)+exp(1)
+print(y)</code></pre>
+<pre><code>##  [1]  5.859874  9.001467 12.143060 15.284652 18.426245 21.567838 24.709430
+##  [8] 27.851023 30.992616 34.134208</code></pre>
+<p>But metaprogramming can be dangerous when mixed with floating point arithmetic. In this case some loss of precision occurred with the doubles when converting to strings:</p>
+<pre class="r"><code>x - y</code></pre>
+<pre><code>##  [1]  1.776357e-15  0.000000e+00 -3.552714e-15 -7.105427e-15 -1.065814e-14
+##  [6] -1.421085e-14 -1.776357e-14 -1.776357e-14 -2.131628e-14 -2.842171e-14</code></pre>
+<pre class="r"><code>as.double(as.character(pi))*(1:10) + as.double(as.character(exp(1))) - x</code></pre>
+<pre><code>##  [1] 0.000000e+00 0.000000e+00 0.000000e+00 0.000000e+00 0.000000e+00
+##  [6] 3.552714e-15 3.552714e-15 0.000000e+00 0.000000e+00 0.000000e+00</code></pre>
+<p>Anyway this was just a small example. There are many many directions one can choose to take with metaprogramming. Even creating new preprocessing directives such as unrolling loops, defining constexprs, etc.</p>
+</div>
+</content:encoded>	
     </item>
     
     <item>
       <title>Deriving Principal Component Analysis and implementing in C&#43;&#43; using Eigen</title>
       <link>/post/001_deriving_pca/main/</link>
       <pubDate>Sat, 20 Jun 2020 00:00:00 +0000</pubDate>
-      
       <guid>/post/001_deriving_pca/main/</guid>
       <description>
 
@@ -740,26 +1178,187 @@ print(R$sdev^2)&lt;/code&gt;&lt;/pre&gt;
 &lt;/ol&gt;
 &lt;/div&gt;
 </description>
-      
-            <category>dimensionality reduction</category>
-      
-            <category>pca</category>
-      
-            <category>eigen</category>
-      
-            <category>c&#43;&#43;</category>
-      
-            <category>derivation</category>
-      
-            <category>rcpp</category>
-      
-            <category>r</category>
-      
-      
-            <category>C&#43;&#43;</category>
-      
-            <category>R</category>
-      
+      <content:encoded>
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p><a href="https://en.wikipedia.org/wiki/Principal_component_analysis">Principal component analysis</a> is one of the most commonly used techniques in statistical modeling and machine learning. In typical applications it serves as a (linear) dimensionality reduction, allowing one to project high dimensional data onto a lower dimensional subspace. This can help make a problem that was previously computationally intractable easier, or can help transform feature variables into something more useful. However, most presentations fail to give a sense of “why” and students are left without an understanding of exactly what PCA is and what assumptions it makes. This can lead to model risk issues and prevent users from being able to modify the technique when different assumptions hold. The purpose of this post is to rectify this with a derivation for those that want to know why, which should be everyone. For fun we implement what we learn at the end in a few lines of C++.</p>
+<div id="a-note-on-difficulty" class="section level3">
+<h3>A note on difficulty</h3>
+<p>To understand what follows you need to understand linear algebra and undergraduate probability. <strong>The proof that follows is as clear, honest, and self-contained as I think is possible, but most will not find it easy</strong>. In my opinion if a truly easy and theoretically honest proof were possible you would have already seen it.</p>
+</div>
+</div>
+<div id="deriving-pca" class="section level2">
+<h2>Deriving PCA</h2>
+<p>As scientists our data is often times multidimensional because it involves measurements of many features of the world. Equally often, our data may have some “randomness” in it that we can not capture (so that if the experiment that was run to obtain the data were rerun the results may not be exactly the same).</p>
+<p>Let <span class="math inline">\(\vec{X} = [X^1, X^2, ..., X^d]\)</span> be a <span class="math inline">\(d\)</span>-dimensional random vector <a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> that represents the measured values of <span class="math inline">\(d\)</span> feature variables.</p>
+<p>We want to capture the “shape” of the randomness of <span class="math inline">\(\vec{X}\)</span>. For example, in what directions does <span class="math inline">\(\vec{X}\)</span> vary the most? In what directions does it vary the least? This is important because if, for example, <span class="math inline">\(\vec{X}\)</span> had a lot of randomness in its first coordinate <span class="math inline">\(X^1\)</span>, but had very little randomness in the other coordinates, then independent measurements of <span class="math inline">\(\vec{X}\)</span> would differ a lot in the first coordinate, but not much in the others. The other coordinates would all give roughly the same values and hence roughly the same information. The other coordinates would in a sense be redundant: replacing <span class="math inline">\(\vec{X}\)</span> by <span class="math inline">\(X^1\)</span> would not lose a lot of information but would have the benefit of having to deal with only 1 feature as opposed to <span class="math inline">\(d\)</span> features (i.e. a dimensionality reduction).</p>
+<p>To proceed we need to define some measure of variation or randomness. A good one is variance. Our goal is to decompose <span class="math inline">\(\vec{X}\)</span> into vectors along which <span class="math inline">\(\vec{X}\)</span> has the most variance. Directions are represented by unit vectors (i.e. vectors of length 1). If <span class="math inline">\(\vec{\omega}\)</span> is a non-random unit vector, then the component of <span class="math inline">\(\vec{X}\)</span> along <span class="math inline">\(\vec{\omega}\)</span> is given by</p>
+<p><span class="math display">\[
+\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\ \vec{\omega}
+\]</span>
+where <span class="math inline">\(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\)</span> denotes the inner product in <span class="math inline">\(\mathbb{R}^d\)</span> (aka, dot product). Since <span class="math inline">\(\vec{\omega}\)</span> is not random, the randomness of <span class="math inline">\(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\ \vec{\omega}\)</span> is controlled entirely by the coefficient <span class="math inline">\(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle\)</span>. To find the direction of maximal variance is to simply find <span class="math inline">\(\vec{\omega}\)</span> that maximizes the variance of this inner product. In other words we want</p>
+<p><span class="math display">\[
+\vec{\omega}_1 := \text{argmax} \ \ \text{Var}( \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle ) 
+\]</span>
+where the argmax is taken over all <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(||\vec{\omega}|| = 1\)</span><a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>. We begin:</p>
+<p><span class="math display">\[\begin{equation}
+  \begin{aligned}
+
+\text{Var}( \langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle )  &amp;= 
+\text{E}\bigg[\bigg(\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle - \text{E}[\langle\ \vec{\omega}\ ,\ \vec{X}\ \rangle]\bigg)^2\bigg] \\
+
+
+    &amp;= \text{E}[\langle\ \vec{\omega}\ , \ \vec{X} - \text{E}[\vec{X}] \ \rangle^2] \\
+    
+    
+    &amp;= \text{E}\bigg[\ \bigg(\sum_i\omega_i(X^i - \text{E}[X^i])\bigg)^2\bigg] \\
+    
+    
+    &amp;= \text{E}\bigg[ \sum_{i,j}\omega_i\omega_j(X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \bigg] \\
+    
+    
+    &amp;= \sum_{i,j}\omega_i\omega_j \ \text{E}\bigg[ \ (X^i - \text{E}[X^i])(X^j - \text{E}[X^j]) \ \bigg] \\
+    
+    
+    &amp;= \sum_{i,j}\omega_i\omega_j \ \text{Cov}(X^i, X^j) \\
+    
+    
+    &amp;= \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle
+  \end{aligned}
+\end{equation}\]</span></p>
+<p>where <span class="math inline">\(\text{Cov}(\vec{X})\)</span> is the covariance matrix of <span class="math inline">\(\vec{X}\)</span>. So</p>
+<p><span class="math display">\[
+\vec{\omega}_1 := \text{argmax} \ \ \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle 
+\]</span>
+again the argmax is taken over all <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(||\vec{\omega}|| = 1\)</span>. This problem is called a “variational problem”, but why so is not important at the moment.</p>
+<p>This <span class="math inline">\(\vec{\omega}_1\)</span> must be the first eigenvector of the matrix <span class="math inline">\(\text{Cov}(\vec{X})\)</span>. Why? <strong>This is the hard part. If you can understand what follows you’re golden</strong>. There are multiple ways to see why this is the case:</p>
+<p>One is by Lagrange multipliers. If we write <span class="math inline">\(f(\vec{\omega}) := \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle\)</span> then</p>
+<p><span class="math display">\[\begin{equation}
+\begin{aligned}
+
+f(\vec{\omega} + \vec{h}) - f(\vec{\omega}) &amp;=  \langle \ \vec{\omega} + \vec{h} \ , \ \text{Cov}(\vec{X})(\vec{\omega}+\vec{h}) \ \rangle - \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle \\
+
+    &amp;= \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{\omega} \ , \ \text{Cov}(\vec{X})\vec{h}\rangle \ + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle \\
+    
+    &amp;= 2\langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{\omega} \ \rangle + \langle \ \vec{h} \ , \ \text{Cov}(\vec{X})\vec{h} \rangle
+
+\end{aligned}
+\end{equation}\]</span></p>
+<p>where we first expanded the first term using the bilinearity of the inner product, canceled like terms, and lastly used the symmetry of the covariance matrix to combine two terms. In the above expression the first order term in <span class="math inline">\(\vec{h}\)</span> is given by <span class="math inline">\(\langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle\)</span>. The other term is quadratic in <span class="math inline">\(\vec{h}\)</span>. By definition the differential of <span class="math inline">\(f\)</span> at <span class="math inline">\(\vec{\omega}\)</span> is this linear term:</p>
+<p><span class="math display">\[
+df_{\vec{\omega}} \ (\vec{h}) = \langle \ \vec{h} \ , \ 2\text{Cov}(\vec{X})\vec{\omega} \ \rangle
+\]</span></p>
+<p>By definition<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> the gradient of <span class="math inline">\(f\)</span> at <span class="math inline">\(\vec{\omega}\)</span> is just the vector in the above expression which the inner product with <span class="math inline">\(\vec{h}\)</span> is being taken:</p>
+<p><span class="math display">\[
+\nabla_{\vec{\omega}} f = 2 \ \text{Cov}(\vec{X}) \ \vec{\omega}
+\]</span>
+Because our variational problem is to maximize <span class="math inline">\(f(\vec{\omega})\)</span> on the unit sphere where <span class="math inline">\(||\vec{\omega}|| = 1\)</span>, then the gradient of <span class="math inline">\(f\)</span> at the maximizing point <span class="math inline">\(\vec{\omega}_1\)</span> must be orthogonal (i.e. perpendicular, i.e. normal) to the surface of the unit sphere at that point<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>. The direction (i.e. unit vector) perpendicular to the unit sphere at <span class="math inline">\(\vec{\omega}_1\)</span> is <span class="math inline">\(\vec{\omega}_1\)</span> itself with its starting point translated to the surface!</p>
+<p><img src="/img/Spherical_unit_vectors.png" /></p>
+<p>Thus the gradient of <span class="math inline">\(f\)</span> at <span class="math inline">\(\vec{\omega}_1\)</span> must be collinear with (and hence a multiple of) <span class="math inline">\(\vec{\omega}_1\)</span>:</p>
+<p><span class="math display">\[
+\nabla_{\vec{\omega}_1}f  = \lambda&#39; \ \vec{\omega}_1
+\]</span>
+for some number <span class="math inline">\(\lambda&#39;\)</span>. Thus</p>
+<p><span class="math display">\[
+\text{Cov}(\vec{X}) \ \vec{\omega}_1 = \frac{\lambda&#39;}{2} \ \vec{\omega}_1 =: \lambda \ \vec{\omega}_1
+\]</span>
+Hence <span class="math inline">\(\vec{\omega}_1\)</span> is an eigenvector of <span class="math inline">\(\text{Cov}(\vec{X})\)</span>. We note that the eigenvalue <span class="math inline">\(\lambda\)</span> is just the variance we wanted to maximize:</p>
+<p><span class="math display">\[
+\langle \ \vec{\omega}_1 \ , \ \text{Cov}(\vec{X}) \ \vec{\omega}_1 \ \rangle = \langle \ \vec{\omega}_1 \ , \lambda \vec{\omega}_1 \ \rangle = \lambda\langle \ \vec{\omega}_1 \ , \vec{\omega}_1 \ \rangle = \lambda ||\vec{\omega}||^2 = \lambda
+\]</span>
+Thus we see that eigenvectors capture directions of maximal variance and eigenvalues capture the value of the variance in that maximal direction! We can also see why the variance is a nice measure of variation/randomness. Because it’s <strong>quadratic</strong> in its arguments, derivatives of it become <strong>linear</strong>, leading to <strong>linear</strong> eigenvalue problems, which are very well understood by mathematicians.</p>
+<p>We proceed as follows. Let <span class="math inline">\(\vec{X}_{new} = \vec{X} - \langle\vec{\omega}_1,\vec{X}\rangle\vec{\omega}_1\)</span>. This <span class="math inline">\(\vec{X}_{new}\)</span> is just the component of <span class="math inline">\(\vec{X}\)</span> orthogonal to <span class="math inline">\(\vec{\omega}_1\)</span>. Intuitively it’s the part of <span class="math inline">\(\vec{X}\)</span> that <span class="math inline">\(\vec{\omega}_1\)</span> can not explain.</p>
+<p>Just as before we want to capture the direction of maximal variance of <span class="math inline">\(\vec{X}_{new}\)</span>. I.e. we want a vector <span class="math inline">\(\vec{\omega}_2\)</span> with <span class="math inline">\(||\vec{\omega}_2||=1\)</span> such that <span class="math inline">\(\text{Var}(\langle \vec{\omega}_2, \vec{X}_{new}\rangle)\)</span> is maximal.</p>
+<p>Since <span class="math inline">\(\vec{X}_{new} \perp \vec{\omega}_1\)</span><a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> then <span class="math inline">\(\langle \vec{\omega}, \vec{X}_{new}\rangle = \langle \vec{\omega} - \alpha\vec{\omega}_1, \vec{X}_{new}\rangle\)</span> for any <span class="math inline">\(\alpha \in \mathbb{R}\)</span>. Therefore by replacing <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(\vec{\omega} - \langle\vec{\omega}_1,\vec{\omega}\rangle\vec{\omega}_1\)</span> we may restrict our maximization problem to maximizing <span class="math inline">\(\text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle)\)</span> over all <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(||\vec{\omega}|| = 1\)</span> and <span class="math inline">\(\vec{\omega} \perp \vec{\omega}_1\)</span>.</p>
+<p>We transform this expression as follows:</p>
+<p><span class="math display">\[\begin{equation}
+\begin{aligned}
+
+\text{Var}(\langle \vec{\omega}, \vec{X}_{new}\rangle) &amp;= \text{Var}(\langle \vec{\omega}, \vec{X} - \langle\vec{\omega}_1,\vec{X}\rangle\vec{\omega}_1\rangle) \\
+
+    &amp;= \text{Var}(\langle \vec{\omega}, \vec{X}\rangle) \qquad \text{Since }\vec{\omega}\perp\vec{\omega}_1 \\
+    
+    &amp;= \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle \qquad \text{By the earlier computation}
+
+\end{aligned}
+\end{equation}\]</span></p>
+<p>So the vector <span class="math inline">\(\vec{\omega}_2\)</span> is given by the new variational problem</p>
+<p><span class="math display">\[
+\vec{\omega}_2 = \text{argmax} \ \langle \vec{\omega}, \text{Cov}(\vec{X})\vec{\omega}\rangle
+\]</span>
+where the argmax is taken over all <span class="math inline">\(\vec{\omega}\)</span> with <span class="math inline">\(||\vec{\omega}|| = 1\)</span> and <span class="math inline">\(\vec{\omega} \perp \vec{\omega}_1\)</span>. Now <span class="math inline">\(\langle \vec{\omega}_2, \vec{X}_{new}\rangle = \langle \vec{\omega}_2, \vec{X}\rangle\)</span> is of maximal variance in a direction perpendicular to <span class="math inline">\(\vec{\omega}_1\)</span>.</p>
+<p>Notice that this is the same maximization problem as before, but now restricted to a lower dimensional subspace (the subspace that is prependicular to <span class="math inline">\(\vec{\omega}_1\)</span>). The same Lagrange multiplier calculation as before can be applied again in this subspace. This shows that <span class="math inline">\(\vec{\omega}_2\)</span> is an eigenvector of <span class="math inline">\(\text{Cov}(\vec{X})\)</span> with eigenvalue <span class="math inline">\(\langle \vec{\omega}_2, \text{Cov}(\vec{X})\vec{\omega}_2\rangle\)</span>. This eigenvalue must be less than or equal to the eigenvalue of <span class="math inline">\(\vec{\omega}_1\)</span> because the maximum of the same expression is being taken over a smaller set for <span class="math inline">\(\vec{\omega}_2\)</span>.</p>
+<p>We can continue this process until all eigenvectors are exhausted. By decomposing <span class="math inline">\(\vec{X}\)</span> into linear combinations of the eigenvectors <span class="math inline">\(\vec{\omega}_i\)</span> we may choose to capture as much or as little of the variance of <span class="math inline">\(\vec{X}\)</span> as we please. For example, by projecting onto the first k eigenvectors we may capture the k-dimensional variance of <span class="math inline">\(\vec{X}\)</span>:</p>
+<p><span class="math display">\[
+\vec{X}_k := \sum_{i = 1}^k\langle\vec{\omega}_i,\vec{X}\rangle\vec{\omega}_i
+\]</span></p>
+</div>
+<div id="sample-estimators" class="section level2">
+<h2>Sample estimators</h2>
+<p>In practice we do not know the matrix <span class="math inline">\(\text{Cov}(\vec{X})\)</span>, but instead have a data matrix <span class="math inline">\(\{ \vec{X}_j \}_{j=1}^N\)</span> of row vectors representing realizations of the random vector <span class="math inline">\(\vec{X}\)</span>.</p>
+<p>Statistics is often concerned with constructing sample estimators of quantities. If our data rows are sampled IID from the distribution of <span class="math inline">\(\vec{X}\)</span> then in lieu of <span class="math inline">\(\text{Cov}(X^i,X^j)\)</span> we construct the sample covariances:</p>
+<p><span class="math display">\[
+S^2_{i,j} := \frac{1}{N-1}\sum_{n=1}^N\bigg(X^i_n - \bar{X}^i\bigg)\bigg(X^j_n - \bar{X}^j\bigg)
+\]</span>
+where <span class="math inline">\(\bar{X}^i\)</span> is the mean of the <span class="math inline">\(i^{\text{th}}\)</span> feature column. This estimator is a statistic constructed for its favorable distributional properties under IID assumptions as <span class="math inline">\(N\)</span> becomes large. In particular, it converges to <span class="math inline">\(\text{Cov}(X^i,X^j)\)</span> in some sense.</p>
+</div>
+<div id="implementing-in-eigen" class="section level2">
+<h2>Implementing in Eigen</h2>
+<p>The derivation above gives us one formula to carry out PCA: simply compute the sample covariance matrix of the data and extract its eigenvectors and eigenvalues. This may or may not be the most numerically efficient/stable algorithm to use (I haven’t checked), but this is easy enough to implement in most numerical computing languages. Here we implement it in C++ using the <a href="http://eigen.tuxfamily.org/">Eigen</a> library. To make it more interactive we use the <a href="https://cran.r-project.org/web/packages/RcppEigen/index.html">RcppEigen</a> package in R to allow using the function in R sessions:</p>
+<pre class="cpp"><code>#include &lt;RcppEigen.h&gt;
+
+// [[Rcpp::depends(RcppEigen)]]
+
+using namespace Eigen;
+
+
+// [[Rcpp::export]]
+Rcpp::List EigenDecomp(const Map&lt;MatrixXd&gt; M) 
+{
+    //Constructing sample covariance matrix 
+    MatrixXd centered = M.rowwise() - M.colwise().mean();
+    MatrixXd cov = centered.adjoint() * centered/(M.rows()-1);
+    
+    //Using Eigen&#39;s eigensolver (with default settings)
+    SelfAdjointEigenSolver&lt;MatrixXd&gt; eig(cov);
+    
+    VectorXd values = eig.eigenvalues();
+    MatrixXd vectors = eig.eigenvectors();
+    
+    //Returning results as a R-list
+    return Rcpp::List::create(Rcpp::Named(&quot;Cov&quot;) = cov,
+                           Rcpp::Named(&quot;values&quot;) = values,
+                           Rcpp::Named(&quot;vectors&quot;) = vectors);
+}</code></pre>
+<p>Note on compilation: I’m using a laptop with an i7-8750h CPU running Windows 10. The compiler is the version of <a href="http://mingw-w64.org/doku.php">mingw-w64</a> that comes with <a href="https://cran.r-project.org/bin/windows/Rtools/">Rtools40</a> (i.e. the Windows port of GCC 8.3.0). By creating a Makevars.win file in an <code>./Documents/.R</code> folder file I altered R’s default flags for g++ to use:</p>
+<pre><code>CXXFLAGS = -march=native -O3 -Wno-ignored-attributes $(DEBUGFLAG)</code></pre>
+<p>Eigen is a template expression library that relies heavily on the compiler using the best options for the machine at hand. Here we’ve used <code>-march=native</code> which enables all instruction subsets supported by my local machine. For more info running <code>g++ -march=native -Q --help=target</code> in the command line will show you what compiler flags this turns on. For example mine enables flags targeting AVX2, as well as a variety of others. The <code>-Wno-ignored-attributes</code> suppresses the large number of ignored attributes warnings that an expression template library like Eigen can produce. Let’s compare with R’s built in PCA function <a href="https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/prcomp">prcomp</a></p>
+<pre class="r"><code>set.seed(42)
+X = matrix(rnorm(10000*4), 10000, 4)
+
+R = prcomp(X)
+
+Cpp = EigenDecomp(X)
+
+print(R$sdev^2)</code></pre>
+<pre><code>## [1] 1.036884 1.021022 1.013685 1.001778</code></pre>
+<pre class="r"><code>print(Cpp$values)</code></pre>
+<pre><code>## [1] 1.001778 1.013685 1.021022 1.036884</code></pre>
+<p>The eigenvalues are exactly the same, just in opposite order. Next time we might link an optimized BLAS library such as Intel’s MKL, but I suspect the plain Eigen version is quite competitive.</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>The exact definition of “random variable” or “random vector” is unimportant. For mathematicians this means that there is a probability space <span class="math inline">\((\Omega, \mathcal{M}, \mathbf{P})\)</span> and that <span class="math inline">\(\vec{X}:\Omega \mapsto \mathbb{R}^d\)</span> is a Borel-measurable map.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Note on existence. A vector that attains the maximum must exist because the expression being maximized is continuous (in fact quadratic) in <span class="math inline">\(\vec{\omega}\)</span> and the unit sphere in <span class="math inline">\(\mathbb{R}^d\)</span> is compact.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>And this is indeed the true definition of the <a href="https://en.wikipedia.org/wiki/Gradient#Differential_or_(exterior)_derivative">gradient of a function</a>.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>This is the method of <a href="https://en.wikipedia.org/wiki/Lagrange_multiplier#Modern_formulation_via_differentiable_manifolds">Lagrange multipliers</a>. It can be proven easily as follows. Let <span class="math inline">\(\vec{v}\)</span> be any vector tangent to the sphere at the maximizing point <span class="math inline">\(\vec{\omega}_1\)</span>, and let <span class="math inline">\(\gamma(t)\)</span> be a smooth curve on the sphere going through <span class="math inline">\(\vec{\omega}_1\)</span> with <span class="math inline">\(\gamma&#39;(t) = \vec{v}\)</span>. Then the function <span class="math inline">\(f(\gamma(t))\)</span> achieves a maximum at the value of <span class="math inline">\(t\)</span> at which <span class="math inline">\(\gamma(t) = \vec{\omega}_1\)</span> so it’s derivative must be 0 there. Thus <span class="math inline">\(0 = d/dt(f(\gamma(t))) = df_{\vec{\omega}_1} \ (\gamma&#39;(t)) = \langle \gamma&#39;(t),\nabla_{\vec{\omega}_1}f\rangle = \langle\vec{v},\nabla_{\vec{\omega}_1}f\rangle\)</span>. Since <span class="math inline">\(\vec{v}\)</span> was an arbitrary tangent vector this shows that <span class="math inline">\(\nabla_{\vec{\omega}_1}f\)</span> is orthogonal to every tangent vector and hence is a normal vector.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>The symbol <span class="math inline">\(\perp\)</span> means “prependicular to”.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
+</content:encoded>	
     </item>
     
   </channel>

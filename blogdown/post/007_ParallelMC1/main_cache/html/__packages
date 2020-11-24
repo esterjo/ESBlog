@@ -1,2 +1,4 @@
 base
-microbenchmark
+magrittr
+ggplot2
+cowplot

@@ -1,9 +1,20 @@
 ---
-title: "Parallel Monte Carlo: Simulating Compound Poisson Processes using C++ and TBB"
+title: 'Parallel Monte Carlo: Simulating Compound Poisson Processes using C++ and
+  TBB'
 author: "Edger Sterjo"
-date: 2020-11-20
-categories: ["C++", "R", "TBB"]
-tags: ["parallel", "monte carlo", "poisson", "c++", "operational risk", "rcpp", "r"]
+date: '2020-11-20'
+categories:
+- C++
+- R
+- TBB
+tags:
+- parallel
+- monte carlo
+- poisson
+- c++
+- operational risk
+- rcpp
+- r
 ---
 
 ## Introduction
@@ -22,7 +33,7 @@ We'll implement a function that simulates random samples of $L$ in R, serially i
 
 R is extremely expressive when it comes to mathematical, statistical, and graphing operations and the base implementation is quite simple:
 
-```{r}
+```{r, cache=TRUE}
 ## Function to simulate random samples from a CP variable with 
 ## log-normal severities
 rCP = function(lambda, mu, sigma, N)
@@ -174,9 +185,32 @@ x_tbb = tbbCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6, seed = 42)
 
 ks.test(x = x_cpp, y = x_tbb, alternative = "two.sided")
 ks.test(x = x_r, y = x_tbb, alternative = "two.sided")
+
+p = c(0.5, 0.75, 0.9, 0.95, 0.99, 0.999, 0.9999)
+data.frame(R = quantile(x_r, probs = p), 
+		   Cpp = quantile(x_cpp, probs = p), 
+		   TBB = quantile(x_tbb, probs = p))
 ```
 
-The Kolmogorov-Smirnov test again can't tell the samples apart between R, serial C++, and TBB implementations. As for performance:
+
+
+The Kolmogorov-Smirnov test again can't tell the samples apart between R, serial C++, and TBB implementations. Let's take a look at the spacing between consecutive percentiles for non-zero values. If the RNGs between different threads overlapped in the parallel implementation, this would be a first way to find out as differences between the sorted values would show a spike at 0
+
+```{r, cache=TRUE}
+library(magrittr)
+
+y_r = x_r[x_r > 0] %>% sort(decreasing = FALSE) %>% diff()
+y_tbb = x_tbb[x_tbb > 0 ] %>% sort(decreasing = FALSE) %>% diff()
+
+ks.test(y_r, y_tbb, alternative = "two.sided")
+```
+
+```{r, cache=TRUE}
+data.frame(R = quantile(y_r, probs = p), 
+		   TBB = quantile(y_tbb, probs = p))
+```
+
+## Final Performance Comparison
 
 ```{r, cache=TRUE}
 microbenchmark::microbenchmark(

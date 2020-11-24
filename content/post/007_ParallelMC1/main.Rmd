@@ -1,0 +1,201 @@
+---
+title: "Parallel Monte Carlo: Simulating Compound Poisson Processes using C++ and TBB"
+author: "Edger Sterjo"
+date: 2020-11-20
+categories: ["C++", "R", "TBB"]
+tags: ["parallel", "monte carlo", "poisson", "c++", "operational risk", "rcpp", "r"]
+---
+
+## Introduction
+
+In this post we implement a function to simulate random samples of a [Compound Poisson variable](https://en.wikipedia.org/wiki/Compound_Poisson_process). A random variable $L$ is a compound Poisson (CP) random variable if there exists a Poisson random variable $N$, and a random variable $S$ such that 
+
+$$
+L = \sum_{i = 1}^N S_i
+$$
+
+where $S_i$ for $i \in \mathbb{N}$ is an IID sequence of random variables with the same distribution as $S$ and that are independent of $N$. This kind of expression is typical in operational risk modeling, insurance modeling, and [ruin theory](https://en.wikipedia.org/wiki/Ruin_theory). Typically, the variable $N$ is a counter for the occurrence of loss events to an insurance portfolio over a given time period, and $S_i$ is the severity of the $i$-th loss event. A CP variable/process is the most common approach banks take to model operational risk as part of their [Advanced Measurement Approach](https://en.wikipedia.org/wiki/Advanced_measurement_approach). The advantage of this model in operational risk is that losses (and hence data) tend to be sparse in this domain. In addition, losses tend to be heavy tailed. By splitting event frequency ($N$) from event severity ($S$) the model developer can use more data to fit loss event distributions and loss frequency distributions independently (after accepting the assumptions of the CP process). Allowing one to focus on fitting the tail of the loss distribution, without having to worry about the frequency of occurrences.
+
+We'll implement a function that simulates random samples of $L$ in R, serially in C++, and in parallel in C++ using the [Threading Building Blocks (TBB)](https://github.com/oneapi-src/oneTBB) library.
+
+## 	R Implementation
+
+R is extremely expressive when it comes to mathematical, statistical, and graphing operations and the base implementation is quite simple:
+
+```{r}
+## Function to simulate random samples from a CP variable with 
+## log-normal severities
+rCP = function(lambda, mu, sigma, N)
+{
+	sapply(1:N, FUN = function(dummy){
+		sum(rlnorm(n = rpois(1, lambda), meanlog = mu, sdlog = sigma))
+	})
+}
+```
+
+## Serial C++ Implementation
+
+We now implement the sampler in C++ using the [Rcpp package](http://www.rcpp.org/). We will also make use of the [dqrng](https://cran.r-project.org/web/packages/dqrng/index.html) package so that we can conveniently include the [PCG](https://www.pcg-random.org/) random number generator by Melissa O'Neil.
+
+```{Rcpp, cache=TRUE}
+#include <Rcpp.h>
+
+// [[Rcpp::depends(dqrng)]]
+// [[Rcpp::plugins(cpp11)]]
+
+#include <pcg_random.hpp>
+#include <random>
+#include <algorithm>
+
+// [[Rcpp::export]]
+Rcpp::NumericVector cppCP(const double lambda,
+                          const double mu,
+                          const double sigma,
+                          const int N)
+{
+	// Seed with a real random value, if available
+	pcg_extras::seed_seq_from<std::random_device> seed_source;
+
+	// Make a random number engine
+	pcg64 rng(seed_source);
+    
+	// Distribution for frequency
+	std::poisson_distribution<int> Freq(lambda);
+    
+	// Distribution for severity
+	std::lognormal_distribution<double> Sev(mu, sigma);
+	
+	// Allocate vector
+	Rcpp::NumericVector out(N);
+
+    // Simulate samples
+    std::generate(out.begin(), out.end(), [&](){
+    	
+    	// Simulating loss event count
+    	int n = Freq(rng);
+    	
+    	// Accumulating loss severities
+    	double s = 0;
+    	for(int i = 0; i < n; ++i) s += Sev(rng);
+    	
+    	return s;
+    });
+    
+    return out;
+}
+```
+
+```{r, cache=TRUE}
+x_r = rCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6)
+x_cpp = cppCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6)
+
+ks.test(x = x_r, y = x_cpp, alternative = "two.sided")
+
+microbenchmark::microbenchmark(
+	"R" = rCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6),
+	"C++" = cppCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6),
+	times = 10L
+	)
+```
+
+We see that a Kolmogorov-Smirnov test for equality of distributions shows that the two samples aren't statistically distinct. Also the C++ version is ~30 times faster than the R version. Note that we added the compilation flags `-O3 -march=native` to the Makevars file in our Documents/.R folder.
+
+
+## Parallel C++ Implementation
+
+There are many libraries we can use to parallelize the C++ code above. These include [OpenMP](https://www.openmp.org/) and [OpenACC](https://www.openacc.org/) (both of which allow for standards based parallelization through directive based APIs, with newer standards allowing for GPU offloading), [MPI](https://www.open-mpi.org/) and [Boost.MPI](https://www.boost.org/doc/libs/1_74_0/doc/html/mpi.html) for distributed messaging passing, [Kokkos](https://github.com/kokkos/kokkos), [Taskflow](https://github.com/taskflow/taskflow), [Boost.Compute](https://github.com/boostorg/compute), [HPX](https://github.com/STEllAR-GROUP/hpx/), etc.
+
+However, [Threading Building Blocks (TBB)](https://rcppcore.github.io/RcppParallel/tbb.html) is very powerful, expressive, mature, and is very conveniently included in the [RcppParallel](https://rcppcore.github.io/RcppParallel/) package. I find TBB's API to be very well designed. So TBB it is!
+
+```{Rcpp}
+#include <Rcpp.h>
+#include <RcppParallel.h>
+
+// [[Rcpp::depends(dqrng, RcppParallel)]]
+// [[Rcpp::plugins(cpp11)]]
+
+#include <pcg_random.hpp>
+#include <random>
+#include <algorithm>
+
+
+
+// [[Rcpp::export]]
+Rcpp::NumericVector tbbCP(const double lambda,
+                          const double mu,
+                          const double sigma,
+                          const int N,
+                          const uint64_t seed)
+{
+	using brange = tbb::blocked_range<size_t>;
+	
+	// Allocate vector
+	Rcpp::NumericVector out(N);
+	
+	// Getting pointer to data
+	auto begin = out.begin();
+	
+	tbb::parallel_for(brange(0, N), [=](brange& range){
+		
+		// Distribution for frequency
+		std::poisson_distribution<int> Freq(lambda);
+    
+    	// Distribution for severity
+    	std::lognormal_distribution<double> Sev(mu, sigma);
+    	
+    	// RNG local to thread, with unique stream
+    	pcg64 rng(seed, range.end());
+		
+		// Serial version of sampler
+		auto seq_CP = [&](){
+			
+			// Simulating loss event count
+			int n = Freq(rng);
+			
+			// Accumulating loss severities
+			double s = 0;
+			for(int i = 0; i < n; ++i) s += Sev(rng);
+			
+			return s;
+		};
+		
+		// Loop to simulate samples
+		std::generate(begin + range.begin(), begin + range.end(), seq_CP);
+	});
+	
+	return out;
+}
+```
+
+C++11 and TBB allow for pretty parallel code. Let's see if this function is as useful as it is pretty.
+
+```{r, cache=TRUE}
+x_tbb = tbbCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6, seed = 42)
+
+ks.test(x = x_cpp, y = x_tbb, alternative = "two.sided")
+ks.test(x = x_r, y = x_tbb, alternative = "two.sided")
+```
+
+The Kolmogorov-Smirnov test again can't tell the samples apart between R, serial C++, and TBB implementations. As for performance:
+
+```{r, cache=TRUE}
+microbenchmark::microbenchmark(
+	"R" = rCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6),
+	"C++" = cppCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6),
+	"TBB" = tbbCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6, seed = 42),
+	times = 10L
+	)
+```
+
+TBB ran ~8 times faster than the serial version. The algorithm's runtime scales linearly with $\lambda$, so let's compare the two C++ versions with a higher lambda:
+
+```{r, cache=TRUE}
+
+microbenchmark::microbenchmark(
+	"C++" = cppCP(lambda = 17, mu = 5.5, sigma = 2.5, N = 10^6),
+	"TBB" = tbbCP(lambda = 17, mu = 5.5, sigma = 2.5, N = 10^6, seed = 42),
+	times = 50L
+	)
+```
+
+TBB ran ~9.5 times faster than the serial version.

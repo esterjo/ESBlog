@@ -25,7 +25,7 @@ $$
 L = \sum_{i = 1}^N S_i
 $$
 
-where $S_i$ for $i \in \mathbb{N}$ is an IID sequence of random variables with the same distribution as $S$ and that are independent of $N$. This kind of expression is typical in operational risk modeling, insurance modeling, and [ruin theory](https://en.wikipedia.org/wiki/Ruin_theory). Typically, the variable $N$ is a counter for the occurrence of loss events to an insurance portfolio over a given time period, and $S_i$ is the severity of the $i$-th loss event. A CP variable/process is the most common approach banks take to model operational risk as part of their [Advanced Measurement Approach](https://en.wikipedia.org/wiki/Advanced_measurement_approach). The advantage of this model in operational risk is that losses (and hence data) tend to be sparse in this domain. In addition, losses tend to be heavy tailed. By splitting event frequency ($N$) from event severity ($S$) the model developer can use more data to fit loss event distributions and loss frequency distributions independently (after accepting the assumptions of the CP process). Allowing one to focus on fitting the tail of the loss distribution, without having to worry about the frequency of occurrences.
+where $S_i$ for $i \in \mathbb{N}$ is an IID sequence of random variables with the same distribution as $S$ and that are independent of $N$. This kind of expression is typical in operational risk modeling, insurance modeling, and [ruin theory](https://en.wikipedia.org/wiki/Ruin_theory). Typically, the variable $N$ is a counter for the occurrence of loss events to an insurance portfolio over a given time period, and $S_i$ is the severity of the $i$-th loss event. A CP variable/process is the most common approach banks take to model operational risk as part of their [Advanced Measurement Approach](https://en.wikipedia.org/wiki/Advanced_measurement_approach). The advantage of this model in operational risk is that losses (and hence data) tend to be sparse in this domain. In addition, losses tend to be heavy tailed. By splitting event frequency ($N$) from event severity ($S$) the model developer can use more data to fit loss severity distributions and loss frequency distributions independently (after accepting the assumptions of the CP process). Allowing one to focus on fitting the tail of the loss distribution, without having to worry about the frequency of occurrences.
 
 We'll implement a function that simulates random samples of $L$ in R, serially in C++, and in parallel in C++ using the [Threading Building Blocks (TBB)](https://github.com/oneapi-src/oneTBB) library.
 
@@ -33,7 +33,7 @@ We'll implement a function that simulates random samples of $L$ in R, serially i
 
 R is extremely expressive when it comes to mathematical, statistical, and graphing operations and the base implementation is quite simple:
 
-```{r, cache=TRUE}
+```{r}
 ## Function to simulate random samples from a CP variable with 
 ## log-normal severities
 rCP = function(lambda, mu, sigma, N)
@@ -48,7 +48,7 @@ rCP = function(lambda, mu, sigma, N)
 
 We now implement the sampler in C++ using the [Rcpp package](http://www.rcpp.org/). We will also make use of the [dqrng](https://cran.r-project.org/web/packages/dqrng/index.html) package so that we can conveniently include the [PCG](https://www.pcg-random.org/) random number generator by Melissa O'Neil.
 
-```{Rcpp, cache=TRUE}
+```{Rcpp, engine.opts = list(verbose = TRUE)}
 #include <Rcpp.h>
 
 // [[Rcpp::depends(dqrng)]]
@@ -96,7 +96,7 @@ Rcpp::NumericVector cppCP(const double lambda,
 }
 ```
 
-```{r, cache=TRUE}
+```{r}
 x_r = rCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6)
 x_cpp = cppCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6)
 
@@ -109,7 +109,7 @@ microbenchmark::microbenchmark(
 	)
 ```
 
-We see that a Kolmogorov-Smirnov test for equality of distributions shows that the two samples aren't statistically distinct. Also the C++ version is ~30 times faster than the R version. Note that we added the compilation flags `-O3 -march=native` to the Makevars file in our Documents/.R folder.
+We see that a Kolmogorov-Smirnov test for equality of distributions shows that the two samples aren't statistically distinct. Also the C++ version is ~30 times faster than the R version. Note that we added the compilation flags `-O3 -march=native` to R's Makeoconf file (although one could simply register a plugin with Rcpp or use a makevars file in a package).
 
 
 ## Parallel C++ Implementation
@@ -118,7 +118,7 @@ There are many libraries we can use to parallelize the C++ code above. These inc
 
 However, [Threading Building Blocks (TBB)](https://rcppcore.github.io/RcppParallel/tbb.html) is very powerful, expressive, mature, and is very conveniently included in the [RcppParallel](https://rcppcore.github.io/RcppParallel/) package. I find TBB's API to be very well designed. So TBB it is!
 
-```{Rcpp}
+```{Rcpp engine.opts = list(verbose = TRUE)}
 #include <Rcpp.h>
 #include <RcppParallel.h>
 
@@ -180,7 +180,7 @@ Rcpp::NumericVector tbbCP(const double lambda,
 
 C++11 and TBB allow for pretty parallel code. Let's see if this function is as useful as it is pretty.
 
-```{r, cache=TRUE}
+```{r}
 x_tbb = tbbCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6, seed = 42)
 
 ks.test(x = x_cpp, y = x_tbb, alternative = "two.sided")
@@ -196,7 +196,8 @@ data.frame(R = quantile(x_r, probs = p),
 
 The Kolmogorov-Smirnov test again can't tell the samples apart between R, serial C++, and TBB implementations. Let's take a look at the spacing between consecutive percentiles for non-zero values. If the RNGs between different threads overlapped in the parallel implementation, this would be a first way to find out as differences between the sorted values would show a spike at 0
 
-```{r, cache=TRUE}
+
+```{r}
 library(magrittr)
 
 y_r = x_r[x_r > 0] %>% sort(decreasing = FALSE) %>% diff()
@@ -205,14 +206,14 @@ y_tbb = x_tbb[x_tbb > 0 ] %>% sort(decreasing = FALSE) %>% diff()
 ks.test(y_r, y_tbb, alternative = "two.sided")
 ```
 
-```{r, cache=TRUE}
+```{r}
 data.frame(R = quantile(y_r, probs = p), 
 		   TBB = quantile(y_tbb, probs = p))
 ```
 
 ## Final Performance Comparison
 
-```{r, cache=TRUE}
+```{r}
 microbenchmark::microbenchmark(
 	"R" = rCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6),
 	"C++" = cppCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6),
@@ -223,8 +224,7 @@ microbenchmark::microbenchmark(
 
 TBB ran ~8 times faster than the serial version. The algorithm's runtime scales linearly with $\lambda$, so let's compare the two C++ versions with a higher lambda:
 
-```{r, cache=TRUE}
-
+```{r}
 microbenchmark::microbenchmark(
 	"C++" = cppCP(lambda = 17, mu = 5.5, sigma = 2.5, N = 10^6),
 	"TBB" = tbbCP(lambda = 17, mu = 5.5, sigma = 2.5, N = 10^6, seed = 42),

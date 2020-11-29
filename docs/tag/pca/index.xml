@@ -171,8 +171,9 @@ Rcpp::List EigenDecomp(const Map&amp;lt;MatrixXd&amp;gt; M)
                            Rcpp::Named(&amp;quot;values&amp;quot;) = values,
                            Rcpp::Named(&amp;quot;vectors&amp;quot;) = vectors);
 }&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Note on compilation: I’m using a laptop with an i7-8750h CPU running Windows 10. The compiler is the version of &lt;a href=&#34;http://mingw-w64.org/doku.php&#34;&gt;mingw-w64&lt;/a&gt; that comes with &lt;a href=&#34;https://cran.r-project.org/bin/windows/Rtools/&#34;&gt;Rtools40&lt;/a&gt; (i.e. the Windows port of GCC 8.3.0). By creating a Makevars.win file in an &lt;code&gt;./Documents/.R&lt;/code&gt; folder file I altered R’s default flags for g++ to use:&lt;/p&gt;
+&lt;p&gt;Note on compilation: I’m using a laptop with an i7-8750h CPU running Windows 10. The compiler is the version of &lt;a href=&#34;http://mingw-w64.org/doku.php&#34;&gt;mingw-w64&lt;/a&gt; that comes with &lt;a href=&#34;https://cran.r-project.org/bin/windows/Rtools/&#34;&gt;Rtools40&lt;/a&gt; (i.e. the Windows port of GCC 8.3.0). By updating my Makeconf file I altered R’s default flags for g++ to use:&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;CXXFLAGS = -march=native -O3 -Wno-ignored-attributes $(DEBUGFLAG)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This can be done in a package with a Makevars file, or in live code through registering an Rcpp plugin.&lt;/p&gt;
 &lt;p&gt;Eigen is a template expression library that relies heavily on the compiler using the best options for the machine at hand. Here we’ve used &lt;code&gt;-march=native&lt;/code&gt; which enables all instruction subsets supported by my local machine. For more info running &lt;code&gt;g++ -march=native -Q --help=target&lt;/code&gt; in the command line will show you what compiler flags this turns on. For example mine enables flags targeting AVX2, as well as a variety of others. The &lt;code&gt;-Wno-ignored-attributes&lt;/code&gt; suppresses the large number of ignored attributes warnings that an expression template library like Eigen can produce. Let’s compare with R’s built in PCA function &lt;a href=&#34;https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/prcomp&#34;&gt;prcomp&lt;/a&gt;&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;set.seed(42)
 X = matrix(rnorm(10000*4), 10000, 4)
@@ -352,8 +353,9 @@ Rcpp::List EigenDecomp(const Map&lt;MatrixXd&gt; M)
                            Rcpp::Named(&quot;values&quot;) = values,
                            Rcpp::Named(&quot;vectors&quot;) = vectors);
 }</code></pre>
-<p>Note on compilation: I’m using a laptop with an i7-8750h CPU running Windows 10. The compiler is the version of <a href="http://mingw-w64.org/doku.php">mingw-w64</a> that comes with <a href="https://cran.r-project.org/bin/windows/Rtools/">Rtools40</a> (i.e. the Windows port of GCC 8.3.0). By creating a Makevars.win file in an <code>./Documents/.R</code> folder file I altered R’s default flags for g++ to use:</p>
+<p>Note on compilation: I’m using a laptop with an i7-8750h CPU running Windows 10. The compiler is the version of <a href="http://mingw-w64.org/doku.php">mingw-w64</a> that comes with <a href="https://cran.r-project.org/bin/windows/Rtools/">Rtools40</a> (i.e. the Windows port of GCC 8.3.0). By updating my Makeconf file I altered R’s default flags for g++ to use:</p>
 <pre><code>CXXFLAGS = -march=native -O3 -Wno-ignored-attributes $(DEBUGFLAG)</code></pre>
+<p>This can be done in a package with a Makevars file, or in live code through registering an Rcpp plugin.</p>
 <p>Eigen is a template expression library that relies heavily on the compiler using the best options for the machine at hand. Here we’ve used <code>-march=native</code> which enables all instruction subsets supported by my local machine. For more info running <code>g++ -march=native -Q --help=target</code> in the command line will show you what compiler flags this turns on. For example mine enables flags targeting AVX2, as well as a variety of others. The <code>-Wno-ignored-attributes</code> suppresses the large number of ignored attributes warnings that an expression template library like Eigen can produce. Let’s compare with R’s built in PCA function <a href="https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/prcomp">prcomp</a></p>
 <pre class="r"><code>set.seed(42)
 X = matrix(rnorm(10000*4), 10000, 4)

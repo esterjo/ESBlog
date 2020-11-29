@@ -201,11 +201,13 @@ Rcpp::List EigenDecomp(const Map<MatrixXd> M)
                            Rcpp::Named("vectors") = vectors);
 }
 ```
-Note on compilation: I'm using a laptop with an i7-8750h CPU running Windows 10. The compiler is the version of [mingw-w64](http://mingw-w64.org/doku.php) that comes with [Rtools40](https://cran.r-project.org/bin/windows/Rtools/) (i.e. the Windows port of GCC 8.3.0). By creating a Makevars.win file in an `./Documents/.R` folder file I altered R's default flags for g++ to use:
+Note on compilation: I'm using a laptop with an i7-8750h CPU running Windows 10. The compiler is the version of [mingw-w64](http://mingw-w64.org/doku.php) that comes with [Rtools40](https://cran.r-project.org/bin/windows/Rtools/) (i.e. the Windows port of GCC 8.3.0). By updating my Makeconf file I altered R's default flags for g++ to use:
 
 ```
 CXXFLAGS = -march=native -O3 -Wno-ignored-attributes $(DEBUGFLAG)
 ```
+
+This can be done in a package with a Makevars file, or in live code through registering an Rcpp plugin. 
 
 Eigen is a template expression library that relies heavily on the compiler using the best options for the machine at hand. Here we've used `-march=native` which enables all instruction subsets supported by my local machine. For more info running `g++ -march=native -Q --help=target` in the command line will show you what compiler flags this turns on. For example mine enables flags targeting AVX2, as well as a variety of others. The `-Wno-ignored-attributes` suppresses the large number of ignored attributes warnings that an expression template library like Eigen can produce. Let's compare with R's built in PCA function [prcomp](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/prcomp)
 

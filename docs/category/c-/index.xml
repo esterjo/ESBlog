@@ -26,7 +26,7 @@
 &lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
 L = \sum_{i = 1}^N S_i
 \]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;where &lt;span class=&#34;math inline&#34;&gt;\(S_i\)&lt;/span&gt; for &lt;span class=&#34;math inline&#34;&gt;\(i \in \mathbb{N}\)&lt;/span&gt; is an IID sequence of random variables with the same distribution as &lt;span class=&#34;math inline&#34;&gt;\(S\)&lt;/span&gt; and that are independent of &lt;span class=&#34;math inline&#34;&gt;\(N\)&lt;/span&gt;. This kind of expression is typical in operational risk modeling, insurance modeling, and &lt;a href=&#34;https://en.wikipedia.org/wiki/Ruin_theory&#34;&gt;ruin theory&lt;/a&gt;. Typically, the variable &lt;span class=&#34;math inline&#34;&gt;\(N\)&lt;/span&gt; is a counter for the occurrence of loss events to an insurance portfolio over a given time period, and &lt;span class=&#34;math inline&#34;&gt;\(S_i\)&lt;/span&gt; is the severity of the &lt;span class=&#34;math inline&#34;&gt;\(i\)&lt;/span&gt;-th loss event. A CP variable/process is the most common approach banks take to model operational risk as part of their &lt;a href=&#34;https://en.wikipedia.org/wiki/Advanced_measurement_approach&#34;&gt;Advanced Measurement Approach&lt;/a&gt;. The advantage of this model in operational risk is that losses (and hence data) tend to be sparse in this domain. In addition, losses tend to be heavy tailed. By splitting event frequency (&lt;span class=&#34;math inline&#34;&gt;\(N\)&lt;/span&gt;) from event severity (&lt;span class=&#34;math inline&#34;&gt;\(S\)&lt;/span&gt;) the model developer can use more data to fit loss event distributions and loss frequency distributions independently (after accepting the assumptions of the CP process). Allowing one to focus on fitting the tail of the loss distribution, without having to worry about the frequency of occurrences.&lt;/p&gt;
+&lt;p&gt;where &lt;span class=&#34;math inline&#34;&gt;\(S_i\)&lt;/span&gt; for &lt;span class=&#34;math inline&#34;&gt;\(i \in \mathbb{N}\)&lt;/span&gt; is an IID sequence of random variables with the same distribution as &lt;span class=&#34;math inline&#34;&gt;\(S\)&lt;/span&gt; and that are independent of &lt;span class=&#34;math inline&#34;&gt;\(N\)&lt;/span&gt;. This kind of expression is typical in operational risk modeling, insurance modeling, and &lt;a href=&#34;https://en.wikipedia.org/wiki/Ruin_theory&#34;&gt;ruin theory&lt;/a&gt;. Typically, the variable &lt;span class=&#34;math inline&#34;&gt;\(N\)&lt;/span&gt; is a counter for the occurrence of loss events to an insurance portfolio over a given time period, and &lt;span class=&#34;math inline&#34;&gt;\(S_i\)&lt;/span&gt; is the severity of the &lt;span class=&#34;math inline&#34;&gt;\(i\)&lt;/span&gt;-th loss event. A CP variable/process is the most common approach banks take to model operational risk as part of their &lt;a href=&#34;https://en.wikipedia.org/wiki/Advanced_measurement_approach&#34;&gt;Advanced Measurement Approach&lt;/a&gt;. The advantage of this model in operational risk is that losses (and hence data) tend to be sparse in this domain. In addition, losses tend to be heavy tailed. By splitting event frequency (&lt;span class=&#34;math inline&#34;&gt;\(N\)&lt;/span&gt;) from event severity (&lt;span class=&#34;math inline&#34;&gt;\(S\)&lt;/span&gt;) the model developer can use more data to fit loss severity distributions and loss frequency distributions independently (after accepting the assumptions of the CP process). Allowing one to focus on fitting the tail of the loss distribution, without having to worry about the frequency of occurrences.&lt;/p&gt;
 &lt;p&gt;We’ll implement a function that simulates random samples of &lt;span class=&#34;math inline&#34;&gt;\(L\)&lt;/span&gt; in R, serially in C++, and in parallel in C++ using the &lt;a href=&#34;https://github.com/oneapi-src/oneTBB&#34;&gt;Threading Building Blocks (TBB)&lt;/a&gt; library.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;r-implementation&#34; class=&#34;section level2&#34;&gt;
@@ -99,7 +99,7 @@ ks.test(x = x_r, y = x_cpp, alternative = &amp;quot;two.sided&amp;quot;)&lt;/cod
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  x_r and x_cpp
-## D = 0.001018, p-value = 0.678
+## D = 0.000943, p-value = 0.7655
 ## alternative hypothesis: two-sided&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;microbenchmark::microbenchmark(
     &amp;quot;R&amp;quot; = rCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6),
@@ -108,9 +108,9 @@ ks.test(x = x_r, y = x_cpp, alternative = &amp;quot;two.sided&amp;quot;)&lt;/cod
     )&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## Unit: milliseconds
 ##  expr       min        lq      mean    median        uq       max neval
-##     R 4341.5756 4439.2064 4574.5096 4558.2499 4718.8387 4804.7140    10
-##   C++  155.4266  156.1008  158.4273  157.0789  161.2701  164.3323    10&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;We see that a Kolmogorov-Smirnov test for equality of distributions shows that the two samples aren’t statistically distinct. Also the C++ version is ~30 times faster than the R version. Note that we added the compilation flags &lt;code&gt;-O3 -march=native&lt;/code&gt; to the Makevars file in our Documents/.R folder.&lt;/p&gt;
+##     R 4501.4496 4594.6436 4739.0426 4724.6761 4815.8414 5200.2425    10
+##   C++  146.3643  148.6291  151.2645  150.2397  152.1217  164.1117    10&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We see that a Kolmogorov-Smirnov test for equality of distributions shows that the two samples aren’t statistically distinct. Also the C++ version is ~30 times faster than the R version. Note that we added the compilation flags &lt;code&gt;-O3 -march=native&lt;/code&gt; to R’s Makeoconf file (although one could simply register a plugin with Rcpp or use a makevars file in a package).&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;parallel-c-implementation&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Parallel C++ Implementation&lt;/h2&gt;
@@ -183,7 +183,7 @@ ks.test(x = x_cpp, y = x_tbb, alternative = &amp;quot;two.sided&amp;quot;)&lt;/c
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  x_cpp and x_tbb
-## D = 0.001102, p-value = 0.5783
+## D = 0.000838, p-value = 0.874
 ## alternative hypothesis: two-sided&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;ks.test(x = x_r, y = x_tbb, alternative = &amp;quot;two.sided&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## Warning in ks.test(x = x_r, y = x_tbb, alternative = &amp;quot;two.sided&amp;quot;): p-value will
@@ -192,20 +192,20 @@ ks.test(x = x_cpp, y = x_tbb, alternative = &amp;quot;two.sided&amp;quot;)&lt;/c
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  x_r and x_tbb
-## D = 0.001541, p-value = 0.1859
+## D = 0.000945, p-value = 0.7633
 ## alternative hypothesis: two-sided&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;p = c(0.5, 0.75, 0.9, 0.95, 0.99, 0.999, 0.9999)
 data.frame(R = quantile(x_r, probs = p), 
            Cpp = quantile(x_cpp, probs = p), 
            TBB = quantile(x_tbb, probs = p))&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##                   R          Cpp          TBB
-## 50%        527.2246     527.6282     527.7901
-## 75%       3202.1612    3213.9151    3226.8657
-## 90%      13048.4224   13040.0286   13102.3506
-## 95%      29352.3049   29574.5516   29446.4030
-## 99%     137764.8881  138644.1286  139492.1698
-## 99.9%   807719.5974  823119.0249  828671.4139
-## 99.99% 3651570.7240 3905734.0859 4344372.6722&lt;/code&gt;&lt;/pre&gt;
+## 50%        529.3897     527.6282     529.3316
+## 75%       3213.7417    3213.9151    3218.7301
+## 90%      13056.5337   13040.0286   13041.2159
+## 95%      29520.2726   29574.5516   29278.4840
+## 99%     139791.3728  138644.1286  139244.2176
+## 99.9%   843963.3124  823119.0249  829286.3101
+## 99.99% 4200873.5766 3905734.0859 4039648.9704&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;The Kolmogorov-Smirnov test again can’t tell the samples apart between R, serial C++, and TBB implementations. Let’s take a look at the spacing between consecutive percentiles for non-zero values. If the RNGs between different threads overlapped in the parallel implementation, this would be a first way to find out as differences between the sorted values would show a spike at 0&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(magrittr)
 
@@ -219,18 +219,18 @@ ks.test(y_r, y_tbb, alternative = &amp;quot;two.sided&amp;quot;)&lt;/code&gt;&lt
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  y_r and y_tbb
-## D = 0.0012673, p-value = 0.5276
+## D = 0.00097705, p-value = 0.83
 ## alternative hypothesis: two-sided&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;data.frame(R = quantile(y_r, probs = p), 
            TBB = quantile(y_tbb, probs = p))&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##                   R          TBB
-## 50%    4.706363e-03 4.708780e-03
-## 75%    2.794131e-02 2.817167e-02
-## 90%    1.931360e-01 1.931657e-01
-## 95%    7.347277e-01 7.381209e-01
-## 99%    1.388909e+01 1.409701e+01
-## 99.9%  6.467285e+02 6.969408e+02
-## 99.99% 2.550298e+04 3.055431e+04&lt;/code&gt;&lt;/pre&gt;
+## 50%    4.722972e-03 4.713026e-03
+## 75%    2.795033e-02 2.802607e-02
+## 90%    1.932969e-01 1.912953e-01
+## 95%    7.436211e-01 7.337337e-01
+## 99%    1.387946e+01 1.406128e+01
+## 99.9%  6.883692e+02 6.542354e+02
+## 99.99% 2.992786e+04 2.836147e+04&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;div id=&#34;final-performance-comparison&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Final Performance Comparison&lt;/h2&gt;
@@ -242,9 +242,9 @@ ks.test(y_r, y_tbb, alternative = &amp;quot;two.sided&amp;quot;)&lt;/code&gt;&lt
     )&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## Unit: milliseconds
 ##  expr       min        lq       mean     median        uq       max neval
-##     R 4307.5389 4816.1606 4823.14700 4865.52570 5038.5754 5082.3324    10
-##   C++  155.5200  155.7909  157.90293  156.71330  158.7648  166.1808    10
-##   TBB   17.7675   17.8830   18.49813   18.64765   19.0808   19.1385    10&lt;/code&gt;&lt;/pre&gt;
+##     R 4337.9311 4384.7903 4442.43026 4453.99915 4457.9848 4594.2826    10
+##   C++  146.3226  146.6822  148.60682  147.26385  147.7859  158.8800    10
+##   TBB   17.4804   17.5449   20.85249   18.32455   18.5613   33.5128    10&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;TBB ran ~8 times faster than the serial version. The algorithm’s runtime scales linearly with &lt;span class=&#34;math inline&#34;&gt;\(\lambda\)&lt;/span&gt;, so let’s compare the two C++ versions with a higher lambda:&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;microbenchmark::microbenchmark(
     &amp;quot;C++&amp;quot; = cppCP(lambda = 17, mu = 5.5, sigma = 2.5, N = 10^6),
@@ -253,8 +253,8 @@ ks.test(y_r, y_tbb, alternative = &amp;quot;two.sided&amp;quot;)&lt;/code&gt;&lt
     )&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## Unit: milliseconds
 ##  expr       min        lq      mean    median        uq       max neval
-##   C++ 1410.0878 1411.3738 1413.7713 1412.1782 1414.3671 1438.4218    50
-##   TBB  147.5638  147.7184  148.7243  148.2237  148.3881  156.3559    50&lt;/code&gt;&lt;/pre&gt;
+##   C++ 1322.3560 1326.6730 1339.6420 1332.9718 1350.6654 1374.7016    50
+##   TBB  143.3758  143.6282  147.1177  145.0476  146.9344  162.7252    50&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;TBB ran ~9.5 times faster than the serial version.&lt;/p&gt;
 &lt;/div&gt;
 </description>
@@ -267,7 +267,7 @@ ks.test(y_r, y_tbb, alternative = &amp;quot;two.sided&amp;quot;)&lt;/code&gt;&lt
 <p><span class="math display">\[
 L = \sum_{i = 1}^N S_i
 \]</span></p>
-<p>where <span class="math inline">\(S_i\)</span> for <span class="math inline">\(i \in \mathbb{N}\)</span> is an IID sequence of random variables with the same distribution as <span class="math inline">\(S\)</span> and that are independent of <span class="math inline">\(N\)</span>. This kind of expression is typical in operational risk modeling, insurance modeling, and <a href="https://en.wikipedia.org/wiki/Ruin_theory">ruin theory</a>. Typically, the variable <span class="math inline">\(N\)</span> is a counter for the occurrence of loss events to an insurance portfolio over a given time period, and <span class="math inline">\(S_i\)</span> is the severity of the <span class="math inline">\(i\)</span>-th loss event. A CP variable/process is the most common approach banks take to model operational risk as part of their <a href="https://en.wikipedia.org/wiki/Advanced_measurement_approach">Advanced Measurement Approach</a>. The advantage of this model in operational risk is that losses (and hence data) tend to be sparse in this domain. In addition, losses tend to be heavy tailed. By splitting event frequency (<span class="math inline">\(N\)</span>) from event severity (<span class="math inline">\(S\)</span>) the model developer can use more data to fit loss event distributions and loss frequency distributions independently (after accepting the assumptions of the CP process). Allowing one to focus on fitting the tail of the loss distribution, without having to worry about the frequency of occurrences.</p>
+<p>where <span class="math inline">\(S_i\)</span> for <span class="math inline">\(i \in \mathbb{N}\)</span> is an IID sequence of random variables with the same distribution as <span class="math inline">\(S\)</span> and that are independent of <span class="math inline">\(N\)</span>. This kind of expression is typical in operational risk modeling, insurance modeling, and <a href="https://en.wikipedia.org/wiki/Ruin_theory">ruin theory</a>. Typically, the variable <span class="math inline">\(N\)</span> is a counter for the occurrence of loss events to an insurance portfolio over a given time period, and <span class="math inline">\(S_i\)</span> is the severity of the <span class="math inline">\(i\)</span>-th loss event. A CP variable/process is the most common approach banks take to model operational risk as part of their <a href="https://en.wikipedia.org/wiki/Advanced_measurement_approach">Advanced Measurement Approach</a>. The advantage of this model in operational risk is that losses (and hence data) tend to be sparse in this domain. In addition, losses tend to be heavy tailed. By splitting event frequency (<span class="math inline">\(N\)</span>) from event severity (<span class="math inline">\(S\)</span>) the model developer can use more data to fit loss severity distributions and loss frequency distributions independently (after accepting the assumptions of the CP process). Allowing one to focus on fitting the tail of the loss distribution, without having to worry about the frequency of occurrences.</p>
 <p>We’ll implement a function that simulates random samples of <span class="math inline">\(L\)</span> in R, serially in C++, and in parallel in C++ using the <a href="https://github.com/oneapi-src/oneTBB">Threading Building Blocks (TBB)</a> library.</p>
 </div>
 <div id="r-implementation" class="section level2">
@@ -340,7 +340,7 @@ ks.test(x = x_r, y = x_cpp, alternative = &quot;two.sided&quot;)</code></pre>
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  x_r and x_cpp
-## D = 0.001018, p-value = 0.678
+## D = 0.000943, p-value = 0.7655
 ## alternative hypothesis: two-sided</code></pre>
 <pre class="r"><code>microbenchmark::microbenchmark(
     &quot;R&quot; = rCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6),
@@ -349,9 +349,9 @@ ks.test(x = x_r, y = x_cpp, alternative = &quot;two.sided&quot;)</code></pre>
     )</code></pre>
 <pre><code>## Unit: milliseconds
 ##  expr       min        lq      mean    median        uq       max neval
-##     R 4341.5756 4439.2064 4574.5096 4558.2499 4718.8387 4804.7140    10
-##   C++  155.4266  156.1008  158.4273  157.0789  161.2701  164.3323    10</code></pre>
-<p>We see that a Kolmogorov-Smirnov test for equality of distributions shows that the two samples aren’t statistically distinct. Also the C++ version is ~30 times faster than the R version. Note that we added the compilation flags <code>-O3 -march=native</code> to the Makevars file in our Documents/.R folder.</p>
+##     R 4501.4496 4594.6436 4739.0426 4724.6761 4815.8414 5200.2425    10
+##   C++  146.3643  148.6291  151.2645  150.2397  152.1217  164.1117    10</code></pre>
+<p>We see that a Kolmogorov-Smirnov test for equality of distributions shows that the two samples aren’t statistically distinct. Also the C++ version is ~30 times faster than the R version. Note that we added the compilation flags <code>-O3 -march=native</code> to R’s Makeoconf file (although one could simply register a plugin with Rcpp or use a makevars file in a package).</p>
 </div>
 <div id="parallel-c-implementation" class="section level2">
 <h2>Parallel C++ Implementation</h2>
@@ -424,7 +424,7 @@ ks.test(x = x_cpp, y = x_tbb, alternative = &quot;two.sided&quot;)</code></pre>
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  x_cpp and x_tbb
-## D = 0.001102, p-value = 0.5783
+## D = 0.000838, p-value = 0.874
 ## alternative hypothesis: two-sided</code></pre>
 <pre class="r"><code>ks.test(x = x_r, y = x_tbb, alternative = &quot;two.sided&quot;)</code></pre>
 <pre><code>## Warning in ks.test(x = x_r, y = x_tbb, alternative = &quot;two.sided&quot;): p-value will
@@ -433,20 +433,20 @@ ks.test(x = x_cpp, y = x_tbb, alternative = &quot;two.sided&quot;)</code></pre>
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  x_r and x_tbb
-## D = 0.001541, p-value = 0.1859
+## D = 0.000945, p-value = 0.7633
 ## alternative hypothesis: two-sided</code></pre>
 <pre class="r"><code>p = c(0.5, 0.75, 0.9, 0.95, 0.99, 0.999, 0.9999)
 data.frame(R = quantile(x_r, probs = p), 
            Cpp = quantile(x_cpp, probs = p), 
            TBB = quantile(x_tbb, probs = p))</code></pre>
 <pre><code>##                   R          Cpp          TBB
-## 50%        527.2246     527.6282     527.7901
-## 75%       3202.1612    3213.9151    3226.8657
-## 90%      13048.4224   13040.0286   13102.3506
-## 95%      29352.3049   29574.5516   29446.4030
-## 99%     137764.8881  138644.1286  139492.1698
-## 99.9%   807719.5974  823119.0249  828671.4139
-## 99.99% 3651570.7240 3905734.0859 4344372.6722</code></pre>
+## 50%        529.3897     527.6282     529.3316
+## 75%       3213.7417    3213.9151    3218.7301
+## 90%      13056.5337   13040.0286   13041.2159
+## 95%      29520.2726   29574.5516   29278.4840
+## 99%     139791.3728  138644.1286  139244.2176
+## 99.9%   843963.3124  823119.0249  829286.3101
+## 99.99% 4200873.5766 3905734.0859 4039648.9704</code></pre>
 <p>The Kolmogorov-Smirnov test again can’t tell the samples apart between R, serial C++, and TBB implementations. Let’s take a look at the spacing between consecutive percentiles for non-zero values. If the RNGs between different threads overlapped in the parallel implementation, this would be a first way to find out as differences between the sorted values would show a spike at 0</p>
 <pre class="r"><code>library(magrittr)
 
@@ -460,18 +460,18 @@ ks.test(y_r, y_tbb, alternative = &quot;two.sided&quot;)</code></pre>
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  y_r and y_tbb
-## D = 0.0012673, p-value = 0.5276
+## D = 0.00097705, p-value = 0.83
 ## alternative hypothesis: two-sided</code></pre>
 <pre class="r"><code>data.frame(R = quantile(y_r, probs = p), 
            TBB = quantile(y_tbb, probs = p))</code></pre>
 <pre><code>##                   R          TBB
-## 50%    4.706363e-03 4.708780e-03
-## 75%    2.794131e-02 2.817167e-02
-## 90%    1.931360e-01 1.931657e-01
-## 95%    7.347277e-01 7.381209e-01
-## 99%    1.388909e+01 1.409701e+01
-## 99.9%  6.467285e+02 6.969408e+02
-## 99.99% 2.550298e+04 3.055431e+04</code></pre>
+## 50%    4.722972e-03 4.713026e-03
+## 75%    2.795033e-02 2.802607e-02
+## 90%    1.932969e-01 1.912953e-01
+## 95%    7.436211e-01 7.337337e-01
+## 99%    1.387946e+01 1.406128e+01
+## 99.9%  6.883692e+02 6.542354e+02
+## 99.99% 2.992786e+04 2.836147e+04</code></pre>
 </div>
 <div id="final-performance-comparison" class="section level2">
 <h2>Final Performance Comparison</h2>
@@ -483,9 +483,9 @@ ks.test(y_r, y_tbb, alternative = &quot;two.sided&quot;)</code></pre>
     )</code></pre>
 <pre><code>## Unit: milliseconds
 ##  expr       min        lq       mean     median        uq       max neval
-##     R 4307.5389 4816.1606 4823.14700 4865.52570 5038.5754 5082.3324    10
-##   C++  155.5200  155.7909  157.90293  156.71330  158.7648  166.1808    10
-##   TBB   17.7675   17.8830   18.49813   18.64765   19.0808   19.1385    10</code></pre>
+##     R 4337.9311 4384.7903 4442.43026 4453.99915 4457.9848 4594.2826    10
+##   C++  146.3226  146.6822  148.60682  147.26385  147.7859  158.8800    10
+##   TBB   17.4804   17.5449   20.85249   18.32455   18.5613   33.5128    10</code></pre>
 <p>TBB ran ~8 times faster than the serial version. The algorithm’s runtime scales linearly with <span class="math inline">\(\lambda\)</span>, so let’s compare the two C++ versions with a higher lambda:</p>
 <pre class="r"><code>microbenchmark::microbenchmark(
     &quot;C++&quot; = cppCP(lambda = 17, mu = 5.5, sigma = 2.5, N = 10^6),
@@ -494,8 +494,8 @@ ks.test(y_r, y_tbb, alternative = &quot;two.sided&quot;)</code></pre>
     )</code></pre>
 <pre><code>## Unit: milliseconds
 ##  expr       min        lq      mean    median        uq       max neval
-##   C++ 1410.0878 1411.3738 1413.7713 1412.1782 1414.3671 1438.4218    50
-##   TBB  147.5638  147.7184  148.7243  148.2237  148.3881  156.3559    50</code></pre>
+##   C++ 1322.3560 1326.6730 1339.6420 1332.9718 1350.6654 1374.7016    50
+##   TBB  143.3758  143.6282  147.1177  145.0476  146.9344  162.7252    50</code></pre>
 <p>TBB ran ~9.5 times faster than the serial version.</p>
 </div>
 </content:encoded>	
@@ -704,13 +704,14 @@ Z.r = imputeR(X, beta, Y)
 
 # Checking range of values
 print(summary(Z.cpp - Z.r))&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;##        V1            
-##  Min.   :-7.105e-15  
-##  1st Qu.:-1.110e-16  
-##  Median : 0.000e+00  
-##  Mean   : 1.577e-16  
-##  3rd Qu.: 2.776e-17  
-##  Max.   : 2.931e-14&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##        V1   
+##  Min.   :0  
+##  1st Qu.:0  
+##  Median :0  
+##  Mean   :0  
+##  3rd Qu.:0  
+##  Max.   :0  
+##  NA&amp;#39;s   :3&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Not bad. Next we need a function to compute (regularized) least squares. For the solution we use the normal equations. According to the &lt;a href=&#34;https://eigen.tuxfamily.org/dox-devel/group__LeastSquares.html&#34;&gt;Eigen tutorial on the matter&lt;/a&gt; the normal equations are the fastest but least numerically stable option. For us this is good enough. Again we create a small wrapper to test from R:&lt;/p&gt;
 &lt;pre class=&#34;cpp&#34;&gt;&lt;code&gt;VectorXd RLS(const VectorXd&amp;amp; Z, 
              const MatrixXd&amp;amp; X, 
@@ -856,7 +857,7 @@ system.time(probit.cpp100 &amp;lt;- Probit(Y, X, 0.0, 100))&lt;/code&gt;&lt;/pre
 ## X2  1.0    0.8632397      0.9845270 0.9845285
 ## X3  1.5    1.2932036      1.5056988 1.5056998
 ## X4  2.0    1.7173029      1.9814520 1.9814547&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;We see the base R converges much more quickly than our implementation of EM. Note, this is not due to weak compiler flags on our part. A local Makevars file in &lt;code&gt;Documents/.R&lt;/code&gt; overrides the default R build flags to use the optimizations &lt;code&gt;-O3 -march=native&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;We see the base R converges much more quickly than our implementation of EM. Note, this is not due to weak compiler flags on our part. I modified R’s Makeconf file overrides the default R build flags to use the optimizations &lt;code&gt;-O3 -march=native&lt;/code&gt; (although simply registering an Rcpp plugin is enough to do this or using a makevars file in a package).&lt;/p&gt;
 &lt;p&gt;No, instead &lt;a href=&#34;https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/glm&#34;&gt;&lt;code&gt;glm.fit&lt;/code&gt;&lt;/a&gt; uses &lt;a href=&#34;https://en.wikipedia.org/wiki/Iteratively_reweighted_least_squares&#34;&gt;iteratively reweighted least squares (IRLS)&lt;/a&gt; to fit the model, not EM. This can be seen in the &lt;a href=&#34;https://github.com/SurajGupta/r-source/blob/master/src/library/stats/R/glm.R&#34;&gt;source code&lt;/a&gt;. So EM is not a very fast algorithm to fit probit models. At some point in the future we’ll probably implement IRLS in Eigen (or Fortran, or Julia).&lt;/p&gt;
 &lt;/div&gt;
 </description>
@@ -1058,13 +1059,14 @@ Z.r = imputeR(X, beta, Y)
 
 # Checking range of values
 print(summary(Z.cpp - Z.r))</code></pre>
-<pre><code>##        V1            
-##  Min.   :-7.105e-15  
-##  1st Qu.:-1.110e-16  
-##  Median : 0.000e+00  
-##  Mean   : 1.577e-16  
-##  3rd Qu.: 2.776e-17  
-##  Max.   : 2.931e-14</code></pre>
+<pre><code>##        V1   
+##  Min.   :0  
+##  1st Qu.:0  
+##  Median :0  
+##  Mean   :0  
+##  3rd Qu.:0  
+##  Max.   :0  
+##  NA&#39;s   :3</code></pre>
 <p>Not bad. Next we need a function to compute (regularized) least squares. For the solution we use the normal equations. According to the <a href="https://eigen.tuxfamily.org/dox-devel/group__LeastSquares.html">Eigen tutorial on the matter</a> the normal equations are the fastest but least numerically stable option. For us this is good enough. Again we create a small wrapper to test from R:</p>
 <pre class="cpp"><code>VectorXd RLS(const VectorXd&amp; Z, 
              const MatrixXd&amp; X, 
@@ -1210,7 +1212,7 @@ system.time(probit.cpp100 &lt;- Probit(Y, X, 0.0, 100))</code></pre>
 ## X2  1.0    0.8632397      0.9845270 0.9845285
 ## X3  1.5    1.2932036      1.5056988 1.5056998
 ## X4  2.0    1.7173029      1.9814520 1.9814547</code></pre>
-<p>We see the base R converges much more quickly than our implementation of EM. Note, this is not due to weak compiler flags on our part. A local Makevars file in <code>Documents/.R</code> overrides the default R build flags to use the optimizations <code>-O3 -march=native</code>.</p>
+<p>We see the base R converges much more quickly than our implementation of EM. Note, this is not due to weak compiler flags on our part. I modified R’s Makeconf file overrides the default R build flags to use the optimizations <code>-O3 -march=native</code> (although simply registering an Rcpp plugin is enough to do this or using a makevars file in a package).</p>
 <p>No, instead <a href="https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/glm"><code>glm.fit</code></a> uses <a href="https://en.wikipedia.org/wiki/Iteratively_reweighted_least_squares">iteratively reweighted least squares (IRLS)</a> to fit the model, not EM. This can be seen in the <a href="https://github.com/SurajGupta/r-source/blob/master/src/library/stats/R/glm.R">source code</a>. So EM is not a very fast algorithm to fit probit models. At some point in the future we’ll probably implement IRLS in Eigen (or Fortran, or Julia).</p>
 </div>
 </content:encoded>	
@@ -1640,8 +1642,9 @@ Rcpp::List EigenDecomp(const Map&amp;lt;MatrixXd&amp;gt; M)
                            Rcpp::Named(&amp;quot;values&amp;quot;) = values,
                            Rcpp::Named(&amp;quot;vectors&amp;quot;) = vectors);
 }&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Note on compilation: I’m using a laptop with an i7-8750h CPU running Windows 10. The compiler is the version of &lt;a href=&#34;http://mingw-w64.org/doku.php&#34;&gt;mingw-w64&lt;/a&gt; that comes with &lt;a href=&#34;https://cran.r-project.org/bin/windows/Rtools/&#34;&gt;Rtools40&lt;/a&gt; (i.e. the Windows port of GCC 8.3.0). By creating a Makevars.win file in an &lt;code&gt;./Documents/.R&lt;/code&gt; folder file I altered R’s default flags for g++ to use:&lt;/p&gt;
+&lt;p&gt;Note on compilation: I’m using a laptop with an i7-8750h CPU running Windows 10. The compiler is the version of &lt;a href=&#34;http://mingw-w64.org/doku.php&#34;&gt;mingw-w64&lt;/a&gt; that comes with &lt;a href=&#34;https://cran.r-project.org/bin/windows/Rtools/&#34;&gt;Rtools40&lt;/a&gt; (i.e. the Windows port of GCC 8.3.0). By updating my Makeconf file I altered R’s default flags for g++ to use:&lt;/p&gt;
 &lt;pre&gt;&lt;code&gt;CXXFLAGS = -march=native -O3 -Wno-ignored-attributes $(DEBUGFLAG)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This can be done in a package with a Makevars file, or in live code through registering an Rcpp plugin.&lt;/p&gt;
 &lt;p&gt;Eigen is a template expression library that relies heavily on the compiler using the best options for the machine at hand. Here we’ve used &lt;code&gt;-march=native&lt;/code&gt; which enables all instruction subsets supported by my local machine. For more info running &lt;code&gt;g++ -march=native -Q --help=target&lt;/code&gt; in the command line will show you what compiler flags this turns on. For example mine enables flags targeting AVX2, as well as a variety of others. The &lt;code&gt;-Wno-ignored-attributes&lt;/code&gt; suppresses the large number of ignored attributes warnings that an expression template library like Eigen can produce. Let’s compare with R’s built in PCA function &lt;a href=&#34;https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/prcomp&#34;&gt;prcomp&lt;/a&gt;&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;set.seed(42)
 X = matrix(rnorm(10000*4), 10000, 4)
@@ -1821,8 +1824,9 @@ Rcpp::List EigenDecomp(const Map&lt;MatrixXd&gt; M)
                            Rcpp::Named(&quot;values&quot;) = values,
                            Rcpp::Named(&quot;vectors&quot;) = vectors);
 }</code></pre>
-<p>Note on compilation: I’m using a laptop with an i7-8750h CPU running Windows 10. The compiler is the version of <a href="http://mingw-w64.org/doku.php">mingw-w64</a> that comes with <a href="https://cran.r-project.org/bin/windows/Rtools/">Rtools40</a> (i.e. the Windows port of GCC 8.3.0). By creating a Makevars.win file in an <code>./Documents/.R</code> folder file I altered R’s default flags for g++ to use:</p>
+<p>Note on compilation: I’m using a laptop with an i7-8750h CPU running Windows 10. The compiler is the version of <a href="http://mingw-w64.org/doku.php">mingw-w64</a> that comes with <a href="https://cran.r-project.org/bin/windows/Rtools/">Rtools40</a> (i.e. the Windows port of GCC 8.3.0). By updating my Makeconf file I altered R’s default flags for g++ to use:</p>
 <pre><code>CXXFLAGS = -march=native -O3 -Wno-ignored-attributes $(DEBUGFLAG)</code></pre>
+<p>This can be done in a package with a Makevars file, or in live code through registering an Rcpp plugin.</p>
 <p>Eigen is a template expression library that relies heavily on the compiler using the best options for the machine at hand. Here we’ve used <code>-march=native</code> which enables all instruction subsets supported by my local machine. For more info running <code>g++ -march=native -Q --help=target</code> in the command line will show you what compiler flags this turns on. For example mine enables flags targeting AVX2, as well as a variety of others. The <code>-Wno-ignored-attributes</code> suppresses the large number of ignored attributes warnings that an expression template library like Eigen can produce. Let’s compare with R’s built in PCA function <a href="https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/prcomp">prcomp</a></p>
 <pre class="r"><code>set.seed(42)
 X = matrix(rnorm(10000*4), 10000, 4)

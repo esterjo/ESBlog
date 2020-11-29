@@ -203,13 +203,14 @@ Z.r = imputeR(X, beta, Y)
 
 # Checking range of values
 print(summary(Z.cpp - Z.r))</code></pre>
-<pre><code>##        V1            
-##  Min.   :-7.105e-15  
-##  1st Qu.:-1.110e-16  
-##  Median : 0.000e+00  
-##  Mean   : 1.577e-16  
-##  3rd Qu.: 2.776e-17  
-##  Max.   : 2.931e-14</code></pre>
+<pre><code>##        V1   
+##  Min.   :0  
+##  1st Qu.:0  
+##  Median :0  
+##  Mean   :0  
+##  3rd Qu.:0  
+##  Max.   :0  
+##  NA&#39;s   :3</code></pre>
 <p>Not bad. Next we need a function to compute (regularized) least squares. For the solution we use the normal equations. According to the <a href="https://eigen.tuxfamily.org/dox-devel/group__LeastSquares.html">Eigen tutorial on the matter</a> the normal equations are the fastest but least numerically stable option. For us this is good enough. Again we create a small wrapper to test from R:</p>
 <pre class="cpp"><code>VectorXd RLS(const VectorXd&amp; Z, 
              const MatrixXd&amp; X, 
@@ -355,6 +356,6 @@ system.time(probit.cpp100 &lt;- Probit(Y, X, 0.0, 100))</code></pre>
 ## X2  1.0    0.8632397      0.9845270 0.9845285
 ## X3  1.5    1.2932036      1.5056988 1.5056998
 ## X4  2.0    1.7173029      1.9814520 1.9814547</code></pre>
-<p>We see the base R converges much more quickly than our implementation of EM. Note, this is not due to weak compiler flags on our part. A local Makevars file in <code>Documents/.R</code> overrides the default R build flags to use the optimizations <code>-O3 -march=native</code>.</p>
+<p>We see the base R converges much more quickly than our implementation of EM. Note, this is not due to weak compiler flags on our part. I modified R’s Makeconf file overrides the default R build flags to use the optimizations <code>-O3 -march=native</code> (although simply registering an Rcpp plugin is enough to do this or using a makevars file in a package).</p>
 <p>No, instead <a href="https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/glm"><code>glm.fit</code></a> uses <a href="https://en.wikipedia.org/wiki/Iteratively_reweighted_least_squares">iteratively reweighted least squares (IRLS)</a> to fit the model, not EM. This can be seen in the <a href="https://github.com/SurajGupta/r-source/blob/master/src/library/stats/R/glm.R">source code</a>. So EM is not a very fast algorithm to fit probit models. At some point in the future we’ll probably implement IRLS in Eigen (or Fortran, or Julia).</p>
 </div>

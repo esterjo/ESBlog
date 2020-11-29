@@ -99,7 +99,7 @@ ks.test(x = x_r, y = x_cpp, alternative = &amp;quot;two.sided&amp;quot;)&lt;/cod
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  x_r and x_cpp
-## D = 0.000943, p-value = 0.7655
+## D = 0.000872, p-value = 0.8416
 ## alternative hypothesis: two-sided&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;microbenchmark::microbenchmark(
     &amp;quot;R&amp;quot; = rCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6),
@@ -107,9 +107,9 @@ ks.test(x = x_r, y = x_cpp, alternative = &amp;quot;two.sided&amp;quot;)&lt;/cod
     times = 10L
     )&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## Unit: milliseconds
-##  expr       min        lq      mean    median        uq       max neval
-##     R 4501.4496 4594.6436 4739.0426 4724.6761 4815.8414 5200.2425    10
-##   C++  146.3643  148.6291  151.2645  150.2397  152.1217  164.1117    10&lt;/code&gt;&lt;/pre&gt;
+##  expr       min        lq      mean    median       uq       max neval
+##     R 4510.0932 4708.5776 4766.8646 4744.4485 4838.215 5121.6228    10
+##   C++  148.1817  148.4262  150.8928  148.8326  149.993  164.8603    10&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;We see that a Kolmogorov-Smirnov test for equality of distributions shows that the two samples aren’t statistically distinct. Also the C++ version is ~30 times faster than the R version. Note that we added the compilation flags &lt;code&gt;-O3 -march=native&lt;/code&gt; to R’s Makeoconf file (although one could simply register a plugin with Rcpp or use a makevars file in a package).&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;parallel-c-implementation&#34; class=&#34;section level2&#34;&gt;
@@ -183,7 +183,7 @@ ks.test(x = x_cpp, y = x_tbb, alternative = &amp;quot;two.sided&amp;quot;)&lt;/c
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  x_cpp and x_tbb
-## D = 0.000838, p-value = 0.874
+## D = 0.001452, p-value = 0.2425
 ## alternative hypothesis: two-sided&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;ks.test(x = x_r, y = x_tbb, alternative = &amp;quot;two.sided&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## Warning in ks.test(x = x_r, y = x_tbb, alternative = &amp;quot;two.sided&amp;quot;): p-value will
@@ -192,20 +192,20 @@ ks.test(x = x_cpp, y = x_tbb, alternative = &amp;quot;two.sided&amp;quot;)&lt;/c
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  x_r and x_tbb
-## D = 0.000945, p-value = 0.7633
+## D = 0.001089, p-value = 0.5936
 ## alternative hypothesis: two-sided&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;p = c(0.5, 0.75, 0.9, 0.95, 0.99, 0.999, 0.9999)
 data.frame(R = quantile(x_r, probs = p), 
            Cpp = quantile(x_cpp, probs = p), 
            TBB = quantile(x_tbb, probs = p))&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##                   R          Cpp          TBB
-## 50%        529.3897     527.6282     529.3316
-## 75%       3213.7417    3213.9151    3218.7301
-## 90%      13056.5337   13040.0286   13041.2159
-## 95%      29520.2726   29574.5516   29278.4840
-## 99%     139791.3728  138644.1286  139244.2176
-## 99.9%   843963.3124  823119.0249  829286.3101
-## 99.99% 4200873.5766 3905734.0859 4039648.9704&lt;/code&gt;&lt;/pre&gt;
+## 50%        530.5667     527.6282     529.1471
+## 75%       3220.2349    3213.9151    3237.5176
+## 90%      13065.1576   13040.0286   13121.7187
+## 95%      29373.5052   29574.5516   29469.1435
+## 99%     137559.5922  138644.1286  139464.6125
+## 99.9%   781650.1328  823119.0249  823881.6340
+## 99.99% 3659308.8591 3905734.0859 4198961.5219&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;The Kolmogorov-Smirnov test again can’t tell the samples apart between R, serial C++, and TBB implementations. Let’s take a look at the spacing between consecutive percentiles for non-zero values. If the RNGs between different threads overlapped in the parallel implementation, this would be a first way to find out as differences between the sorted values would show a spike at 0&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(magrittr)
 
@@ -219,18 +219,18 @@ ks.test(y_r, y_tbb, alternative = &amp;quot;two.sided&amp;quot;)&lt;/code&gt;&lt
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  y_r and y_tbb
-## D = 0.00097705, p-value = 0.83
+## D = 0.00071533, p-value = 0.9849
 ## alternative hypothesis: two-sided&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;data.frame(R = quantile(y_r, probs = p), 
            TBB = quantile(y_tbb, probs = p))&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##                   R          TBB
-## 50%    4.722972e-03 4.713026e-03
-## 75%    2.795033e-02 2.802607e-02
-## 90%    1.932969e-01 1.912953e-01
-## 95%    7.436211e-01 7.337337e-01
-## 99%    1.387946e+01 1.406128e+01
-## 99.9%  6.883692e+02 6.542354e+02
-## 99.99% 2.992786e+04 2.836147e+04&lt;/code&gt;&lt;/pre&gt;
+## 50%    4.727899e-03 4.714475e-03
+## 75%    2.805332e-02 2.813593e-02
+## 90%    1.917154e-01 1.921603e-01
+## 95%    7.332917e-01 7.379764e-01
+## 99%    1.347410e+01 1.427091e+01
+## 99.9%  6.416662e+02 6.715141e+02
+## 99.99% 2.694763e+04 2.952423e+04&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;div id=&#34;final-performance-comparison&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Final Performance Comparison&lt;/h2&gt;
@@ -242,9 +242,9 @@ ks.test(y_r, y_tbb, alternative = &amp;quot;two.sided&amp;quot;)&lt;/code&gt;&lt
     )&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## Unit: milliseconds
 ##  expr       min        lq       mean     median        uq       max neval
-##     R 4337.9311 4384.7903 4442.43026 4453.99915 4457.9848 4594.2826    10
-##   C++  146.3226  146.6822  148.60682  147.26385  147.7859  158.8800    10
-##   TBB   17.4804   17.5449   20.85249   18.32455   18.5613   33.5128    10&lt;/code&gt;&lt;/pre&gt;
+##     R 4467.4944 4536.6768 4728.00462 4728.59330 4887.7398 5140.7951    10
+##   C++  149.1431  150.5745  152.42350  151.40620  152.4696  162.2056    10
+##   TBB   17.4412   17.8820   19.82192   18.47545   19.3990   31.7309    10&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;TBB ran ~8 times faster than the serial version. The algorithm’s runtime scales linearly with &lt;span class=&#34;math inline&#34;&gt;\(\lambda\)&lt;/span&gt;, so let’s compare the two C++ versions with a higher lambda:&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;microbenchmark::microbenchmark(
     &amp;quot;C++&amp;quot; = cppCP(lambda = 17, mu = 5.5, sigma = 2.5, N = 10^6),
@@ -253,8 +253,8 @@ ks.test(y_r, y_tbb, alternative = &amp;quot;two.sided&amp;quot;)&lt;/code&gt;&lt
     )&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## Unit: milliseconds
 ##  expr       min        lq      mean    median        uq       max neval
-##   C++ 1322.3560 1326.6730 1339.6420 1332.9718 1350.6654 1374.7016    50
-##   TBB  143.3758  143.6282  147.1177  145.0476  146.9344  162.7252    50&lt;/code&gt;&lt;/pre&gt;
+##   C++ 1347.9007 1349.0826 1350.7041 1349.8818 1352.1057 1359.8021    50
+##   TBB  143.8937  144.1016  145.6269  144.5351  145.6879  153.2576    50&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;TBB ran ~9.5 times faster than the serial version.&lt;/p&gt;
 &lt;/div&gt;
 </description>
@@ -340,7 +340,7 @@ ks.test(x = x_r, y = x_cpp, alternative = &quot;two.sided&quot;)</code></pre>
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  x_r and x_cpp
-## D = 0.000943, p-value = 0.7655
+## D = 0.000872, p-value = 0.8416
 ## alternative hypothesis: two-sided</code></pre>
 <pre class="r"><code>microbenchmark::microbenchmark(
     &quot;R&quot; = rCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6),
@@ -348,9 +348,9 @@ ks.test(x = x_r, y = x_cpp, alternative = &quot;two.sided&quot;)</code></pre>
     times = 10L
     )</code></pre>
 <pre><code>## Unit: milliseconds
-##  expr       min        lq      mean    median        uq       max neval
-##     R 4501.4496 4594.6436 4739.0426 4724.6761 4815.8414 5200.2425    10
-##   C++  146.3643  148.6291  151.2645  150.2397  152.1217  164.1117    10</code></pre>
+##  expr       min        lq      mean    median       uq       max neval
+##     R 4510.0932 4708.5776 4766.8646 4744.4485 4838.215 5121.6228    10
+##   C++  148.1817  148.4262  150.8928  148.8326  149.993  164.8603    10</code></pre>
 <p>We see that a Kolmogorov-Smirnov test for equality of distributions shows that the two samples aren’t statistically distinct. Also the C++ version is ~30 times faster than the R version. Note that we added the compilation flags <code>-O3 -march=native</code> to R’s Makeoconf file (although one could simply register a plugin with Rcpp or use a makevars file in a package).</p>
 </div>
 <div id="parallel-c-implementation" class="section level2">
@@ -424,7 +424,7 @@ ks.test(x = x_cpp, y = x_tbb, alternative = &quot;two.sided&quot;)</code></pre>
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  x_cpp and x_tbb
-## D = 0.000838, p-value = 0.874
+## D = 0.001452, p-value = 0.2425
 ## alternative hypothesis: two-sided</code></pre>
 <pre class="r"><code>ks.test(x = x_r, y = x_tbb, alternative = &quot;two.sided&quot;)</code></pre>
 <pre><code>## Warning in ks.test(x = x_r, y = x_tbb, alternative = &quot;two.sided&quot;): p-value will
@@ -433,20 +433,20 @@ ks.test(x = x_cpp, y = x_tbb, alternative = &quot;two.sided&quot;)</code></pre>
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  x_r and x_tbb
-## D = 0.000945, p-value = 0.7633
+## D = 0.001089, p-value = 0.5936
 ## alternative hypothesis: two-sided</code></pre>
 <pre class="r"><code>p = c(0.5, 0.75, 0.9, 0.95, 0.99, 0.999, 0.9999)
 data.frame(R = quantile(x_r, probs = p), 
            Cpp = quantile(x_cpp, probs = p), 
            TBB = quantile(x_tbb, probs = p))</code></pre>
 <pre><code>##                   R          Cpp          TBB
-## 50%        529.3897     527.6282     529.3316
-## 75%       3213.7417    3213.9151    3218.7301
-## 90%      13056.5337   13040.0286   13041.2159
-## 95%      29520.2726   29574.5516   29278.4840
-## 99%     139791.3728  138644.1286  139244.2176
-## 99.9%   843963.3124  823119.0249  829286.3101
-## 99.99% 4200873.5766 3905734.0859 4039648.9704</code></pre>
+## 50%        530.5667     527.6282     529.1471
+## 75%       3220.2349    3213.9151    3237.5176
+## 90%      13065.1576   13040.0286   13121.7187
+## 95%      29373.5052   29574.5516   29469.1435
+## 99%     137559.5922  138644.1286  139464.6125
+## 99.9%   781650.1328  823119.0249  823881.6340
+## 99.99% 3659308.8591 3905734.0859 4198961.5219</code></pre>
 <p>The Kolmogorov-Smirnov test again can’t tell the samples apart between R, serial C++, and TBB implementations. Let’s take a look at the spacing between consecutive percentiles for non-zero values. If the RNGs between different threads overlapped in the parallel implementation, this would be a first way to find out as differences between the sorted values would show a spike at 0</p>
 <pre class="r"><code>library(magrittr)
 
@@ -460,18 +460,18 @@ ks.test(y_r, y_tbb, alternative = &quot;two.sided&quot;)</code></pre>
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  y_r and y_tbb
-## D = 0.00097705, p-value = 0.83
+## D = 0.00071533, p-value = 0.9849
 ## alternative hypothesis: two-sided</code></pre>
 <pre class="r"><code>data.frame(R = quantile(y_r, probs = p), 
            TBB = quantile(y_tbb, probs = p))</code></pre>
 <pre><code>##                   R          TBB
-## 50%    4.722972e-03 4.713026e-03
-## 75%    2.795033e-02 2.802607e-02
-## 90%    1.932969e-01 1.912953e-01
-## 95%    7.436211e-01 7.337337e-01
-## 99%    1.387946e+01 1.406128e+01
-## 99.9%  6.883692e+02 6.542354e+02
-## 99.99% 2.992786e+04 2.836147e+04</code></pre>
+## 50%    4.727899e-03 4.714475e-03
+## 75%    2.805332e-02 2.813593e-02
+## 90%    1.917154e-01 1.921603e-01
+## 95%    7.332917e-01 7.379764e-01
+## 99%    1.347410e+01 1.427091e+01
+## 99.9%  6.416662e+02 6.715141e+02
+## 99.99% 2.694763e+04 2.952423e+04</code></pre>
 </div>
 <div id="final-performance-comparison" class="section level2">
 <h2>Final Performance Comparison</h2>
@@ -483,9 +483,9 @@ ks.test(y_r, y_tbb, alternative = &quot;two.sided&quot;)</code></pre>
     )</code></pre>
 <pre><code>## Unit: milliseconds
 ##  expr       min        lq       mean     median        uq       max neval
-##     R 4337.9311 4384.7903 4442.43026 4453.99915 4457.9848 4594.2826    10
-##   C++  146.3226  146.6822  148.60682  147.26385  147.7859  158.8800    10
-##   TBB   17.4804   17.5449   20.85249   18.32455   18.5613   33.5128    10</code></pre>
+##     R 4467.4944 4536.6768 4728.00462 4728.59330 4887.7398 5140.7951    10
+##   C++  149.1431  150.5745  152.42350  151.40620  152.4696  162.2056    10
+##   TBB   17.4412   17.8820   19.82192   18.47545   19.3990   31.7309    10</code></pre>
 <p>TBB ran ~8 times faster than the serial version. The algorithm’s runtime scales linearly with <span class="math inline">\(\lambda\)</span>, so let’s compare the two C++ versions with a higher lambda:</p>
 <pre class="r"><code>microbenchmark::microbenchmark(
     &quot;C++&quot; = cppCP(lambda = 17, mu = 5.5, sigma = 2.5, N = 10^6),
@@ -494,8 +494,8 @@ ks.test(y_r, y_tbb, alternative = &quot;two.sided&quot;)</code></pre>
     )</code></pre>
 <pre><code>## Unit: milliseconds
 ##  expr       min        lq      mean    median        uq       max neval
-##   C++ 1322.3560 1326.6730 1339.6420 1332.9718 1350.6654 1374.7016    50
-##   TBB  143.3758  143.6282  147.1177  145.0476  146.9344  162.7252    50</code></pre>
+##   C++ 1347.9007 1349.0826 1350.7041 1349.8818 1352.1057 1359.8021    50
+##   TBB  143.8937  144.1016  145.6269  144.5351  145.6879  153.2576    50</code></pre>
 <p>TBB ran ~9.5 times faster than the serial version.</p>
 </div>
 </content:encoded>	

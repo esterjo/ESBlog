@@ -25,7 +25,7 @@ tags:
 <p><span class="math display">\[
 L = \sum_{i = 1}^N S_i
 \]</span></p>
-<p>where <span class="math inline">\(S_i\)</span> for <span class="math inline">\(i \in \mathbb{N}\)</span> is an IID sequence of random variables with the same distribution as <span class="math inline">\(S\)</span> and that are independent of <span class="math inline">\(N\)</span>. This kind of expression is typical in operational risk modeling, insurance modeling, and <a href="https://en.wikipedia.org/wiki/Ruin_theory">ruin theory</a>. Typically, the variable <span class="math inline">\(N\)</span> is a counter for the occurrence of loss events to an insurance portfolio over a given time period, and <span class="math inline">\(S_i\)</span> is the severity of the <span class="math inline">\(i\)</span>-th loss event. A CP variable/process is the most common approach banks take to model operational risk as part of their <a href="https://en.wikipedia.org/wiki/Advanced_measurement_approach">Advanced Measurement Approach</a>. The advantage of this model in operational risk is that losses (and hence data) tend to be sparse in this domain. In addition, losses tend to be heavy tailed. By splitting event frequency (<span class="math inline">\(N\)</span>) from event severity (<span class="math inline">\(S\)</span>) the model developer can use more data to fit loss severity distributions and loss frequency distributions independently (after accepting the assumptions of the CP process). Allowing one to focus on fitting the tail of the loss distribution, without having to worry about the frequency of occurrences.</p>
+<p>where <span class="math inline">\(S_i\)</span> for <span class="math inline">\(i \in \mathbb{N}\)</span> is an IID sequence of random variables with the same distribution as <span class="math inline">\(S\)</span> and that are independent of <span class="math inline">\(N\)</span>. This kind of expression is typical in operational risk modeling, insurance modeling, and <a href="https://en.wikipedia.org/wiki/Ruin_theory">ruin theory</a>. Typically, the variable <span class="math inline">\(N\)</span> is a counter for the occurrence of loss events to an insurance portfolio over a given time period, and <span class="math inline">\(S_i\)</span> is the severity of the <span class="math inline">\(i\)</span>-th loss event. A CP variable/process is the most common approach banks take to model operational risk as part of their <a href="https://en.wikipedia.org/wiki/Advanced_measurement_approach">Advanced Measurement Approach</a>. The advantage of this model in operational risk is that losses (and hence data) tend to be sparse in this domain. In addition, losses tend to be heavy tailed. By splitting event frequency (<span class="math inline">\(N\)</span>) from event severity (<span class="math inline">\(S\)</span>) the model developer can use more data to fit loss severity distributions and loss frequency distributions independently (after accepting the assumptions of the CP process). This assumption of IID losses allows the modeler to focus on fitting the tail of the loss distribution, without having to worry about the frequency of occurrences.</p>
 <p>We’ll implement a function that simulates random samples of <span class="math inline">\(L\)</span> in R, serially in C++, and in parallel in C++ using the <a href="https://github.com/oneapi-src/oneTBB">Threading Building Blocks (TBB)</a> library.</p>
 </div>
 <div id="r-implementation" class="section level2">
@@ -46,7 +46,6 @@ rCP = function(lambda, mu, sigma, N)
 <pre class="cpp"><code>#include &lt;Rcpp.h&gt;
 
 // [[Rcpp::depends(dqrng)]]
-// [[Rcpp::plugins(cpp11)]]
 
 #include &lt;pcg_random.hpp&gt;
 #include &lt;random&gt;
@@ -98,7 +97,7 @@ ks.test(x = x_r, y = x_cpp, alternative = &quot;two.sided&quot;)</code></pre>
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  x_r and x_cpp
-## D = 0.000872, p-value = 0.8416
+## D = 0.000963, p-value = 0.7427
 ## alternative hypothesis: two-sided</code></pre>
 <pre class="r"><code>microbenchmark::microbenchmark(
     &quot;R&quot; = rCP(lambda = 1.7, mu = 5.5, sigma = 2.5, N = 10^6),
@@ -106,9 +105,9 @@ ks.test(x = x_r, y = x_cpp, alternative = &quot;two.sided&quot;)</code></pre>
     times = 10L
     )</code></pre>
 <pre><code>## Unit: milliseconds
-##  expr       min        lq      mean    median       uq       max neval
-##     R 4510.0932 4708.5776 4766.8646 4744.4485 4838.215 5121.6228    10
-##   C++  148.1817  148.4262  150.8928  148.8326  149.993  164.8603    10</code></pre>
+##  expr       min         lq       mean     median         uq       max neval
+##     R 4268.0577 4331.33293 4358.51965 4357.96885 4401.17094 4416.6745    10
+##   C++   70.8535   70.96943   77.22742   71.20739   71.51722  128.0817    10</code></pre>
 <p>We see that a Kolmogorov-Smirnov test for equality of distributions shows that the two samples aren’t statistically distinct. Also the C++ version is ~30 times faster than the R version. Note that we added the compilation flags <code>-O3 -march=native</code> to R’s Makeoconf file (although one could simply register a plugin with Rcpp or use a makevars file in a package).</p>
 </div>
 <div id="parallel-c-implementation" class="section level2">
@@ -119,7 +118,6 @@ ks.test(x = x_r, y = x_cpp, alternative = &quot;two.sided&quot;)</code></pre>
 #include &lt;RcppParallel.h&gt;
 
 // [[Rcpp::depends(dqrng, RcppParallel)]]
-// [[Rcpp::plugins(cpp11)]]
 
 #include &lt;pcg_random.hpp&gt;
 #include &lt;random&gt;
@@ -182,7 +180,7 @@ ks.test(x = x_cpp, y = x_tbb, alternative = &quot;two.sided&quot;)</code></pre>
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  x_cpp and x_tbb
-## D = 0.001452, p-value = 0.2425
+## D = 0.000891, p-value = 0.8222
 ## alternative hypothesis: two-sided</code></pre>
 <pre class="r"><code>ks.test(x = x_r, y = x_tbb, alternative = &quot;two.sided&quot;)</code></pre>
 <pre><code>## Warning in ks.test(x = x_r, y = x_tbb, alternative = &quot;two.sided&quot;): p-value will
@@ -191,20 +189,20 @@ ks.test(x = x_cpp, y = x_tbb, alternative = &quot;two.sided&quot;)</code></pre>
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  x_r and x_tbb
-## D = 0.001089, p-value = 0.5936
+## D = 0.001349, p-value = 0.3227
 ## alternative hypothesis: two-sided</code></pre>
 <pre class="r"><code>p = c(0.5, 0.75, 0.9, 0.95, 0.99, 0.999, 0.9999)
 data.frame(R = quantile(x_r, probs = p), 
            Cpp = quantile(x_cpp, probs = p), 
            TBB = quantile(x_tbb, probs = p))</code></pre>
 <pre><code>##                   R          Cpp          TBB
-## 50%        530.5667     527.6282     529.1471
-## 75%       3220.2349    3213.9151    3237.5176
-## 90%      13065.1576   13040.0286   13121.7187
-## 95%      29373.5052   29574.5516   29469.1435
-## 99%     137559.5922  138644.1286  139464.6125
-## 99.9%   781650.1328  823119.0249  823881.6340
-## 99.99% 3659308.8591 3905734.0859 4198961.5219</code></pre>
+## 50%        525.6721     527.8515     525.2247
+## 75%       3188.0650    3205.9785    3215.0528
+## 90%      13007.0777   12989.6880   13043.5109
+## 95%      29284.5478   29428.5408   29399.1686
+## 99%     137016.4653  136261.8314  139049.8941
+## 99.9%   821332.7436  794316.1106  845872.3186
+## 99.99% 3864860.8800 3319502.5073 4282836.7037</code></pre>
 <p>The Kolmogorov-Smirnov test again can’t tell the samples apart between R, serial C++, and TBB implementations. Let’s take a look at the spacing between consecutive percentiles for non-zero values. If the RNGs between different threads overlapped in the parallel implementation, this would be a first way to find out as differences between the sorted values would show a spike at 0</p>
 <pre class="r"><code>library(magrittr)
 
@@ -218,18 +216,18 @@ ks.test(y_r, y_tbb, alternative = &quot;two.sided&quot;)</code></pre>
 ##  Two-sample Kolmogorov-Smirnov test
 ## 
 ## data:  y_r and y_tbb
-## D = 0.00071533, p-value = 0.9849
+## D = 0.0013749, p-value = 0.4224
 ## alternative hypothesis: two-sided</code></pre>
 <pre class="r"><code>data.frame(R = quantile(y_r, probs = p), 
            TBB = quantile(y_tbb, probs = p))</code></pre>
 <pre><code>##                   R          TBB
-## 50%    4.727899e-03 4.714475e-03
-## 75%    2.805332e-02 2.813593e-02
-## 90%    1.917154e-01 1.921603e-01
-## 95%    7.332917e-01 7.379764e-01
-## 99%    1.347410e+01 1.427091e+01
-## 99.9%  6.416662e+02 6.715141e+02
-## 99.99% 2.694763e+04 2.952423e+04</code></pre>
+## 50%    4.706155e-03 4.696845e-03
+## 75%    2.789482e-02 2.799611e-02
+## 90%    1.927010e-01 1.922044e-01
+## 95%    7.343613e-01 7.353753e-01
+## 99%    1.342726e+01 1.425215e+01
+## 99.9%  6.736032e+02 6.651423e+02
+## 99.99% 2.541149e+04 2.965516e+04</code></pre>
 </div>
 <div id="final-performance-comparison" class="section level2">
 <h2>Final Performance Comparison</h2>
@@ -240,10 +238,14 @@ ks.test(y_r, y_tbb, alternative = &quot;two.sided&quot;)</code></pre>
     times = 10L
     )</code></pre>
 <pre><code>## Unit: milliseconds
-##  expr       min        lq       mean     median        uq       max neval
-##     R 4467.4944 4536.6768 4728.00462 4728.59330 4887.7398 5140.7951    10
-##   C++  149.1431  150.5745  152.42350  151.40620  152.4696  162.2056    10
-##   TBB   17.4412   17.8820   19.82192   18.47545   19.3990   31.7309    10</code></pre>
+##  expr        min          lq        mean      median          uq        max
+##     R 4257.52277 4386.657195 4419.765148 4439.142598 4464.874526 4497.83768
+##   C++   70.69678   70.932022   71.548681   71.373135   72.201374   72.53289
+##   TBB    9.31567    9.440707    9.578117    9.507002    9.641842   10.27413
+##  neval
+##     10
+##     10
+##     10</code></pre>
 <p>TBB ran ~8 times faster than the serial version. The algorithm’s runtime scales linearly with <span class="math inline">\(\lambda\)</span>, so let’s compare the two C++ versions with a higher lambda:</p>
 <pre class="r"><code>microbenchmark::microbenchmark(
     &quot;C++&quot; = cppCP(lambda = 17, mu = 5.5, sigma = 2.5, N = 10^6),
@@ -251,8 +253,8 @@ ks.test(y_r, y_tbb, alternative = &quot;two.sided&quot;)</code></pre>
     times = 50L
     )</code></pre>
 <pre><code>## Unit: milliseconds
-##  expr       min        lq      mean    median        uq       max neval
-##   C++ 1347.9007 1349.0826 1350.7041 1349.8818 1352.1057 1359.8021    50
-##   TBB  143.8937  144.1016  145.6269  144.5351  145.6879  153.2576    50</code></pre>
+##  expr       min        lq      mean    median       uq       max neval
+##   C++ 585.05328 587.97749 595.12652 595.08056 601.1128 610.35413    50
+##   TBB  68.66768  69.74909  71.06729  70.30209  71.6615  82.82758    50</code></pre>
 <p>TBB ran ~9.5 times faster than the serial version.</p>
 </div>

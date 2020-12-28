@@ -25,7 +25,7 @@ $$
 L = \sum_{i = 1}^N S_i
 $$
 
-where $S_i$ for $i \in \mathbb{N}$ is an IID sequence of random variables with the same distribution as $S$ and that are independent of $N$. This kind of expression is typical in operational risk modeling, insurance modeling, and [ruin theory](https://en.wikipedia.org/wiki/Ruin_theory). Typically, the variable $N$ is a counter for the occurrence of loss events to an insurance portfolio over a given time period, and $S_i$ is the severity of the $i$-th loss event. A CP variable/process is the most common approach banks take to model operational risk as part of their [Advanced Measurement Approach](https://en.wikipedia.org/wiki/Advanced_measurement_approach). The advantage of this model in operational risk is that losses (and hence data) tend to be sparse in this domain. In addition, losses tend to be heavy tailed. By splitting event frequency ($N$) from event severity ($S$) the model developer can use more data to fit loss severity distributions and loss frequency distributions independently (after accepting the assumptions of the CP process). Allowing one to focus on fitting the tail of the loss distribution, without having to worry about the frequency of occurrences.
+where $S_i$ for $i \in \mathbb{N}$ is an IID sequence of random variables with the same distribution as $S$ and that are independent of $N$. This kind of expression is typical in operational risk modeling, insurance modeling, and [ruin theory](https://en.wikipedia.org/wiki/Ruin_theory). Typically, the variable $N$ is a counter for the occurrence of loss events to an insurance portfolio over a given time period, and $S_i$ is the severity of the $i$-th loss event. A CP variable/process is the most common approach banks take to model operational risk as part of their [Advanced Measurement Approach](https://en.wikipedia.org/wiki/Advanced_measurement_approach). The advantage of this model in operational risk is that losses (and hence data) tend to be sparse in this domain. In addition, losses tend to be heavy tailed. By splitting event frequency ($N$) from event severity ($S$) the model developer can use more data to fit loss severity distributions and loss frequency distributions independently (after accepting the assumptions of the CP process). This assumption of IID losses allows the modeler to focus on fitting the tail of the loss distribution, without having to worry about the frequency of occurrences.
 
 We'll implement a function that simulates random samples of $L$ in R, serially in C++, and in parallel in C++ using the [Threading Building Blocks (TBB)](https://github.com/oneapi-src/oneTBB) library.
 
@@ -52,7 +52,6 @@ We now implement the sampler in C++ using the [Rcpp package](http://www.rcpp.org
 #include <Rcpp.h>
 
 // [[Rcpp::depends(dqrng)]]
-// [[Rcpp::plugins(cpp11)]]
 
 #include <pcg_random.hpp>
 #include <random>
@@ -123,7 +122,6 @@ However, [Threading Building Blocks (TBB)](https://rcppcore.github.io/RcppParall
 #include <RcppParallel.h>
 
 // [[Rcpp::depends(dqrng, RcppParallel)]]
-// [[Rcpp::plugins(cpp11)]]
 
 #include <pcg_random.hpp>
 #include <random>
